@@ -1,0 +1,8 @@
+{
+  "routes": {
+    "/nfl-predictor": {},
+    "/nfl-predictor/equipos": {},
+    "/nfl-predictor/puntajes": {},
+    "/nfl-predictor/reglamento": {}
+  }
+}
