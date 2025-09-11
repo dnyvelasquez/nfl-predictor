@@ -18,18 +18,17 @@
         <td>{{ p.nombre }}</td>
         <td>{{ p.puntaje }}</td>
         <td>
-            <table class="subtabla">
-                <tbody>
-                    @for (eq of equiposDe(p.nombre); track eq.nombre) {
-                        <tr>
-                            <td>
-                                <img [src]="eq.logo" [alt]="eq.nombre" width="30" height="30" />
-                            </td>
-                            <td>{{ eq.puntaje }}</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+          <table class="subtabla">
+              <tbody>
+                  @for (eq of equiposDe(p.nombre); track eq.nombre) {
+                    <td >
+                        <img [src]="eq.logo" [alt]="eq.nombre" width="30" height="30" />
+                        <div class="division-badge">{{ eq.division }}</div>
+                    </td>
+                    <td>{{ eq.puntaje }}</td>
+                  }
+              </tbody>
+          </table>
         </td>
       </tr>
     }

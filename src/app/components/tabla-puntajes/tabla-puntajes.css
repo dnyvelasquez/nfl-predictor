@@ -37,6 +37,28 @@ table {
   overflow: hidden;
 }
 
+.subtabla td {
+  border-right: 1px solid #ccc;
+  padding: 6px 12px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.subtabla td:last-child {
+  border-right: none; 
+}
+
+.division-badge {
+  font-size: 10px;
+  background-color: #1976d2; 
+  color: white;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .subtabla th, .subtabla td {
   border: 1px solid #bbb;
   padding: 6px;
