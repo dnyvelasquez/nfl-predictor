@@ -29,7 +29,8 @@
             "outputMode": "server",
             "ssr": {
               "entry": "src/server.ts"
-            }
+            },
+            "baseHref": "/nfl-predictor/"
           },
           "configurations": {
             "production": {
