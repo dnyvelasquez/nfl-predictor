@@ -1,0 +1,27 @@
+<h1>
+  <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" 
+       alt="NFL Logo" class="logo-nfl">
+  Bienvenidos a NFL Predictor 2025-2026 🏈
+</h1>
+
+
+<hr class="divider">
+
+
+<h2>Clasificación de Participantes</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Participante</th>
+      <th>Puntaje</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (p of participantes; track $index) {
+      <tr [ngClass]="{'primer-lugar': $index === 0, 'segundo-lugar': $index === 1}">
+        <td>{{ p.nombre }}</td>
+        <td>{{ p.puntaje }}</td>
+      </tr>
+    }
+  </tbody>
+</table>

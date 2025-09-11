@@ -1,0 +1,28 @@
+<h1>
+  <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" 
+       alt="NFL Logo" class="logo-nfl">
+  Equipos en Competición 🏈
+</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Logo</th>
+      <th>División</th>
+      <th>Puntaje</th>
+      <th>Participante</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (e of equipos; track $index) {
+      <tr>
+        <td>{{ e.nombre }}</td>
+        <td><img [src]="e.logo" alt="{{e.nombre}}" width="30" /></td>
+        <td>{{ e.division }}</td>
+        <td>{{ e.puntaje }}</td>
+        <td>{{ e.participante }}</td>
+      </tr>
+    }
+  </tbody>
+</table>

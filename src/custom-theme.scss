@@ -1,0 +1,118 @@
+@use '@angular/material' as mat;
+
+// 1. Inicializa el core
+@include mat.core();
+
+// 2. Define tu tema
+$my-theme: mat.define-theme((
+  color: (
+    theme-type: dark, // o light
+    primary: mat.$cyan-palette,
+    tertiary: mat.$orange-palette, // en vez de secondary
+  ),
+));
+
+// 3. Aplica el tema global
+:root {
+  @include mat.all-component-themes($my-theme);
+}
+
+// 4. Estilos globales
+body {
+  background-color: #0a0f24; // Fondo azul oscuro estilo NFL
+  color: #ffffff;
+  margin: 0;
+  font-family: Roboto, Arial, sans-serif;
+}
+
+.mat-card {
+  background-color: #13294b;
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.mat-toolbar {
+  background: #13294b;
+  color: #fff;
+}
+
+
+
+// // Include theming for Angular Material with `mat.theme()`.
+// // This Sass mixin will define CSS variables that are used for styling Angular Material
+// // components according to the Material 3 design spec.
+// // Learn more about theming and how to use it for your application's
+// // custom components at https://material.angular.dev/guide/theming
+// @use '@angular/material' as mat;
+
+
+
+
+// html {
+//   @include mat.theme((
+//     color: (
+//       primary: mat.$cyan-palette,
+//       tertiary: mat.$orange-palette,
+//     ),
+//     typography: Roboto,
+//     density: 0,
+//   ));
+// }
+
+// body {
+//   // Default the application to a light color theme. This can be changed to
+//   // `dark` to enable the dark color theme, or to `light dark` to defer to the
+//   // user's system settings.
+  
+//   color-scheme: light;
+
+//   // Set a default background, font and text colors for the application using
+//   // Angular Material's system-level CSS variables. Learn more about these
+//   // variables at https://material.angular.dev/guide/system-variables
+  
+//   background-color: var(--mat-sys-surface);
+//   color: var(--mat-sys-on-surface);
+//   font: var(--mat-sys-body-medium);
+
+//   // Reset the user agent margin.
+  
+//   margin: 0;
+
+
+// }
+
+// // Include theming for Angular Material with `mat.theme()`.
+// // This Sass mixin will define CSS variables that are used for styling Angular Material
+// // components according to the Material 3 design spec.
+// // Learn more about theming and how to use it for your application's
+// // custom components at https://material.angular.dev/guide/theming
+// @use '@angular/material' as mat;
+
+// html {
+//   @include mat.theme((
+//     color: (
+//       primary: mat.$azure-palette,
+//       tertiary: mat.$blue-palette,
+//     ),
+//     typography: Roboto,
+//     density: 0,
+//   ));
+// }
+
+// body {
+//   // Default the application to a light color theme. This can be changed to
+//   // `dark` to enable the dark color theme, or to `light dark` to defer to the
+//   // user's system settings.
+//   color-scheme: light;
+
+//   // Set a default background, font and text colors for the application using
+//   // Angular Material's system-level CSS variables. Learn more about these
+//   // variables at https://material.angular.dev/guide/system-variables
+//   background-color: var(--mat-sys-surface);
+//   color: var(--mat-sys-on-surface);
+//   font: var(--mat-sys-body-medium);
+
+//   // Reset the user agent margin.
+//   margin: 0;
+// }

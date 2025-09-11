@@ -1,0 +1,37 @@
+<h1>
+  <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" 
+       alt="NFL Logo" class="logo-nfl">
+  Tabla de Puntajes y Equipos 🏈
+</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Participante</th>
+      <th>Puntaje</th>
+      <th>Equipos</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (p of participantes; track $index) {
+      <tr>
+        <td>{{ p.nombre }}</td>
+        <td>{{ p.puntaje }}</td>
+        <td>
+            <table class="subtabla">
+                <tbody>
+                    @for (eq of equiposDe(p.nombre); track eq.nombre) {
+                        <tr>
+                            <td>
+                                <img [src]="eq.logo" [alt]="eq.nombre" width="30" height="30" />
+                            </td>
+                            <td>{{ eq.puntaje }}</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>
