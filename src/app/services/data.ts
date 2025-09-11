@@ -17,6 +17,7 @@ export interface Equipo {
   providedIn: 'root'
 })
 export class Service {
+  
   private participantes: Participante[] = [
     { nombre: 'Argemiro' },
     { nombre: 'Tomás' },
