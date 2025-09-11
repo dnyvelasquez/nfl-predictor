@@ -16,8 +16,7 @@ export interface Equipo {
 @Injectable({
   providedIn: 'root'
 })
-export class Service {
-  
+export class Service { 
   private participantes: Participante[] = [
     { nombre: 'Argemiro' },
     { nombre: 'Tomás' },
