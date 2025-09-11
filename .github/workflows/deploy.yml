@@ -5,27 +5,37 @@ on:
     branches:
       - main
 
+env:
+  REPO: dnyvelasquez/nfl-predictor
+
+permissions:
+  contents: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout 🔄
         uses: actions/checkout@v3
 
-      - name: Setup Node
+      - name: Setup Node 🟢
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '18'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies 📦
+        run: npm ci
 
-      - name: Build Angular
-        run: npm run build -- --base-href="/nfl-predictor/"
+      - name: Set repo name env
+        run: echo "REPO=$(basename $GITHUB_REPOSITORY)" >> $GITHUB_ENV
 
-      - name: Deploy to GitHub Pages
+      - name: Build Angular ⚒️
+        # usa la variable REPO creada arriba
+        run: npm run build -- --configuration production --base-href="/${{ env.REPO }}/"
+
+      - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: dist/$(basename $GITHUB_REPOSITORY)
+          folder: dist/${{ env.REPO }}
