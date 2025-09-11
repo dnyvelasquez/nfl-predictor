@@ -5,40 +5,28 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Angular app
-        # usa npx ng para evitar problemas al pasar flags por npm
         run: npx ng build --configuration=production --base-href="/nfl-predictor/"
 
-      - name: Show dist contents (debug)
-        run: |
-          echo "CONTENTS OF dist:"
-          ls -la dist
-          echo "CONTENTS OF dist/NFL-Predictor:"
-          ls -la dist/NFL-Predictor || true
-          echo "SHOW index.html HEAD:"
-          sed -n '1,40p' dist/NFL-Predictor/index.html || true
-
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          branch: gh-pages
-          folder: dist/NFL-Predictor
-          clean: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist/NFL-Predictor
+          publish_branch: gh-pages
