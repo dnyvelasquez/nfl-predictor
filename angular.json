@@ -31,7 +31,7 @@
               "entry": "src/server.ts"
             },
             "baseHref": "/nfl-predictor/",
-            "outputPath": "dist/NFL-Predictor"
+            "outputPath": "dist/nfl-predictor"
           },
           "configurations": {
             "production": {
@@ -61,10 +61,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "NFL-Predictor:build:production"
+              "buildTarget": "nfl-predictor:build:production"
             },
             "development": {
-              "buildTarget": "NFL-Predictor:build:development"
+              "buildTarget": "nfl-predictor:build:development"
             }
           },
           "defaultConfiguration": "development"
