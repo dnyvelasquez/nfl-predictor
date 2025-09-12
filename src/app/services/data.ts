@@ -49,7 +49,7 @@ export class Service {
     { nombre: 'Commanders', puntaje: 0, division: 'NFC East', participante: 'Daniel', logo: 'https://static.www.nfl.com/h_16,w_16,q_auto,f_auto,dpr_2.0/league/api/clubs/logos/WAS'},
     { nombre: 'Bears', puntaje: 0, division: 'NFC North', participante: 'Argemiro', logo: 'https://static.www.nfl.com/h_16,w_16,q_auto,f_auto,dpr_2.0/league/api/clubs/logos/CHI'},
     { nombre: 'Lions', puntaje: 0, division: 'NFC North', participante: 'Daniel', logo: 'https://static.www.nfl.com/h_16,w_16,q_auto,f_auto,dpr_2.0/league/api/clubs/logos/DET'},
-    { nombre: 'Packers', puntaje: 0, division: 'NFC North', participante: 'Juan Ricardo', logo: 'https://static.www.nfl.com/h_16,w_16,q_auto,f_auto,dpr_2.0/league/api/clubs/logos/GB'},
+    { nombre: 'Packers', puntaje: 10, division: 'NFC North', participante: 'Juan Ricardo', logo: 'https://static.www.nfl.com/h_16,w_16,q_auto,f_auto,dpr_2.0/league/api/clubs/logos/GB'},
     { nombre: 'Vikings', puntaje: 0, division: 'NFC North', participante: 'No asignado', logo: 'https://static.www.nfl.com/h_16,w_16,q_auto,f_auto,dpr_2.0/league/api/clubs/logos/MIN'},
     { nombre: 'Falcons', puntaje: 0, division: 'NFC South', participante: 'Juan Ricardo', logo: 'https://static.www.nfl.com/h_16,w_16,q_auto,f_auto,dpr_2.0/league/api/clubs/logos/ATL'},
     { nombre: 'Panthers', puntaje: 0, division: 'NFC South', participante: 'No asignado', logo: 'https://static.www.nfl.com/h_16,w_16,q_auto,f_auto,dpr_2.0/league/api/clubs/logos/CAR'},
