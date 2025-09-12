@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
 import { Service, Participante, Equipo } from '../../services/data';
-import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatChipsModule } from '@angular/material/chips';
 
 type ParticipanteConPuntaje = Participante & { puntaje: number };
 
@@ -10,15 +11,18 @@ type ParticipanteConPuntaje = Participante & { puntaje: number };
   selector: 'app-tabla-puntajes',
   standalone: true,
   imports: [
-    CommonModule,
     MatCardModule,
-    MatTableModule 
+    MatDividerModule,
+    MatTableModule,
+    MatChipsModule
   ], 
   templateUrl: './tabla-puntajes.html',
   styleUrls: ['./tabla-puntajes.css'] 
 })
 export class TablaPuntajes {
-  displayedColumns: string[] = ['nombre', 'puntaje'];  
+  displayedColumns: string[] = ['participante', 'puntaje', 'equipos'];
+
+
   participantes: ParticipanteConPuntaje[] = [];
 
   constructor(private service: Service) {

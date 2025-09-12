@@ -1,108 +1,149 @@
-:host {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  background-color: #013369; 
+/* Fondo azul como el home */
+.tabla-puntajes-container {
+  background-color: #003366;
   min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 30px;
+}
+
+/* Card centrada */
+.tabla-puntajes-card {
+  width: 80%;
+  max-width: 900px;
   padding: 20px;
-  color: white; 
+  text-align: center;
 }
 
-.logo-nfl {
-  height: 50px;
-  margin-right: 10px;
-  vertical-align: middle;
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
 }
 
-table {
+/* Logo */
+.logo {
+  width: 50px;
+}
+
+/* Título */
+.tabla-puntajes-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* Contenedor de tabla */
+.tabla-container {
+  overflow-x: auto;
+}
+
+/* Tabla */
+.tabla-puntajes-table {
+  width: 100%;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden; 
+}
+
+.tabla-puntajes-table table {
   border-collapse: separate;
   border-spacing: 0;
-  width: 30%;
-  margin-top: 20px;
-  background-color: white;
-  border: 4px double #c60c30;  
-  border-radius: 12px;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-  color: black; 
 }
 
-.subtabla {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0 auto;
-  background: #f9f9f9;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.subtabla td {
-  border-right: 1px solid #ccc;
-  padding: 6px 12px;
-  text-align: center;
-  vertical-align: middle;
-}
-
-.subtabla td:last-child {
-  border-right: none; 
-}
-
-.division-badge {
-  font-size: 10px;
-  background-color: #1976d2; 
+/* Cabecera */
+.tabla-puntajes-table th {
+  background-color: #003366;
   color: white;
-  padding: 2px 6px;
-  border-radius: 8px;
-  margin-top: 4px;
+  font-weight: bold;
   text-align: center;
-  white-space: nowrap;
 }
 
-.subtabla th, .subtabla td {
-  border: 1px solid #bbb;
-  padding: 6px;
-  font-size: 14px;
+/* Celdas */
+.tabla-puntajes-table td {
+  text-align: center;
+  padding: 8px;
 }
 
-.subtabla img {
-  border: 1px solid #013369;
-  border-radius: 6px;
-  padding: 2px;
-  background: #fff;
+/* Forzar color del texto */
+.tabla-puntajes-table th,
+.tabla-puntajes-table td {
+  color: #000 !important; /* Texto negro para máxima legibilidad */
 }
 
-th, td {
-  border: 1px solid #ccc;
+/* Opcional: resaltar filas al pasar el mouse */
+.tabla-puntajes-table tr:hover {
+  background-color: #f2f2f2;
+}
+
+.mat-header-cell, .mat-cell {
   padding: 12px;
   text-align: center;
 }
 
-th {
-  background-color: #013369; 
-  color: white;
+
+.equipos-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
 }
 
-tr:nth-child(even) {
-  background-color: #f9f9f9;
+.equipo-logo {
+  width: 35px;
+  height: 35px;
 }
 
+.equipo-division {
+  font-weight: 500;
+  color: #1565c0;
+}
 
-tr.primer-lugar {
-  background-color: #007bff;
-  color: white;
+.equipo-puntaje {
   font-weight: bold;
+  color: #000;
+  font-size: 14px;
 }
 
-tr.segundo-lugar {
-  background-color: #ff4444;
-  color: white;
+.equipo-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.equipo-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: #333;
+}
+
+.division-chip  {
+  border-radius: 16px !important;
+  border: none !important;
+  box-shadow: none !important;
+  background-color: #1976d2 !important; 
+  color: white !important;             
   font-weight: bold;
+  font-size: 10px;  
+  outline: none !important;
 }
 
-.divider {
-  border: none;
-  border-top: 2px solid #c60c30;  
-  width: 60%;
-  margin: 20px auto; 
+.afc-chip {
+  background-color: #d32f2f !important; /* rojo AFC */
+  color: #fff !important;
+  border-radius: 16px;
+  font-weight: 600;
+}
+
+.nfc-chip {
+  background-color: #1976d2 !important; /* azul NFC */
+  color: #fff !important;
+  border-radius: 16px;
+  font-weight: 600;
 }

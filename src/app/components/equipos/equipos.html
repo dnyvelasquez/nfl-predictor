@@ -1,7 +1,10 @@
 <div class="equipos-container">
   <mat-card class="equipos-card">
-    <mat-card-title class="equipos-title">🏈 Equipos en Competición</mat-card-title>
-    <mat-divider></mat-divider>
+    <div class="header">
+      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
+      <mat-card-title class="equipos-title">Equipos en Competición 🏈</mat-card-title>
+      <mat-divider></mat-divider>
+    </div>
 
     <div class="tabla-container">
       <table mat-table [dataSource]="equipos" class="mat-elevation-z8 equipos-table">
@@ -48,33 +51,3 @@
 
 
 
-
-
-<!-- <h1>
-  <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" 
-       alt="NFL Logo" class="logo-nfl">
-  Equipos en Competición 🏈
-</h1>
-
-<table>
-  <thead>
-    <tr>
-      <th>Nombre</th>
-      <th>Logo</th>
-      <th>División</th>
-      <th>Puntaje</th>
-      <th>Participante</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (e of equipos; track $index) {
-      <tr>
-        <td>{{ e.nombre }}</td>
-        <td><img [src]="e.logo" alt="{{e.nombre}}" width="30" /></td>
-        <td>{{ e.division }}</td>
-        <td>{{ e.puntaje }}</td>
-        <td>{{ e.participante }}</td>
-      </tr>
-    }
-  </tbody>
-</table> -->
