@@ -1,4 +1,76 @@
-:host {
+/* Fondo azul como el home */
+.equipos-container {
+  background-color: #003366;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 30px;
+}
+
+/* Card centrada */
+.equipos-card {
+  width: 80%;
+  max-width: 900px;
+  padding: 20px;
+  text-align: center;
+}
+
+/* Título */
+.equipos-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* Contenedor de tabla */
+.tabla-container {
+  overflow-x: auto;
+}
+
+/* Tabla */
+.equipos-table {
+  width: 100%;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden; 
+}
+
+.equipos-table table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Cabecera */
+.equipos-table th {
+  background-color: #003366;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Celdas */
+.equipos-table td {
+  text-align: center;
+  padding: 8px;
+}
+
+/* Forzar color del texto */
+.equipos-table th,
+.equipos-table td {
+  color: #000 !important; /* Texto negro para máxima legibilidad */
+}
+
+/* Opcional: resaltar filas al pasar el mouse */
+.equipos-table tr:hover {
+  background-color: #f2f2f2;
+}
+
+
+
+
+
+/* :host {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -61,4 +133,4 @@ tr.segundo-lugar {
   border-top: 2px solid #c60c30;  
   width: 60%;
   margin: 20px auto; 
-}
+} */
