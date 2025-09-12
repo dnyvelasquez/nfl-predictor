@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "NFL-Predictor": {
+    "nfl-predictor": {
       "projectType": "application",
       "schematics": {},
       "root": "",
