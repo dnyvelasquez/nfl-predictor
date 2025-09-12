@@ -1,4 +1,9 @@
 import { Component } from '@angular/core';
+
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTableModule } from '@angular/material/table';
+
 import { CommonModule } from '@angular/common';
 import { Service, Participante } from '../../services/data';
 
@@ -7,7 +12,14 @@ type ParticipanteConPuntaje = Participante & { puntaje: number };
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    
+    MatCardModule,
+    MatDividerModule,
+    MatTableModule
+  
+  ],
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
