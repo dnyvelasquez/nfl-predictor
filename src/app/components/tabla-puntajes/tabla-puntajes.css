@@ -10,7 +10,7 @@
 
 /* Card centrada */
 .tabla-puntajes-card {
-  max-width: 80%;
+  max-width: 90%;
   padding: 20px;
   text-align: center;
 }
@@ -71,7 +71,12 @@
 /* Forzar color del texto */
 .tabla-puntajes-table th,
 .tabla-puntajes-table td {
-  color: #000 !important; /* Texto negro para máxima legibilidad */
+  color: #000 !important; /* Texto negro para máxima legibilidad */  
+}
+
+.puntaje {
+  font-size: large;
+  font-weight: bold;
 }
 
 /* Opcional: resaltar filas al pasar el mouse */

@@ -18,14 +18,12 @@
         <!-- Puntaje -->
         <ng-container matColumnDef="puntaje">
           <th mat-header-cell *matHeaderCellDef> Puntaje </th>
-          <td mat-cell *matCellDef="let element"> {{element.puntaje}} </td>
+          <td class="puntaje" mat-cell *matCellDef="let element"> {{element.puntaje}} </td>
         </ng-container>
 
         <!-- Equipos -->
         <ng-container matColumnDef="equipos">
           <th mat-header-cell *matHeaderCellDef> Equipos </th>
-
-          
           <td mat-cell *matCellDef="let element">
             <div class="equipos-lista">
               @for (eq of equiposDe(element.nombre); track eq.nombre) {
@@ -37,10 +35,6 @@
               }
             </div>
           </td>
-         
-          
-          
-          
         </ng-container>
         
         <!-- Filas -->

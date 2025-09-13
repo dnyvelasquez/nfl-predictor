@@ -10,7 +10,7 @@
 
 /* Card centrada */
 .equipos-card {
-  max-width: 80%;
+  max-width: 90%;
   padding: 20px;
   text-align: center;
 }
@@ -77,6 +77,3 @@
   gap: 15px;
   margin-bottom: 15px;
 }
-
-
-
