@@ -10,7 +10,7 @@
 .welcome-card {
   padding: 20px;
   text-align: center;
-  width: 600px;
+  max-width: 80%;
 }
 
 .header {

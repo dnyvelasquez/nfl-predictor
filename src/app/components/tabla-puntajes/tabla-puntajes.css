@@ -10,8 +10,7 @@
 
 /* Card centrada */
 .tabla-puntajes-card {
-  width: 80%;
-  max-width: 900px;
+  max-width: 80%;
   padding: 20px;
   text-align: center;
 }
