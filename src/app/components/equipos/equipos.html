@@ -9,13 +9,11 @@
     <div class="tabla-container">
       <table mat-table [dataSource]="(equipos$ | async) ?? []" class="mat-elevation-z8 equipos-table">
 
-        <!-- Nombre -->
         <ng-container matColumnDef="nombre">
           <th mat-header-cell *matHeaderCellDef> Nombre </th>
           <td mat-cell *matCellDef="let element"> {{element.nombre}} </td>
         </ng-container>
 
-        <!-- Logo -->
         <ng-container matColumnDef="logo">
           <th mat-header-cell *matHeaderCellDef> Logo </th>
           <td mat-cell *matCellDef="let element">
@@ -23,25 +21,21 @@
           </td>
         </ng-container>
 
-        <!-- División -->
         <ng-container matColumnDef="division">
           <th mat-header-cell *matHeaderCellDef> División </th>
           <td mat-cell *matCellDef="let element"> {{element.division}} </td>
         </ng-container>
 
-        <!-- Puntaje -->
         <ng-container matColumnDef="puntaje">
           <th mat-header-cell *matHeaderCellDef> Puntaje </th>
           <td mat-cell *matCellDef="let element"> {{element.puntaje}} </td>
         </ng-container>
 
-        <!-- Participante -->
         <ng-container matColumnDef="participante">
           <th mat-header-cell *matHeaderCellDef> Participante </th>
           <td mat-cell *matCellDef="let element"> {{element.participante}} </td>
         </ng-container>
 
-        <!-- Filas -->
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
