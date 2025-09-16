@@ -1,7 +1,46 @@
-<nav>
-  <a routerLink="/">Inicio</a> |
-  <a routerLink="/puntajes">Tabla de Puntajes</a> |
-  <a routerLink="/equipos">Equipos</a> |
-  <a routerLink="/juegos">Juegos de la semana</a> |
-  <a routerLink="/reglamento">Reglamento</a>
-</nav>
+<mat-toolbar color="primary" class="header-toolbar">
+  <span class="logo">NFL Predictor 🏈</span>
+
+  <!-- Espaciador -->
+  <span class="spacer"></span>
+
+  <!-- Menú en desktop -->
+  <nav class="menu-desktop">
+    <button mat-button routerLink="/">
+      <mat-icon>home</mat-icon> Home
+    </button>
+    <button mat-button routerLink="/puntajes">
+      <mat-icon>leaderboard</mat-icon> Tabla de puntajes
+    </button>
+    <button mat-button routerLink="/juegos">
+      <mat-icon>sports_football</mat-icon> Juegos de la semana
+    </button>
+    <button mat-button routerLink="/reglamento">
+      <mat-icon>gavel</mat-icon> Reglamento
+    </button>
+  </nav>
+
+  <!-- Menú hamburguesa en móvil -->
+  <button mat-icon-button [matMenuTriggerFor]="menu" class="menu-mobile">
+    <mat-icon>menu</mat-icon>
+  </button>
+</mat-toolbar>
+
+<mat-menu #menu="matMenu">
+  <button mat-menu-item routerLink="/home">
+    <mat-icon>home</mat-icon>
+    <span>Home</span>
+  </button>
+  <button mat-menu-item routerLink="/tabla-puntajes">
+    <mat-icon>leaderboard</mat-icon>
+    <span>Tabla de puntajes</span>
+  </button>
+  <button mat-menu-item routerLink="/juegos">
+    <mat-icon>sports_football</mat-icon>
+    <span>Juegos de la semana</span>
+  </button>
+  <button mat-menu-item routerLink="/reglamento">
+    <mat-icon>gavel</mat-icon>
+    <span>Reglamento</span>
+  </button>
+</mat-menu>
