@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { Service, Participante, Equipo } from '../../services/data';
+import { AsyncPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
-
-type ParticipanteConPuntaje = Participante & { puntaje: number };
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-tabla-puntajes',
@@ -14,28 +14,22 @@ type ParticipanteConPuntaje = Participante & { puntaje: number };
     MatCardModule,
     MatDividerModule,
     MatTableModule,
-    MatChipsModule
-  ], 
+    MatChipsModule,
+    AsyncPipe
+  ],
   templateUrl: './tabla-puntajes.html',
-  styleUrls: ['./tabla-puntajes.css'] 
+  styleUrls: ['./tabla-puntajes.css']
 })
-export class TablaPuntajes {
+
+export class TablaPuntajes  {
   displayedColumns: string[] = ['participante', 'puntaje', 'equipos'];
-
-
-  participantes: ParticipanteConPuntaje[] = [];
+  participantes$: Observable<Participante[]>;
 
   constructor(private service: Service) {
-    this.participantes = this.service.getParticipantes().map(p => ({
-      ...p,
-      puntaje: this.service.getPuntajeDeParticipante(p.nombre)
-    }));
-    
-    this.participantes.sort((a, b) => b.puntaje - a.puntaje);
-  }
 
-  equiposDe(nombre: string): Equipo[] {
-    return this.service.getEquiposDe(nombre);
+    this.participantes$ = this.service.getParticipantesConPuntaje();
+    
   }
 
 }
+

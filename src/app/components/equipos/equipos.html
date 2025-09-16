@@ -7,7 +7,7 @@
     </div>
 
     <div class="tabla-container">
-      <table mat-table [dataSource]="equipos" class="mat-elevation-z8 equipos-table">
+      <table mat-table [dataSource]="(equipos$ | async) ?? []" class="mat-elevation-z8 equipos-table">
 
         <!-- Nombre -->
         <ng-container matColumnDef="nombre">

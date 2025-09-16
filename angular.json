@@ -30,7 +30,7 @@
             "ssr": {
               "entry": "src/server.ts"
             },
-            "baseHref": "/nfl-predictor/",
+            "baseHref": "/",
             "outputPath": "dist/nfl-predictor"
           },
           "configurations": {

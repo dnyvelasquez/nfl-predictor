@@ -1,4 +1,3 @@
-<!-- home.component.html -->
 <div class="home-container">
   <mat-card class="welcome-card">
     <div class="header">
@@ -10,20 +9,27 @@
 
     <h2 class="subtitle">Clasificación de Participantes</h2>
 
-    <table mat-table [dataSource]="participantes" class="mat-elevation-z8 custom-table">
+    <table mat-table [dataSource]="(participantes$ | async) ?? []" class="mat-elevation-z8 custom-table">
 
-      <!-- Columna Participante -->
       <ng-container matColumnDef="nombre">
         <th mat-header-cell *matHeaderCellDef> Participante </th>
-        <td mat-cell *matCellDef="let p" [ngClass]="{'top': p.nombre === 'Juan Ricardo', 'bottom': p.nombre === 'Argemiro'}">
-          {{p.nombre}}
+        <td mat-cell *matCellDef="let p; let i = index"
+          [ngClass]="{'primer-lugar': i === 0, 'segundo-lugar': i === 1}">
+          <span>{{p.nombre}}</span>
+
+          @if (i === 0) {
+            <mat-icon class="icono-trofeo">emoji_events</mat-icon> <!-- 🏆 -->
+          }
+          @if (i === 1) {
+            <mat-icon class="icono-medalla">military_tech</mat-icon> <!-- 🥈 -->
+          }
         </td>
       </ng-container>
 
-      <!-- Columna Puntaje -->
       <ng-container matColumnDef="puntaje">
         <th mat-header-cell *matHeaderCellDef> Puntaje </th>
-        <td mat-cell *matCellDef="let p" [ngClass]="{'top': p.nombre === 'Juan Ricardo', 'bottom': p.nombre === 'Argemiro'}">
+        <td mat-cell *matCellDef="let p; let i = index"
+          [ngClass]="{'primer-lugar': i === 0, 'segundo-lugar': i === 1}">
           {{p.puntaje}}
         </td>
       </ng-container>
@@ -34,34 +40,3 @@
   </mat-card>
 </div>
 
-
-
-
-
-<!-- <h1>
-  <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" 
-       alt="NFL Logo" class="logo-nfl">
-  Bienvenidos a NFL Predictor 2025-2026 🏈
-</h1>
-
-
-<hr class="divider">
-
-
-<h2>Clasificación de Participantes</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Participante</th>
-      <th>Puntaje</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (p of participantes; track $index) {
-      <tr [ngClass]="{'primer-lugar': $index === 0, 'segundo-lugar': $index === 1}">
-        <td>{{ p.nombre }}</td>
-        <td>{{ p.puntaje }}</td>
-      </tr>
-    }
-  </tbody>
-</table> -->

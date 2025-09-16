@@ -54,7 +54,6 @@
   border-spacing: 0;
 }
 
-/* Cabecera */
 .tabla-puntajes-table th {
   background-color: #003366;
   color: white;
@@ -62,16 +61,14 @@
   text-align: center;
 }
 
-/* Celdas */
 .tabla-puntajes-table td {
   text-align: center;
   padding: 8px;
 }
 
-/* Forzar color del texto */
-.tabla-puntajes-table th,
+
 .tabla-puntajes-table td {
-  color: #000 !important; /* Texto negro para máxima legibilidad */  
+  color: #000 !important;
 }
 
 .puntaje {
@@ -79,7 +76,6 @@
   font-weight: bold;
 }
 
-/* Opcional: resaltar filas al pasar el mouse */
 .tabla-puntajes-table tr:hover {
   background-color: #f2f2f2;
 }
@@ -88,7 +84,6 @@
   padding: 12px;
   text-align: center;
 }
-
 
 .equipos-lista {
   display: flex;

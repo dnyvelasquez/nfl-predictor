@@ -1,4 +1,3 @@
-/* Fondo azul como el home */
 .equipos-container {
   background-color: #003366;
   min-height: 100vh;
@@ -8,26 +7,22 @@
   padding-top: 30px;
 }
 
-/* Card centrada */
 .equipos-card {
   max-width: 90%;
   padding: 20px;
   text-align: center;
 }
 
-/* Título */
 .equipos-title {
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 15px;
 }
 
-/* Contenedor de tabla */
 .tabla-container {
   overflow-x: auto;
 }
 
-/* Tabla */
 .equipos-table {
   width: 100%;
   background-color: white;
@@ -40,7 +35,6 @@
   border-spacing: 0;
 }
 
-/* Cabecera */
 .equipos-table th {
   background-color: #003366;
   color: white;
@@ -48,19 +42,15 @@
   text-align: center;
 }
 
-/* Celdas */
 .equipos-table td {
   text-align: center;
   padding: 8px;
 }
 
-/* Forzar color del texto */
-.equipos-table th,
 .equipos-table td {
-  color: #000 !important; /* Texto negro para máxima legibilidad */
+  color: #000 !important; 
 }
 
-/* Opcional: resaltar filas al pasar el mouse */
 .equipos-table tr:hover {
   background-color: #f2f2f2;
 }
@@ -68,7 +58,6 @@
 .logo {
   width: 50px;
 }
-
 
 .header {
   display: flex;

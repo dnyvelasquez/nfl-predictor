@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTableModule } from '@angular/material/table';
-import { Service } from '../../services/data';
+import { AsyncPipe } from '@angular/common';
+import { Observable, map } from 'rxjs';
+import { Service, Equipo } from '../../services/data';
 
 @Component({
   selector: 'app-equipos',
@@ -10,20 +12,25 @@ import { Service } from '../../services/data';
   imports: [
     MatCardModule,
     MatDividerModule,
-    MatTableModule
+    MatTableModule,
+    AsyncPipe
   ], 
   templateUrl: './equipos.html',
-  styleUrl: './equipos.css'
+  styleUrls: ['./equipos.css']
 })
-export class Equipos implements OnInit {
+
+export class Equipos  {
 
   displayedColumns: string[] = ['nombre', 'logo', 'division', 'puntaje', 'participante'];
+  equipos$: Observable<Equipo[]>;
 
-  equipos: any[] = [];
+  constructor(private service: Service) {
 
-  constructor(private service: Service) {}
+    this.equipos$ = this.service.getEquipos().pipe(
+      map(equipos => equipos ?? [])
+    );
 
-  ngOnInit(): void {
-    this.equipos = this.service.getEquipos();
   }
+
+
 }

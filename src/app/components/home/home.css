@@ -1,10 +1,9 @@
-/* home.component.css */
 .home-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #0b2d5c; /* Azul NFL */
+  background-color: #0b2d5c; 
 }
 
 .welcome-card {
@@ -46,17 +45,22 @@
   text-align: center;
 }
 
-.top {
-  background-color: #1976d2; /* Azul Material */
-  color: white;
+.primer-lugar {
+  background-color: #0b2d5c !important;
   font-weight: bold;
 }
 
-.bottom {
-  background-color: #e53935; /* Rojo Material */
-  color: white;
+.segundo-lugar {
+  background-color: #D50A0A !important;
   font-weight: bold;
 }
 
+.icono-trofeo {
+  color: darkorange;
+  margin-left: 6px;
+}
 
-
+.icono-medalla {
+  color: steelblue;
+  margin-left: 6px;
+}
