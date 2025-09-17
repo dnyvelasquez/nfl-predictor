@@ -1,7 +1,17 @@
 .header-toolbar {
+  position: fixed;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  top: 20;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.logo {
+  width: 30px;
+  padding-right: 4px;
 }
 
 .spacer {

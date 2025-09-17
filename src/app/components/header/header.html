@@ -1,4 +1,5 @@
 <mat-toolbar color="primary" class="header-toolbar">
+  <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
   <span class="logo">NFL Predictor 🏈</span>
 
   <!-- Espaciador -->
@@ -14,6 +15,9 @@
     </button>
     <button mat-button routerLink="/juegos">
       <mat-icon>sports_football</mat-icon> Juegos de la semana
+    </button>
+    <button mat-button routerLink="/equipos">
+      <mat-icon>groups</mat-icon> Equipos
     </button>
     <button mat-button routerLink="/reglamento">
       <mat-icon>gavel</mat-icon> Reglamento
@@ -34,6 +38,10 @@
   <button mat-menu-item routerLink="/puntajes">
     <mat-icon>leaderboard</mat-icon>
     <span>Tabla de puntajes</span>
+  </button>
+  <button mat-menu-item routerLink="/equipos">
+    <mat-icon>groups</mat-icon>
+    <span>Equipos</span>
   </button>
   <button mat-menu-item routerLink="/juegos">
     <mat-icon>sports_football</mat-icon>

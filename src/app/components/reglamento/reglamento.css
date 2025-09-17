@@ -1,27 +1,23 @@
-/* Fondo azul como el home */
 .reglamento-container {
+  padding-top: 80px;
   background-color: #003366;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 30px;
 }
 
-/* Card centrada */
 .reglamento-card {
   max-width: 90%;
   padding: 20px;
   }
 
-/* Título */
 .reglamento-title {
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 15px;
 }
 
-/* Contenedor */
 .container {
   overflow-x: auto;
   background-color: white;
