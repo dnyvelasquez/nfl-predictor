@@ -4,23 +4,11 @@
   align-items: center;
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.spacer {
+  flex: 1 1 auto;
 }
 
-.logo img {
-  height: 40px;
-}
-
-.title {
-  font-size: 20px;
-  font-weight: bold;
-  color: white;
-}
-
-.nav-links {
+.menu-desktop {
   display: flex;
   gap: 12px;
 }
@@ -29,12 +17,11 @@
   display: none;
 }
 
-/* ✅ Responsive: ocultar links en móviles y mostrar el menú hamburguesa */
 @media (max-width: 768px) {
-  .nav-links {
+  .menu-desktop {
     display: none;
   }
   .menu-mobile {
-    display: block;
+    display: inline-flex;
   }
 }
