@@ -20,18 +20,17 @@
 
 .menu-desktop {
   display: flex;
-  gap: 12px;
 }
 
 .menu-mobile {
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 920px) {
   .menu-desktop {
     display: none;
   }
   .menu-mobile {
     display: inline-flex;
   }
-}
+} 
