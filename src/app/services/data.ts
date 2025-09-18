@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { combineLatest, Observable, map, switchMap, forkJoin } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, map, switchMap, forkJoin } from 'rxjs';
 
 export interface Participante {
   nombre: string;
@@ -12,6 +12,14 @@ export interface Equipo {
   division: string;
   logo: string;
   participante: string;
+}
+
+export interface Juego {
+  semana: string,
+  visitante: string,
+  local: string,
+  fecha: string,
+  hora: string,
 }
 
 @Injectable({
@@ -55,6 +63,20 @@ export class Service {
     )
     );
   }
+
+getJuegosPorSemana(semana: string): Observable<any[]> {
+  return this.http.get<any>(this.dataUrl).pipe(
+    map(data => {
+      return data.juegos
+        .filter((juego: any) => juego.semana === semana)
+        .map((juego: any) => ({
+          ...juego,
+          logoVisitante: data.equipos.find((e: any) => e.nombre === juego.visitante)?.logo,
+          logoLocal: data.equipos.find((e: any) => e.nombre === juego.local)?.logo
+        }));
+    })
+  );
+}
 
 }
 

@@ -1,0 +1,84 @@
+.juegos-container {
+  padding-top: 80px;
+  background-color: #003366;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.juegos-card {
+  max-width: 90%;
+  padding: 20px;
+  text-align: center;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.logo {
+  width: 50px;
+}
+
+.juegos-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.tabla-container {
+  overflow-x: auto;
+}
+
+.juegos-table {
+  width: 100%;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden; 
+}
+
+.juegos-table table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.juegos-table th {
+  background-color: #003366;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+}
+
+.juegos-table td {
+  text-align: center;
+  padding: 8px;
+  color: #000 !important;
+}
+
+.juegos-table tr:hover {
+  background-color: #f2f2f2;
+}
+
+.mat-header-cell, .mat-cell {
+  padding: 12px;
+  text-align: center;
+}
+
+
+.equipo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+}
+
+.equipo-logo {
+  width: 40px;
+  height: 40px;
+}
+

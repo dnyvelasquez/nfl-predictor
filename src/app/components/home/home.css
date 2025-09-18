@@ -1,5 +1,5 @@
 .home-container {
-  padding-top: 60px;
+  padding-top: 50px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -59,6 +59,7 @@
 .icono-trofeo {
   color: darkorange;
   margin-left: 6px;
+
 }
 
 .icono-medalla {

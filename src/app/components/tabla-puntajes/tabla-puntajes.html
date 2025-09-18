@@ -11,7 +11,7 @@
 
         <ng-container matColumnDef="participante">
           <th mat-header-cell *matHeaderCellDef> Participante </th>
-          <td mat-cell *matCellDef="let p"> {{p.nombre}} </td>
+          <td class="participante" mat-cell *matCellDef="let p"> {{p.nombre}} </td>
         </ng-container>
 
         <ng-container matColumnDef="puntaje">
@@ -27,7 +27,6 @@
                 <div class="equipo-item">
                   <img [src]="eq.logo" [alt]="eq.nombre" class="equipo-logo" />
                   <span class="equipo-puntaje">{{ eq.puntaje }}</span>
-
                   <mat-chip
                     [ngClass]="{
                       'chip-afc': eq.division.startsWith('AFC'),
