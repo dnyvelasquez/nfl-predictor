@@ -15,11 +15,15 @@ export interface Equipo {
 }
 
 export interface Juego {
-  semana: string,
-  visitante: string,
-  local: string,
-  fecha: string,
-  hora: string,
+  id: string;
+  semana: string;
+  visitante: string;
+  local: string;
+  fecha: string;
+  hora: string;
+  logoVisitante?: string;
+  logoLocal?: string;
+
 }
 
 @Injectable({

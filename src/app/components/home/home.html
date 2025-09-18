@@ -15,6 +15,8 @@
         <th mat-header-cell *matHeaderCellDef> Participante </th>
         <td mat-cell *matCellDef="let p; let i = index"
           [ngClass]="{'primer-lugar': i === 0, 'segundo-lugar': i === 1}">
+          <div class="with-icon">
+
           <span>{{p.nombre}}</span>
 
           @if (i === 0) {
@@ -23,6 +25,11 @@
           @if (i === 1) {
             <mat-icon class="icono-medalla">military_tech</mat-icon> <!-- 🥈 -->
           }
+
+
+
+
+          </div>
         </td>
       </ng-container>
 

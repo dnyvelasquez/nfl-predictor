@@ -28,46 +28,29 @@
 .juegos-title {
   font-size: 24px;
   font-weight: bold;
-  margin-bottom: 15px;
 }
 
-.tabla-container {
+.table-container {
   overflow-x: auto;
-  flex-wrap: wrap;
+  border-radius: 12px;
 }
 
 .juegos-table {
-  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  color: #000;
   background-color: white;
-  border-radius: 12px;
   overflow: hidden; 
 }
 
-.juegos-table table {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.juegos-table th {
-  background-color: #003366;
-  color: white;
-  font-weight: bold;
-  text-align: center;
-}
-
-.juegos-table td {
-  text-align: center;
-  padding: 8px;
-  color: #000 !important;
-}
-
-.juegos-table tr:hover {
-  background-color: #f2f2f2;
-}
-
-.mat-header-cell, .mat-cell {
-  padding: 12px;
-  text-align: center;
+.equipos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .equipo-visitante {
@@ -80,14 +63,16 @@
 
 .equipo-local {
   display: flex;
-  align-items: start;
   align-items: center;
+  justify-content: start;
   gap: 8px;
   font-weight: bold;
 }
 
 .vs {
-  padding-left: 8px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #d32f2f;
 }
 
 .equipo-logo {
@@ -95,3 +80,34 @@
   height: 40px;
 }
 
+.info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+  .schec {
+    padding-left: 20px;
+  }
+
+@media (max-width: 768px) {
+  .juegos-table {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .info {
+    display: flex;
+    flex-direction: column;
+    margin-top: 6px;
+    align-items: center;
+  }
+
+  .schec {
+    padding-left: 0px;
+  }
+
+}

@@ -2,11 +2,42 @@
   <mat-card class="juegos-card">
     <div class="header">
       <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
-      <mat-card-title class="juegos-title">Juegos de la semana 🏈</mat-card-title>
+      <mat-card-title class="juegos-title">Juegos de la semana</mat-card-title>
+      <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
 
-    <div class="tabla-container">
+
+
+
+    <div class="table-container">
+      @for (j of juegos$ | async; track j.id) {
+        <div class="juegos-table">
+          <div class="equipos">
+            <div class="equipo-visitante">
+              <img [src]="j.logoVisitante" alt="{{ j.visitante }}" class="equipo-logo">
+              <span>{{ j.visitante }}</span>
+            </div>
+            <span class="vs">Vs</span>
+            <div class="equipo-local">
+              <span>{{ j.local }}</span>
+              <img [src]="j.logoLocal" alt="{{ j.local }}" class="equipo-logo">
+            </div>
+          </div>
+
+          <div class="info">
+            <span class="schec">{{ j.fecha }}</span>
+            <span class="schec">{{ j.hora }}</span>
+          </div>
+
+
+        </div>
+      }
+    </div>    
+
+
+
+    <!-- <div class="tabla-container">
       <table mat-table [dataSource]="(juegos$ | async) ?? []" class="mat-elevation-z8 juegos-table">
 
         <ng-container matColumnDef="visitante">
@@ -41,7 +72,14 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
-    </div>
+    </div> -->
+
+
+
+
+
+
+
   </mat-card>
 </div>
 

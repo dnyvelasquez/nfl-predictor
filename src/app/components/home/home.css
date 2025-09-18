@@ -66,3 +66,8 @@
   color: steelblue;
   margin-left: 6px;
 }
+
+.with-icon {
+  display: flex;
+  align-items: center;
+}
