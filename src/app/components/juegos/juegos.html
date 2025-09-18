@@ -12,16 +12,17 @@
         <ng-container matColumnDef="visitante">
             <th mat-header-cell *matHeaderCellDef> Visitante </th>
             <td mat-cell *matCellDef="let j"> 
-                <div class="equipo">
+                <div class="equipo-visitante">
                     <img [src]="j.logoVisitante" alt="{{ j.visitante }}" class="logo">
                     <span>{{j.visitante}}</span>
+                    <span class="vs">Vs</span>
                 </div>                
             </td>
         </ng-container>
 
         <ng-container matColumnDef="local">
             <th mat-header-cell *matHeaderCellDef> Local </th>
-            <td class="equipo" mat-cell *matCellDef="let j"> 
+            <td class="equipo-local" mat-cell *matCellDef="let j"> 
                 <span>{{j.local}}</span> 
                 <img [src]="j.logoLocal" alt="{{ j.Local }}" class="logo">
             </td>

@@ -33,6 +33,7 @@
 
 .tabla-container {
   overflow-x: auto;
+  flex-wrap: wrap;
 }
 
 .juegos-table {
@@ -69,12 +70,24 @@
   text-align: center;
 }
 
-
-.equipo {
+.equipo-visitante {
   display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 8px;
+  font-weight: bold;
+}
+
+.equipo-local {
+  display: flex;
+  align-items: start;
   align-items: center;
   gap: 8px;
   font-weight: bold;
+}
+
+.vs {
+  padding-left: 8px;
 }
 
 .equipo-logo {
