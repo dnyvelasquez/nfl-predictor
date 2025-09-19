@@ -13,55 +13,101 @@
   text-align: center;
 }
 
-.equipos-title {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.tabla-container {
-  overflow-x: auto;
-}
-
-.equipos-table {
-  width: 100%;
-  background-color: white;
-  border-radius: 12px;
-  overflow: hidden; 
-}
-
-.equipos-table table {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.equipos-table th {
-  background-color: #003366;
-  color: white;
-  font-weight: bold;
-  text-align: center;
-}
-
-.equipos-table td {
-  text-align: center;
-  padding: 8px;
-}
-
-.equipos-table td {
-  color: #000 !important; 
-}
-
-.equipos-table tr:hover {
-  background-color: #f2f2f2;
-}
-
-.logo {
-  width: 50px;
-}
-
 .header {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 15px;
   margin-bottom: 15px;
+}
+
+.logo {
+  width: 50px;
+}
+
+.equipos-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+}
+
+.equipos-table {
+  display: flex;
+  flex-direction: row !important;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 20px 12px 20px;
+  border-bottom: 1px solid #ddd;
+  color: #000;
+  background-color: white;
+  overflow: hidden; 
+}
+
+.equipos {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0px 20px;
+  gap: 12px;
+}
+
+.equipo{
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  justify-content: space-between;
+  padding: 0px 20px 0px 20px;
+  gap: 20px;
+}
+
+.equipo-logo {
+  width: 60px;
+  height: 60px;
+  padding: 0px 8px 0px 8px;
+}
+
+.info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+
+}
+
+.participante {
+  font-weight: bold;
+  color: #d32f2f;
+}
+
+.puntaje {
+  font-weight: bold;
+}
+
+
+@media (max-width: 768px) {
+  .equipos-table {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .equipos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .info {
+    margin-top: 6px;
+    align-items: center;
+  }
 }

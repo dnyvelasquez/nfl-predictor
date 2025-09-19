@@ -7,10 +7,11 @@ export interface Participante {
 }
 
 export interface Equipo {
+  id: string;
   nombre: string;
   puntaje: number;
   division: string;
-  logo: string;
+  logo?: string;
   participante: string;
 }
 

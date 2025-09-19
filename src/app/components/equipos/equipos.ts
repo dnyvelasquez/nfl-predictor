@@ -21,7 +21,6 @@ import { Service, Equipo } from '../../services/data';
 
 export class Equipos  {
 
-  displayedColumns: string[] = ['nombre', 'logo', 'division', 'puntaje', 'participante'];
   equipos$: Observable<Equipo[]>;
 
   constructor(private service: Service) {

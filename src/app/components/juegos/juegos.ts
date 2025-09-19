@@ -24,7 +24,6 @@ import { CommonModule } from '@angular/common';
 })
 
 export class Juegos  {
-  //displayedColumns: string[] = ['visitante', 'local', 'fecha', 'hora'];
   juegos$: Observable<Juego[]>;
 
   constructor(private service: Service) {

@@ -7,7 +7,31 @@
       <mat-divider></mat-divider>
     </div>
 
-    <div class="tabla-container">
+
+    <div class="table-container">
+      @for (j of equipos$ | async; track j.id) {
+        <div class="equipos-table">
+          <img [src]="j.logo" alt="{{ j.nombre }}" class="equipo-logo">
+          <div class="equipos">
+            <div class="equipo">
+              <span>{{ j.nombre }}</span>
+              <span>{{ j.division }}</span>
+            </div>
+            <div class="info">
+              <span class="puntaje">{{ j.puntaje }} puntos</span>
+              <span class="participante">{{ j.participante }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>    
+
+
+
+
+
+
+    <!-- <div class="tabla-container">
       <table mat-table [dataSource]="(equipos$ | async) ?? []" class="mat-elevation-z8 equipos-table">
 
         <ng-container matColumnDef="nombre">
@@ -40,7 +64,8 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
-    </div>
+    </div> -->
+  
   </mat-card>
 </div>
 
