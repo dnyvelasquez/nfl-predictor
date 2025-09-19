@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, map, switchMap, forkJoin } from 'rxjs';
 
 export interface Participante {
+  id: string;
   nombre: string;
 }
 
