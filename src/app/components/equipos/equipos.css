@@ -51,9 +51,10 @@
 .equipos {
   display: flex;
   flex-direction: row;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding-left: 8px;
+  padding-right: 8px;
 }
 
 .equipo{

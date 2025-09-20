@@ -39,6 +39,7 @@
 
 .tabla-puntajes-table {
   display: flex;
+  justify-content: space-between;
   width: 100%;
   background-color: white;
   overflow: hidden; 
