@@ -20,17 +20,24 @@
 
 .menu-desktop {
   display: flex;
+  justify-content: center;
+  font-size: small;
+  font-weight: bold;
 }
 
 .menu-mobile {
   display: none;
 }
 
-@media (max-width: 920px) {
+
+@media (max-width: 768px) {
   .menu-desktop {
     display: none;
   }
   .menu-mobile {
     display: inline-flex;
   }
+} 
+
+@media (max-width:910px) {
 } 

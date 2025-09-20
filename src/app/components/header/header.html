@@ -1,6 +1,6 @@
 <mat-toolbar color="primary" class="header-toolbar">
   <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
-  <span class="logo">NFL Predictor 🏈</span>
+  <span class="title">NFL Predictor 🏈</span>
 
   <!-- Espaciador -->
   <span class="spacer"></span>
@@ -13,13 +13,13 @@
     <button class="menu-button" mat-button routerLink="/puntajes">
       <mat-icon class="icon">leaderboard</mat-icon> Tabla de puntajes
     </button>
-    <button class="menu-button" mat-button routerLink="/equipos">
-      <mat-icon class="icon">groups</mat-icon> Equipos
-    </button>
     <button class="menu-button" mat-button routerLink="/juegos">
       <mat-icon class="icon">sports_football</mat-icon> Juegos de la semana
     </button>
-    <button class="menu-button" mat-button routerLink="/reglamento">
+    <button class="menu-button" class="menu-2" mat-button routerLink="/equipos">
+      <mat-icon class="icon">groups</mat-icon> Equipos
+    </button>
+    <button class="menu-button" class="menu-2" mat-button routerLink="/reglamento">
       <mat-icon class="icon">gavel</mat-icon> Reglamento
     </button>
   </nav>
@@ -31,15 +31,15 @@
 </mat-toolbar>
 
 <mat-menu #menu="matMenu">
-  <button mat-menu-item routerLink="/">
+  <button class="mobile-2"  mat-menu-item routerLink="/">
     <mat-icon>home</mat-icon>
     <span>Home</span>
   </button>
-  <button mat-menu-item routerLink="/puntajes">
+  <button class="mobile-2" mat-menu-item routerLink="/puntajes">
     <mat-icon>leaderboard</mat-icon>
     <span>Tabla de puntajes</span>
   </button>
-  <button mat-menu-item routerLink="/juegos">
+  <button class="mobile-2" mat-menu-item routerLink="/juegos">
     <mat-icon>sports_football</mat-icon>
     <span>Juegos de la semana</span>
   </button>
