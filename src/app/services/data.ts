@@ -5,6 +5,8 @@ import { Observable, map, switchMap, forkJoin } from 'rxjs';
 export interface Participante {
   id: string;
   nombre: string;
+  puntaje?: number;
+  equipos?: Equipo[];
 }
 
 export interface Equipo {
@@ -12,7 +14,7 @@ export interface Equipo {
   nombre: string;
   puntaje: number;
   division: string;
-  logo?: string;
+  logo: string;
   participante: string;
 }
 

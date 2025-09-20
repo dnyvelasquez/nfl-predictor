@@ -5,6 +5,7 @@ import { MatTableModule } from '@angular/material/table';
 import { AsyncPipe } from '@angular/common';
 import { Observable, map } from 'rxjs';
 import { Service, Equipo } from '../../services/data';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-equipos',
@@ -13,7 +14,8 @@ import { Service, Equipo } from '../../services/data';
     MatCardModule,
     MatDividerModule,
     MatTableModule,
-    AsyncPipe
+    AsyncPipe,
+    CommonModule
   ], 
   templateUrl: './equipos.html',
   styleUrls: ['./equipos.css']

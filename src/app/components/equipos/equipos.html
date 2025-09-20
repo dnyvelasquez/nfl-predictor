@@ -6,8 +6,6 @@
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
-
-
     <div class="table-container">
       @for (j of equipos$ | async; track j.id) {
         <div class="equipos-table">
@@ -15,7 +13,18 @@
           <div class="equipos">
             <div class="equipo">
               <span>{{ j.nombre }}</span>
-              <span>{{ j.division }}</span>
+
+                  <div
+                    [ngClass]="{
+                      'chip-afc': j.division.startsWith('AFC'),
+                      'chip-nfc': j.division.startsWith('NFC')
+                    }"
+                  >
+                    {{ j.division }}
+                  </div>
+              
+
+
             </div>
             <div class="info">
               <span class="puntaje">{{ j.puntaje }} puntos</span>

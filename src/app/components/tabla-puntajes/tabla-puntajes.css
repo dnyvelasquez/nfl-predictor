@@ -1,5 +1,6 @@
 .tabla-puntajes-container {
   padding-top: 80px;
+  padding-bottom: 20px;
   background-color: #003366;
   min-height: 100vh;
   display: flex;
@@ -30,33 +31,18 @@
   font-weight: bold;
 }
 
-.tabla-container {
+.table-container {
   overflow-x: auto;
+  border-radius: 12px;
+  color: black;
 }
 
 .tabla-puntajes-table {
+  display: flex;
   width: 100%;
   background-color: white;
-  border-radius: 12px;
   overflow: hidden; 
-}
-
-.tabla-puntajes-table table {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.tabla-puntajes-table th {
-  background-color: #003366;
-  color: white;
-  font-weight: bold;
-  text-align: center;
-}
-
-.tabla-puntajes-table td {
-  text-align: center;
-  padding: 8px;
-  color: #000 !important;
+  border-bottom: 1px solid #ddd;
 }
 
 .puntaje {
@@ -65,17 +51,12 @@
 }
 
 .participante {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: large;
   font-weight: bold;
-}
-
-.tabla-puntajes-table tr:hover {
-  background-color: #f2f2f2;
-}
-
-.mat-header-cell, .mat-cell {
-  padding: 12px;
-  text-align: center;
+  padding: 12px 8px 8px 8px;
 }
 
 .equipos-lista {
@@ -83,16 +64,12 @@
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
+  padding: 8px 8px;
 }
 
 .equipo-logo {
   width: 40px;
   height: 40px;
-}
-
-.equipo-division {
-  font-weight: 500;
-  color: #1565c0;
 }
 
 .equipo-puntaje {
@@ -105,6 +82,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-left: 8px;
+  padding-right: 8px;
   gap: 4px;
 }
 
@@ -115,19 +94,38 @@
   color: #333;
 }
 
-.division-chip  {
-  background-color: #1976d2 !important; 
-  color: white !important;             
-  font-weight: bold;
+.participante-item {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.puntaje-item {
+  padding-left: 8px;
+  padding-right: 8px;
+  color: #003366; 
 }
 
 .chip-afc {
-  background-color: #d32f2f !important; 
-  color: #fff !important;
-
+  background-color: #d32f2f; 
+  color: #fff;
+  font-size: 0.7em;
+  padding: 4px;
+  border-radius: 8px;
 }
 
 .chip-nfc {
-  background-color: #1976d2 !important; 
-  color: #fff !important;
+  background-color: #1976d2; 
+  color: #fff;
+  font-size: 0.7em;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .tabla-puntajes-table {
+    flex-direction: column;
+  }
+  .equipo-item {
+    padding: 0;
+  }
 }

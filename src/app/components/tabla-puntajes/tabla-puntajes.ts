@@ -24,7 +24,6 @@ import { CommonModule } from '@angular/common';
 })
 
 export class TablaPuntajes  {
-  displayedColumns: string[] = ['participante', 'puntaje', 'equipos'];
   participantes$: Observable<Participante[]>;
 
   constructor(private service: Service) {
