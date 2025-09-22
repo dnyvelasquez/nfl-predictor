@@ -19,25 +19,71 @@
 }
 
 .menu-desktop {
-  display: flex;
-  justify-content: center;
-  font-size: small;
-  font-weight: bold;
-}
-
-.menu-mobile {
   display: none;
 }
 
+.desktop-2 {
+  display: none;
+}
 
-@media (max-width: 768px) {
+.menu-mobile {
+  display: inline-flex;
+}
+
+.mobile-2 {
+  display: flex;
+}
+
+@media (min-width: 768px) {
   .menu-desktop {
+    display: flex;
+    justify-content: center;
+    font-size: small;
+    font-weight: bold;
+  }
+  .desktop-2 {
     display: none;
   }
   .menu-mobile {
     display: inline-flex;
   }
+  .mobile-2 {
+    display: none;
+  }
 } 
 
-@media (max-width:910px) {
+@media (min-width: 960px) {
+  .menu-desktop {
+    display: flex;
+    justify-content: center;
+    font-size: small;
+    font-weight: bold;
+  }
+  .desktop-2 {
+    display: inline-flex;
+  }
+  .menu-mobile {
+    display: none;
+  }
+  .menu-mobile-2 {
+    display: none;
+  }
 } 
+
+
+
+
+
+
+/*
+
+
+
+
+*/
+
+
+
+
+
+

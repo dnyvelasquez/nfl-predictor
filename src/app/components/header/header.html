@@ -16,10 +16,10 @@
     <button class="menu-button" mat-button routerLink="/juegos">
       <mat-icon class="icon">sports_football</mat-icon> Juegos de la semana
     </button>
-    <button class="menu-button" class="menu-2" mat-button routerLink="/equipos">
+    <button class="menu-button desktop-2" mat-button routerLink="/equipos">
       <mat-icon class="icon">groups</mat-icon> Equipos
     </button>
-    <button class="menu-button" class="menu-2" mat-button routerLink="/reglamento">
+    <button class="menu-button desktop-2" mat-button routerLink="/reglamento">
       <mat-icon class="icon">gavel</mat-icon> Reglamento
     </button>
   </nav>
@@ -28,10 +28,9 @@
   <button mat-icon-button [matMenuTriggerFor]="menu" class="menu-mobile">
     <mat-icon>menu</mat-icon>
   </button>
-</mat-toolbar>
 
 <mat-menu #menu="matMenu">
-  <button class="mobile-2"  mat-menu-item routerLink="/">
+  <button class="mobile-2" mat-menu-item routerLink="/">
     <mat-icon>home</mat-icon>
     <span>Home</span>
   </button>
@@ -52,3 +51,4 @@
     <span>Reglamento</span>
   </button>
 </mat-menu>
+
