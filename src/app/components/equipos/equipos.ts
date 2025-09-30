@@ -27,9 +27,7 @@ export class Equipos  {
 
   constructor(private service: Service) {
 
-    this.equipos$ = this.service.getEquipos().pipe(
-      map(equipos => equipos ?? [])
-    );
+    this.equipos$ = this.service.getEquipos(); 
 
   }
 

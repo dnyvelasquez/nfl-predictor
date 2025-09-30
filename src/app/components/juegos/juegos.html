@@ -13,11 +13,17 @@
           <div class="equipos">
             <div class="equipo-visitante">
               <img [src]="j.logoVisitante" alt="{{ j.visitante }}" class="equipo-logo">
-              <span>{{ j.visitante }}</span>
+              <div class="equipo">
+                <span>{{ j.visitante }}</span>
+                <span class="participante">{{ j.participanteVisitante }}</span>
+              </div>
             </div>
             <span class="vs">Vs</span>
             <div class="equipo-local">
-              <span>{{ j.local }}</span>
+              <div class="equipo">
+                <span>{{ j.local }}</span>
+                <span class="participante">{{ j.participanteLocal }}</span>
+              </div>
               <img [src]="j.logoLocal" alt="{{ j.local }}" class="equipo-logo">
             </div>
           </div>

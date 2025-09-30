@@ -7,24 +7,24 @@
       <mat-divider></mat-divider>
     </div>
     <div class="table-container">
-      @for (j of equipos$ | async; track j.id) {
+      @for (e of equipos$ | async; track e.id) {
         <div class="equipos-table">
-          <img [src]="j.logo" alt="{{ j.nombre }}" class="equipo-logo">
+          <img [src]="e.logo" alt="{{ e.nombre }}" class="equipo-logo">
           <div class="equipos">
             <div class="equipo">
-              <span>{{ j.nombre }}</span>
+              <span>{{ e.nombre }}</span>
               <div
                 [ngClass]="{
-                  'chip-afc': j.division.startsWith('AFC'),
-                  'chip-nfc': j.division.startsWith('NFC')
+                  'chip-afc': e.division.startsWith('AFC'),
+                  'chip-nfc': e.division.startsWith('NFC')
                 }"
               >
-                {{ j.division }}
+                {{ e.division }}
               </div>
             </div>
             <div class="info">
-              <span class="puntaje">{{ j.puntaje }} puntos</span>
-              <span class="participante">{{ j.participante }}</span>
+              <span class="puntaje">{{ e.puntaje }} puntos</span>
+              <span class="participante">{{ e.participante }}</span>
             </div>
           </div>
         </div>

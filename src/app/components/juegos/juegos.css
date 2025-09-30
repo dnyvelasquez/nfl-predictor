@@ -54,6 +54,16 @@
   gap: 12px;
 }
 
+.equipo {
+  display: flex;  
+  flex-direction: column;
+}
+
+.participante {
+  color: #555;
+  font-size: 0.7rem;
+}
+
 .equipo-visitante {
   display: flex;
   align-items: center;
