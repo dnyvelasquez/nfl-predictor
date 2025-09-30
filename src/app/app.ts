@@ -10,5 +10,5 @@ import { Header } from "./components/header/header";
   styleUrls: ['./app.css']
 })
 export class App {
-  protected readonly title = signal('NFL-Predictor');
+  protected readonly title = signal('nfl-predictor');
 }
