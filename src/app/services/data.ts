@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable, from, map, switchMap, forkJoin, tap } from 'rxjs';
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 export interface Participante {
@@ -49,7 +47,7 @@ export class Service {
 
   private supabase: SupabaseClient;
 
-  constructor(private http: HttpClient) {
+  constructor() {
 
     this.supabase = createClient(
       'https://pvbulapbudwrxukilivj.supabase.co',
