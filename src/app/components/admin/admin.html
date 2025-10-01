@@ -1,0 +1,27 @@
+<div class="admin-container">
+  <mat-card class="admin-card">
+    <div class="header">
+      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
+      <h1>NFL Predictor 2025-2026</h1>
+      <h1> 🏈</h1>
+    </div>
+    <mat-divider></mat-divider>
+
+    <h2 class="subtitle">Admin Module</h2>
+    <mat-divider></mat-divider>
+
+    <div class="button-container">
+
+        <button mat-menu-item routerLink="/puntajes">
+            <mat-icon>leaderboard</mat-icon>
+            <span>Puntajes</span>
+        </button>
+        <button mat-menu-item (click)="logout()" routerLink="/admin">
+            <mat-icon>logout</mat-icon>
+            <span>Logout</span>
+        </button>
+
+    </div>
+  </mat-card>
+</div>
+

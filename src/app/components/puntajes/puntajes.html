@@ -1,0 +1,38 @@
+<div class="equipos-container">
+  <mat-card class="equipos-card">
+    <div class="header">
+      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
+      <mat-card-title class="equipos-title">Puntajes</mat-card-title>
+      <h1> 🏈</h1>
+      <mat-divider></mat-divider>
+    </div>
+    <div class="table-container">
+      @for (e of equipos$ | async; track e.id) {
+        <div class="equipos-table">
+          <div class="equipos">
+            <div class="equipo">
+                <img [src]="e.logo" alt="{{ e.nombre }}" class="equipo-logo">
+                <span>{{ e.nombre }}</span>
+            </div>
+            <div class="info">
+                <span class="puntaje">Puntaje:</span>
+                <button mat-icon-button (click)="modificarPuntos(e, -5)">
+                    <mat-icon>remove</mat-icon>
+                </button>
+                <span class="puntaje">{{ e.puntaje }}</span>
+                <button mat-icon-button (click)="modificarPuntos(e, 5)">
+                    <mat-icon>add</mat-icon>
+                </button>
+                <button mat-icon-button (click)="guardarPuntos(e)">
+                    <mat-icon>update</mat-icon>
+                </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>      
+  </mat-card>
+</div>
+
+
+

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, map, switchMap, forkJoin, tap } from 'rxjs';
+import { Observable, from, map, switchMap, forkJoin, BehaviorSubject } from 'rxjs';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 export interface Participante {
@@ -46,6 +46,7 @@ export interface Juego {
 export class Service { 
 
   private supabase: SupabaseClient;
+  private loggedIn$ = new BehaviorSubject<boolean>(false);
 
   constructor() {
 
@@ -144,6 +145,46 @@ getJuegosPorSemana(semana: string): Observable<Juego[]> {
     )
   );
 }
+
+  actualizarPuntaje(id: string, nuevoPuntaje: number): Observable<any> {
+    return from(
+      this.supabase
+        .from('equipos')
+        .update({ puntaje: nuevoPuntaje })
+        .eq('id', id)
+    );
+  }  
+
+  login(nombre: string, contrasena: string): Observable<boolean> {
+    return from(
+      this.supabase
+        .from('usuarios')
+        .select('*')
+        .eq('nombre', nombre)
+        .eq('contrasena', contrasena) 
+        .single()
+    ).pipe(
+      map((res: any) => {
+        if (res.error || !res.data) {
+          return false;
+        }
+        return true;
+      })
+    );
+  }
+
+  logout(): void {
+    this.loggedIn$.next(false);
+    localStorage.removeItem('nombre');
+  }
+
+  isLoggedIn(): Observable<boolean> {
+    return this.loggedIn$.asObservable();
+  }
+
+  getUser(): Observable<any> {
+    return from(this.supabase.auth.getUser());
+  }
 
 }
 

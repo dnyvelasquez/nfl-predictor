@@ -1,0 +1,114 @@
+.equipos-container {
+  padding-top: 80px;
+  padding-bottom: 20px;
+  background-color: #003366;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.equipos-card {
+  max-width: 90%;
+  padding: 20px;
+  text-align: center;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.logo {
+  width: 50px;
+}
+
+.equipos-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+}
+
+.equipos-table {
+  display: flex;
+  flex-direction: row !important;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 8px;
+  border-bottom: 1px solid #ddd;
+  color: #000;
+  background-color: white;
+  overflow: hidden; 
+}
+
+.equipos {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.equipo{
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  justify-content: space-between;
+  padding: 0px 8px;
+  gap: 20px;
+}
+
+.equipo-logo {
+  width: 60px;
+  height: 60px;
+  padding: 0px 8px 0px 8px;
+}
+
+.info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+    padding-left: 12px;
+}
+
+.puntaje {
+  font-weight: bold;
+  color: #003366; 
+}
+
+button {
+  margin: 0 4px;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .equipos-table {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .equipos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .info {
+    margin-top: 6px;
+    align-items: center;
+  }
+}

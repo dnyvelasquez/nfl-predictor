@@ -52,7 +52,7 @@
   }
 } 
 
-@media (min-width: 960px) {
+@media (min-width: 1020px) {
   .menu-desktop {
     display: flex;
     justify-content: center;
