@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { FormsModule, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-nuevo-usuario',
   standalone: true,
   imports: [
     MatCardModule,
@@ -18,10 +18,10 @@ import { FormsModule, FormBuilder, FormGroup, Validators, ReactiveFormsModule } 
     FormsModule,
     ReactiveFormsModule
   ],
-  templateUrl: './login.html',
-  styleUrls: ['./login.css']
+  templateUrl: './nuevo-usuario.html',
+  styleUrls: ['./nuevo-usuario.css']
 })
-export class Login {
+export class NuevoUsuario {
   form: FormGroup;
 
   constructor(
@@ -38,13 +38,11 @@ export class Login {
   onSubmit(): void {
     if (this.form.valid) {
       const { nombre, contrasena } = this.form.value;
-
-      this.service.login(nombre!, contrasena!).subscribe((res: any) => {
-        if (res.success) {
-          alert('✅ Login exitoso');
-          this.router.navigate(['/admin']);
+      this.service.register(nombre!, contrasena!).subscribe(success => {
+        if (success) {
+          alert('✅ Usuario agregado exitosamente');
         } else {
-          alert(`❌ Error: ${res.error}`);
+          alert('❌ Usuario no agregado');
         }
       });
     }

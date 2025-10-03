@@ -11,16 +11,22 @@
     <mat-divider></mat-divider>
 
     <div class="button-container">
-
-        <button mat-menu-item routerLink="/puntajes">
-            <mat-icon>leaderboard</mat-icon>
-            <span>Puntajes</span>
-        </button>
-        <button mat-menu-item (click)="logout()" routerLink="/admin">
-            <mat-icon>logout</mat-icon>
-            <span>Logout</span>
-        </button>
-
+      <button mat-menu-item routerLink="/puntajes">
+        <mat-icon>leaderboard</mat-icon>
+        <span>Puntajes</span>
+      </button>
+      <button mat-menu-item routerLink="/nuevo-usuario">
+        <mat-icon>add-user</mat-icon>
+        <span>Nuevo Usuario</span>
+      </button>
+      <button mat-menu-item routerLink="/">
+        <mat-icon>delete-user</mat-icon>
+        <span>Borrar Usuario</span>
+      </button>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
     </div>
   </mat-card>
 </div>

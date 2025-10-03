@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, map, switchMap, forkJoin, BehaviorSubject } from 'rxjs';
+import { Observable, from, map, switchMap, forkJoin, BehaviorSubject, catchError } from 'rxjs';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { HttpClient } from '@angular/common/http';
+import bcrypt from 'bcryptjs';
 
 export interface Participante {
   id: string;
@@ -41,14 +43,16 @@ export interface Juego {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
+
 export class Service { 
 
   private supabase: SupabaseClient;
   private loggedIn$ = new BehaviorSubject<boolean>(false);
+  private FUNCTION_URL = 'https://pvbulapbudwrxukilivj.supabase.co/functions/v1/usuarios';
 
-  constructor() {
+  constructor(private http: HttpClient) {
 
     this.supabase = createClient(
       'https://pvbulapbudwrxukilivj.supabase.co',
@@ -155,23 +159,37 @@ getJuegosPorSemana(semana: string): Observable<Juego[]> {
     );
   }  
 
-  login(nombre: string, contrasena: string): Observable<boolean> {
-    return from(
-      this.supabase
-        .from('usuarios')
-        .select('*')
-        .eq('nombre', nombre)
-        .eq('contrasena', contrasena) 
-        .single()
-    ).pipe(
-      map((res: any) => {
-        if (res.error || !res.data) {
-          return false;
+  login(nombre: string, contrasena: string): Observable<any> {
+    return this.http.post<any>(this.FUNCTION_URL, { action: 'login', nombre, contrasena }).pipe(
+      map(res => {
+        if (res.ok) {
+          localStorage.setItem('nombre', res.user.nombre);
+          localStorage.setItem('userId', res.user.id);
+          return { success: true, user: res.user };
         }
-        return true;
-      })
+        return { success: false, error: res.error };
+      }),
+      catchError((err) => [{ success: false, error: err.message }])
     );
   }
+
+  // login(nombre: string, contrasena: string): Observable<boolean> {
+  //   return from(
+  //     this.supabase
+  //       .from('usuarios')
+  //       .select('*')
+  //       .eq('nombre', nombre)
+  //       .eq('contrasena', contrasena) 
+  //       .single()
+  //   ).pipe(
+  //     map((res: any) => {
+  //       if (res.error || !res.data) {
+  //         return false;
+  //       }
+  //       return true;
+  //     })
+  //   );
+  // }
 
   logout(): void {
     this.loggedIn$.next(false);
@@ -186,5 +204,26 @@ getJuegosPorSemana(semana: string): Observable<Juego[]> {
     return from(this.supabase.auth.getUser());
   }
 
+ register(nombre: string, contrasena: string): Observable<boolean> {
+    return from(
+      (async () => {
+        const hashed = await bcrypt.hash(contrasena, 10);
+        const { error } = await this.supabase
+          .from('usuarios')
+          .insert([{ nombre, contrasena: hashed }]);
+        if (error) {
+          console.error('❌ Error insertando usuario:', error.message);
+          return false;
+        }
+        return true;
+      })()
+    ).pipe(
+      map(result => result),
+      catchError(err => {
+        console.error('❌ Error en register:', err);
+        return [false];
+      })
+    );
+  }
 }
 

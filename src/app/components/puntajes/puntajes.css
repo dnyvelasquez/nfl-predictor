@@ -1,4 +1,4 @@
-.equipos-container {
+.puntajes-container {
   padding-top: 80px;
   padding-bottom: 20px;
   background-color: #003366;
@@ -8,7 +8,7 @@
   align-items: flex-start;
 }
 
-.equipos-card {
+.puntajes-card {
   max-width: 90%;
   padding: 20px;
   text-align: center;
@@ -16,17 +16,17 @@
 
 .header {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 15px;
-  margin-bottom: 15px;
 }
 
 .logo {
   width: 50px;
 }
 
-.equipos-title {
+.puntajes-title {
   font-size: 24px;
   font-weight: bold;
 }
@@ -36,7 +36,7 @@
   border-radius: 12px;
 }
 
-.equipos-table {
+.puntajes-table {
   display: flex;
   flex-direction: row !important;
   justify-content: center;
@@ -79,7 +79,7 @@
   justify-content: space-between;
   gap: 12px;
   font-size: 0.9rem;
-    padding-left: 12px;
+  padding-left: 12px;
 }
 
 .puntaje {
@@ -87,9 +87,28 @@
   color: #003366; 
 }
 
-button {
+.controll {
+  color: black;
   margin: 0 4px;
   border-radius: 12px;
+}
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.left {
+  flex: 1 1 150px !important;
+  max-width: 200px !important;
+}
+
+.right {
+  flex: 1 1 150px !important;
+  max-width: 200px !important;
+  justify-content: end;
 }
 
 @media (max-width: 768px) {

@@ -25,11 +25,6 @@
               "src/custom-theme.scss",
               "src/styles.css"
             ],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            },
             "baseHref": "/",
             "outputPath": "dist/nfl-predictor"
           },
@@ -85,6 +80,14 @@
             "styles": [
               "src/styles.css"
             ]
+          }
+        },
+        "deploy": {
+          "builder": "angular-cli-ghpages:deploy",
+          "options": {
+            "baseHref": "/nfl-predictor/", 
+            "name": "dnyvelasquez",
+            "email": "dny.velasquez@gmail.com"
           }
         }
       }
