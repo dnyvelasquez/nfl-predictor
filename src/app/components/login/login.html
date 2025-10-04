@@ -8,14 +8,14 @@
     <mat-divider></mat-divider>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <mat-form-field appearance="fill" class="full-width">
-        <mat-label>Usuario</mat-label>
-        <input matInput formControlName="nombre">
+      <mat-form-field appearance="fill" class="box">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email">
       </mat-form-field>
 
-      <mat-form-field appearance="fill" class="full-width">
-        <mat-label>Contraseña</mat-label>
-        <input matInput type="password" formControlName="contrasena">
+      <mat-form-field appearance="fill" class="box">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" formControlName="password">
       </mat-form-field>
 
       <div class="buttons">

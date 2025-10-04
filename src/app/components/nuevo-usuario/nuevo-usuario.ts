@@ -36,16 +36,6 @@ export class NuevoUsuario {
   }
 
   onSubmit(): void {
-    if (this.form.valid) {
-      const { nombre, contrasena } = this.form.value;
-      this.service.register(nombre!, contrasena!).subscribe(success => {
-        if (success) {
-          alert('✅ Usuario agregado exitosamente');
-        } else {
-          alert('❌ Usuario no agregado');
-        }
-      });
-    }
   }
 
 }

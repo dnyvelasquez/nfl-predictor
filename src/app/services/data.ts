@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, map, switchMap, forkJoin, BehaviorSubject, catchError } from 'rxjs';
+import { Observable, from, map, of, switchMap, forkJoin, BehaviorSubject, catchError } from 'rxjs';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { HttpClient } from '@angular/common/http';
-import bcrypt from 'bcryptjs';
+import { environment } from '../../environments/environment';
 
 export interface Participante {
   id: string;
@@ -45,22 +45,19 @@ export interface Juego {
 @Injectable({
   providedIn: 'root',
 })
-
 export class Service { 
 
   private supabase: SupabaseClient;
   private loggedIn$ = new BehaviorSubject<boolean>(false);
-  private FUNCTION_URL = 'https://pvbulapbudwrxukilivj.supabase.co/functions/v1/usuarios';
+  private FUNCTION_URL = environment.functionAuthUrl;
 
   constructor(private http: HttpClient) {
-
     this.supabase = createClient(
-      'https://pvbulapbudwrxukilivj.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2YnVsYXBidWR3cnh1a2lsaXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1ODU4MzcsImV4cCI6MjA3NDE2MTgzN30.ubiomG_a0XBqL8mnLu9ujyuXUSa1Zr7o_GBlMizmq0k'
+      environment.supabaseUrl,
+      environment.supabaseAnonKey
     );
-
   }
-
+  
   getParticipantes(): Observable<Participante[]> {
     return from(
       this.supabase.from('participantes').select('*')
@@ -69,7 +66,7 @@ export class Service {
         if (res.error) {
           return[];
         }
-        return res.data as Participante[]
+        return res.data as Participante[];
       })
     );
   }
@@ -82,7 +79,7 @@ export class Service {
         if (res.error) {
           return[];
         }
-        return res.data as Equipo[]
+        return res.data as Equipo[];
       })
     );
   }
@@ -119,36 +116,36 @@ export class Service {
     );
   }
 
-getJuegosPorSemana(semana: string): Observable<Juego[]> {
-  return forkJoin({
-    juegos: from(
-      this.supabase
-        .from('juegos')
-        .select('*')
-        .eq('semana', semana)
-    ).pipe(map((res: any) => res.data || [])),
-    equipos: from(
-      this.supabase
-        .from('equipos')
-        .select('*')
-    ).pipe(map((res: any) => res.data || []))
-  }).pipe(
-    map(({ juegos, equipos }) =>
-      juegos.map((juego: any) => {
-        const visitante = equipos.find((e: any) => e.nombre === juego.visitante);
-        const local = equipos.find((e: any) => e.nombre === juego.local);
+  getJuegosPorSemana(semana: string): Observable<Juego[]> {
+    return forkJoin({
+      juegos: from(
+        this.supabase
+          .from('juegos')
+          .select('*')
+          .eq('semana', semana)
+      ).pipe(map((res: any) => res.data || [])),
+      equipos: from(
+        this.supabase
+          .from('equipos')
+          .select('*')
+      ).pipe(map((res: any) => res.data || []))
+    }).pipe(
+      map(({ juegos, equipos }) =>
+        juegos.map((juego: any) => {
+          const visitante = equipos.find((e: any) => e.nombre === juego.visitante);
+          const local = equipos.find((e: any) => e.nombre === juego.local);
 
-        return {
-          ...juego,
-          logoVisitante: visitante?.logo || '',
-          logoLocal: local?.logo || '',
-          participanteVisitante: visitante?.participante || '',
-          participanteLocal: local?.participante || ''
-        };
-      })
-    )
-  );
-}
+          return {
+            ...juego,
+            logoVisitante: visitante?.logo || '',
+            logoLocal: local?.logo || '',
+            participanteVisitante: visitante?.participante || '',
+            participanteLocal: local?.participante || ''
+          };
+        })
+      )
+    );
+  }
 
   actualizarPuntaje(id: string, nuevoPuntaje: number): Observable<any> {
     return from(
@@ -159,71 +156,52 @@ getJuegosPorSemana(semana: string): Observable<Juego[]> {
     );
   }  
 
-  login(nombre: string, contrasena: string): Observable<any> {
-    return this.http.post<any>(this.FUNCTION_URL, { action: 'login', nombre, contrasena }).pipe(
-      map(res => {
-        if (res.ok) {
-          localStorage.setItem('nombre', res.user.nombre);
-          localStorage.setItem('userId', res.user.id);
-          return { success: true, user: res.user };
+  validarUsuario(): Observable<any> {
+    return from(this.supabase.auth.getSession()).pipe(
+      switchMap((sessionRes) => {
+        const token = sessionRes.data.session?.access_token;
+        if (!token) {
+          return of({ error: 'No hay sesión activa' });
         }
-        return { success: false, error: res.error };
+        return this.http.get(this.FUNCTION_URL, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
       }),
-      catchError((err) => [{ success: false, error: err.message }])
+      catchError(err => of({ error: err.message }))
     );
   }
 
-  // login(nombre: string, contrasena: string): Observable<boolean> {
-  //   return from(
-  //     this.supabase
-  //       .from('usuarios')
-  //       .select('*')
-  //       .eq('nombre', nombre)
-  //       .eq('contrasena', contrasena) 
-  //       .single()
-  //   ).pipe(
-  //     map((res: any) => {
-  //       if (res.error || !res.data) {
-  //         return false;
-  //       }
-  //       return true;
-  //     })
-  //   );
-  // }
 
-  logout(): void {
-    this.loggedIn$.next(false);
-    localStorage.removeItem('nombre');
-  }
 
-  isLoggedIn(): Observable<boolean> {
-    return this.loggedIn$.asObservable();
-  }
 
-  getUser(): Observable<any> {
-    return from(this.supabase.auth.getUser());
-  }
 
- register(nombre: string, contrasena: string): Observable<boolean> {
+  login(email: string, password: string): Observable<any> {
     return from(
-      (async () => {
-        const hashed = await bcrypt.hash(contrasena, 10);
-        const { error } = await this.supabase
-          .from('usuarios')
-          .insert([{ nombre, contrasena: hashed }]);
-        if (error) {
-          console.error('❌ Error insertando usuario:', error.message);
-          return false;
-        }
-        return true;
-      })()
+      this.supabase.auth.signInWithPassword({ email, password })
     ).pipe(
-      map(result => result),
-      catchError(err => {
-        console.error('❌ Error en register:', err);
-        return [false];
+      map(({ data, error }) => {
+        if (error) {
+          return { error: error.message };
+        }
+        return { data: data.user };
       })
     );
   }
-}
 
+  logout(): Observable<any> {
+    return from(this.supabase.auth.signOut()).pipe(
+      map(({ error }) => {
+        if (error) {
+          return { error: error.message };
+        }
+        return { data: 'Sesión cerrada correctamente' };
+      })
+    );
+  }
+
+
+
+
+}
