@@ -8,6 +8,7 @@ import { Login } from './components/login/login';
 import { Admin } from './components/admin/admin';
 import { Puntajes } from './components/puntajes/puntajes';
 import { NuevoUsuario } from './components/nuevo-usuario/nuevo-usuario';
+import { IngresarJuego } from './components/ingresar-juego/ingresar-juego';
 import { authGuard } from '../app/auth-guard';
 
 export const routes: Routes = [
@@ -19,5 +20,6 @@ export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'admin', component: Admin/*, canActivate: [authGuard]*/ },
   { path: 'puntajes', component: Puntajes/*, canActivate: [authGuard]*/ },
-  { path: 'nuevo-usuario', component: NuevoUsuario/*, canActivate: [authGuard]*/ }
+  { path: 'nuevo-usuario', component: NuevoUsuario/*, canActivate: [authGuard]*/ },
+  { path: 'ingresar-juego', component: IngresarJuego/*, canActivate: [authGuard]*/ }
 ];

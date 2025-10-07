@@ -1,0 +1,96 @@
+<div class="ingresar-juego-container">
+  <mat-card class="ingresar-juego-card">
+    <div class="header">
+      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
+      <mat-card-title class="ingresar-juego-title">Ingresar Juego</mat-card-title>
+      <h1> 🏈</h1>
+      <mat-divider></mat-divider>
+    </div>
+
+    <div class="button-container">
+      <button class="left" mat-menu-item routerLink="/admin">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Volver</span>
+      </button>
+      <button class="right" mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
+    </div>
+      
+    <div class="table-container">
+
+
+
+        <form [formGroup]="form" (ngSubmit)="guardar()" novalidate class="pg-form">
+            <mat-form-field appearance="fill">
+            <mat-label>Equipo visitante</mat-label>
+            <mat-select formControlName="visitante">
+                @for (e of equipos; track e.id) {
+                <mat-option [value]="e.nombre">{{ e.nombre }}</mat-option>
+                }
+            </mat-select>
+            @if (f.visitante.touched && f.visitante.hasError('required')) {
+                <mat-error>Selecciona el equipo visitante</mat-error>
+            }
+            </mat-form-field>
+
+            <mat-form-field appearance="fill">
+            <mat-label>Equipo local</mat-label>
+            <mat-select formControlName="local">
+                @for (e of equipos; track e.id) {
+                <mat-option [value]="e.nombre">{{ e.nombre }}</mat-option>
+                }
+            </mat-select>
+            @if (f.local.touched && f.local.hasError('required')) {
+                <mat-error>Selecciona el equipo local</mat-error>
+            }
+            @if (form.hasError('mismosEquipos')) {
+                <mat-error>Visitante y Local no pueden ser el mismo equipo</mat-error>
+            }
+            </mat-form-field>
+
+            <mat-form-field appearance="fill">
+            <mat-label>Fecha (AAAA/MM/DD)</mat-label>
+            <input
+                matInput
+                [matDatepicker]="picker"
+                formControlName="fecha"
+                placeholder="2025/10/12"
+                (dateChange)="onFechaPicked($event)" 
+                (dateInput)="onFechaPicked($event)" 
+                (input)="onFechaTyped($event)"
+                autocomplete="off" />
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker startView="multi-year"></mat-datepicker>
+
+            @if (f.fecha.touched && f.fecha.hasError('required')) {
+                <mat-error>La fecha es requerida</mat-error>
+            }
+            </mat-form-field>
+
+            <mat-form-field appearance="fill">
+            <mat-label>Hora (HH:mm 24h)</mat-label>
+            <input matInput placeholder="20:15" formControlName="hora" />
+            @if (f.hora.touched && f.hora.hasError('required')) { <mat-error>La hora es requerida</mat-error> }
+            @if (f.hora.touched && f.hora.hasError('pattern')) { <mat-error>Formato válido: 00:00 a 23:59</mat-error> }
+            </mat-form-field>
+
+            <div class="pg-actions">
+            <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">
+                {{ loading ? 'Guardando…' : 'Guardar' }}
+            </button>
+            </div>
+
+            @if (errorMsg) {
+            <div class="error">{{ errorMsg }}</div>
+            }
+        </form>
+
+
+    </div>      
+  </mat-card>
+</div>
+
+
+

@@ -25,3 +25,22 @@
 .logo {
   width: 50px;
 }
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.left {
+  flex: 1 1 150px !important;
+  max-width: 200px !important;
+}
+
+.right {
+  flex: 1 1 150px !important;
+  max-width: 200px !important;
+  justify-content: end;
+}
+

@@ -82,6 +82,16 @@
   padding-left: 12px;
 }
 
+.info-equipo {
+  display: flex;
+  flex-direction: column;
+}
+
+.participante {
+  color: #555;
+  font-size: 0.7rem;
+}
+
 .puntaje {
   font-weight: bold;
   color: #003366; 

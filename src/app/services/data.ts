@@ -143,10 +143,6 @@ export class Service {
     );
   }
 
-
-
-
-
   login(email: string, password: string): Observable<any> {
     return from(
       this.supabase.auth.signInWithPassword({ email, password })
@@ -170,10 +166,6 @@ export class Service {
       })
     );
   }
-
-
-
-
 
 private hoyYYYYMMDD(): string {
   const d = new Date();
@@ -271,7 +263,65 @@ getJuegosSemanaActual(): Observable<Juego[]> {
   );
 }
 
+getNextJuegoId() {
+  return from(
+    this.supabase
+      .from('juegos')
+      .select('id')
+      .order('id', { ascending: false })
+      .limit(1)
+  ).pipe(
+    map(({ data, error }: any) => {
+      if (error) throw error;
+      const last = data?.[0]?.id ?? 0;
+      return (Number(last) || 0) + 1;
+    })
+  );
+}
 
+getSemanaIdPorFecha(fecha: string) {
+  return from(
+    this.supabase
+      .from('semana')
+      .select('id,inicio,fin')
+      .lte('inicio', fecha)
+      .gte('fin', fecha)
+      .limit(1)
+  ).pipe(
+    map(({ data, error }: any) => {
+      if (error) throw error;
+      return data?.[0]?.id ?? null;
+    })
+  );
+}
 
+crearJuego(input: { visitante: string; local: string; fecha: string; hora: string }) {
+  return forkJoin({
+    nextId: this.getNextJuegoId(),
+    semanaId: this.getSemanaIdPorFecha(input.fecha),
+  }).pipe(
+    switchMap(({ nextId, semanaId }) =>
+      from(
+        this.supabase
+          .from('juegos')
+          .insert([
+            {
+              id: nextId,
+              semana: semanaId, 
+              visitante: input.visitante,
+              local: input.local,
+              fecha: input.fecha,
+              hora: input.hora,
+            },
+          ])
+          .select()
+      )
+    ),
+    map(({ data, error }: any) => {
+      if (error) throw error;
+      return data?.[0];
+    })
+  );
+}
 
 }

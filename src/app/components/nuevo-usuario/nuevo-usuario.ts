@@ -5,6 +5,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatButtonModule } from '@angular/material/button';
 import { FormsModule, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
@@ -16,7 +19,10 @@ import { FormsModule, FormBuilder, FormGroup, Validators, ReactiveFormsModule } 
     MatFormFieldModule,
     MatInputModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatIconModule,
+    MatMenuModule,
+    MatButtonModule
   ],
   templateUrl: './nuevo-usuario.html',
   styleUrls: ['./nuevo-usuario.css']
@@ -37,5 +43,10 @@ export class NuevoUsuario {
 
   onSubmit(): void {
   }
+
+  logout(): void {
+    this.service.logout();
+    this.router.navigate(['/login']);
+  }  
 
 }
