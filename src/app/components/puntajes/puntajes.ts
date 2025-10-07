@@ -45,8 +45,8 @@ export class Puntajes {
   guardarPuntos(equipo: Equipo) {
     this.service.actualizarPuntaje(equipo.id, equipo.puntaje)
       .subscribe({
-        next: () => console.log(`Puntaje actualizado para ${equipo.nombre}`),
-        error: (err) => console.error('Error al actualizar puntaje:', err)
+        next: () => alert(`Puntaje actualizado para ${equipo.nombre}`),
+        error: () => alert('Error al actualizar puntaje:')
       });
   }
   

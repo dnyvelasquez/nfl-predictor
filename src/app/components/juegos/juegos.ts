@@ -28,7 +28,7 @@ export class Juegos  {
 
   constructor(private service: Service) {
 
-    this.juegos$ = this.service.getJuegosPorSemana("actual");
+    this.juegos$ = this.service.getJuegosSemanaActual();
     
   }
 

@@ -36,6 +36,7 @@ export interface Juego {
   local: string;
   fecha: string;
   hora: string;
+  actual: boolean;
   logoVisitante?: string;
   logoLocal?: string;
   participanteVisitante? : string;
@@ -116,37 +117,6 @@ export class Service {
     );
   }
 
-  getJuegosPorSemana(semana: string): Observable<Juego[]> {
-    return forkJoin({
-      juegos: from(
-        this.supabase
-          .from('juegos')
-          .select('*')
-          .eq('semana', semana)
-      ).pipe(map((res: any) => res.data || [])),
-      equipos: from(
-        this.supabase
-          .from('equipos')
-          .select('*')
-      ).pipe(map((res: any) => res.data || []))
-    }).pipe(
-      map(({ juegos, equipos }) =>
-        juegos.map((juego: any) => {
-          const visitante = equipos.find((e: any) => e.nombre === juego.visitante);
-          const local = equipos.find((e: any) => e.nombre === juego.local);
-
-          return {
-            ...juego,
-            logoVisitante: visitante?.logo || '',
-            logoLocal: local?.logo || '',
-            participanteVisitante: visitante?.participante || '',
-            participanteLocal: local?.participante || ''
-          };
-        })
-      )
-    );
-  }
-
   actualizarPuntaje(id: string, nuevoPuntaje: number): Observable<any> {
     return from(
       this.supabase
@@ -200,6 +170,106 @@ export class Service {
       })
     );
   }
+
+
+
+
+
+private hoyYYYYMMDD(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}/${m}/${day}`;
+}
+
+private toTs(fecha?: string, hora?: string): number {
+  if (!fecha) return Number.MAX_SAFE_INTEGER;
+  const [Y, M, D] = fecha.replace(/-/g, '/').split('/').map(n => parseInt(n, 10));
+  let h = 0, m = 0;
+  if (hora) {
+    const s = hora.trim().toUpperCase();
+    const m1 = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/);
+    if (m1) {
+      h = parseInt(m1[1], 10);
+      m = parseInt(m1[2], 10);
+      const ap = m1[3];
+      if (ap === 'PM' && h < 12) h += 12;
+      if (ap === 'AM' && h === 12) h = 0;
+    } else {
+      const [hh, mm] = s.split(':');
+      h = parseInt(hh || '0', 10);
+      m = parseInt(mm || '0', 10);
+    }
+  }
+  return new Date(Y, (M || 1) - 1, D || 1, h, m, 0, 0).getTime();
+}
+
+getJuegosSemanaActual(): Observable<Juego[]> {
+  const hoy = this.hoyYYYYMMDD();
+
+  const semanaId$ = from(
+    this.supabase
+      .from('semana')
+      .select('id,inicio,fin')
+      .lte('inicio', hoy)
+      .gte('fin', hoy)
+      .limit(1)
+  ).pipe(
+    map(({ data, error }: any) => {
+      if (error) throw error;
+      return data?.[0]?.id ?? null;
+    }),
+    switchMap(id => {
+      if (id !== null) return of(id);
+      return from(
+        this.supabase
+          .from('semana')
+          .select('id,inicio')
+          .lte('inicio', hoy)
+          .order('inicio', { ascending: false })
+          .limit(1)
+      ).pipe(map(({ data }: any) => data?.[0]?.id ?? null));
+    })
+  );
+
+  return semanaId$.pipe(
+    switchMap((semId) => {
+      if (semId === null) return of({ juegos: [], equipos: [] });
+
+      return forkJoin({
+        juegos: from(
+          this.supabase
+            .from('juegos')
+            .select('*')
+            .eq('semana', semId)
+            .order('fecha', { ascending: true })
+            .order('hora', { ascending: true })
+        ).pipe(map((res: any) => res.data || [])),
+        equipos: from(
+          this.supabase.from('equipos').select('*')
+        ).pipe(map((res: any) => res.data || [])),
+      });
+    }),
+    map(({ juegos, equipos }: any) => {
+      const enriquecidos = (juegos as any[]).map((juego) => {
+        const visitante = (equipos as any[]).find(e => e.nombre === juego.visitante);
+        const local = (equipos as any[]).find(e => e.nombre === juego.local);
+        return {
+          ...juego,
+          logoVisitante: visitante?.logo || '',
+          logoLocal: local?.logo || '',
+          participanteVisitante: visitante?.participante || '',
+          participanteLocal: local?.participante || '',
+        } as Juego;
+      });
+
+      return enriquecidos.sort(
+        (a, b) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora)
+      );
+    })
+  );
+}
 
 
 

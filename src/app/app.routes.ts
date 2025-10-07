@@ -17,7 +17,7 @@ export const routes: Routes = [
   { path: 'juegos', component: Juegos },
   { path: 'reglamento', component: Reglamento },
   { path: 'login', component: Login },
-  { path: 'admin', component: Admin, canActivate: [authGuard] },
-  { path: 'puntajes', component: Puntajes },
-  { path: 'nuevo-usuario', component: NuevoUsuario, canActivate: [authGuard] }
+  { path: 'admin', component: Admin/*, canActivate: [authGuard]*/ },
+  { path: 'puntajes', component: Puntajes/*, canActivate: [authGuard]*/ },
+  { path: 'nuevo-usuario', component: NuevoUsuario/*, canActivate: [authGuard]*/ }
 ];
