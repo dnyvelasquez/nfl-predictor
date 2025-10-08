@@ -4,6 +4,14 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 
+
+//Descarte login prod
+console.log('[ENV]', environment.production ? 'prod' : 'dev',
+  environment.supabaseUrl,
+  environment.supabaseAnonKey?.slice(0, 8));
+//
+
+
 export interface Participante {
   id: string;
   nombre: string;
