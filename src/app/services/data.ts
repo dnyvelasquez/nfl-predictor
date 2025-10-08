@@ -143,6 +143,16 @@ export class Service {
     );
   }
 
+  getSession$() {
+    return from(this.supabase.auth.getSession()).pipe(
+      map(({ data }) => data.session ?? null)
+    );
+  }
+
+  isAuthenticated$() {
+    return this.getSession$().pipe(map((s) => !!s));
+  }
+
   login(email: string, password: string): Observable<any> {
     return from(
       this.supabase.auth.signInWithPassword({ email, password })

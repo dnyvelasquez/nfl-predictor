@@ -3,10 +3,9 @@ import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { Service } from './services/data';
 
-export const authGuard: CanActivateFn = async (_route, state): Promise<boolean | UrlTree> => {
+export const guestGuard: CanActivateFn = async (): Promise<boolean | UrlTree> => {
   const router = inject(Router);
   const svc = inject(Service);
-
   const isAuth = await firstValueFrom(svc.isAuthenticated$());
-  return isAuth ? true : router.createUrlTree(['/login'], { queryParams: { redirect: state.url } });
+  return isAuth ? router.createUrlTree(['/admin']) : true;
 };
