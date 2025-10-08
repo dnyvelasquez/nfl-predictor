@@ -1,16 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, map, of, switchMap, forkJoin, BehaviorSubject, catchError } from 'rxjs';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Observable, from, map, of, switchMap, forkJoin, /*BehaviorSubject,*/ catchError } from 'rxjs';
+import { /*createClient,*/ SupabaseClient } from '@supabase/supabase-js';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-
-
-//Descarte login prod
-console.log('[ENV]', environment.production ? 'prod' : 'dev',
-  environment.supabaseUrl,
-  environment.supabaseAnonKey?.slice(0, 8));
-//
-
+import { supabase } from '../core/supabase.client';
 
 export interface Participante {
   id: string;
@@ -57,14 +50,15 @@ export interface Juego {
 export class Service { 
 
   private supabase: SupabaseClient;
-  private loggedIn$ = new BehaviorSubject<boolean>(false);
   private FUNCTION_URL = environment.functionAuthUrl;
 
   constructor(private http: HttpClient) {
-    this.supabase = createClient(
-      environment.supabaseUrl,
-      environment.supabaseAnonKey
-    );
+  this.supabase = supabase;
+
+    // this.supabase = createClient(
+    //   environment.supabaseUrl,
+    //   environment.supabaseAnonKey
+    // );
   }
   
   getParticipantes(): Observable<Participante[]> {

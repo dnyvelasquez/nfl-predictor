@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
+import { supabase } from '../../core/supabase.client';
 
 @Component({
   selector: 'app-login',
@@ -43,28 +44,31 @@ export class Login {
     });
   }
 
-onSubmit(): void {
-  if (this.form.invalid || this.loading) {
-    this.form.markAllAsTouched();
-    return;
-  }
-  this.loading = true;
-  this.errorMsg = null;
+  onSubmit(): void {
+    if (this.form.invalid || this.loading) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.loading = true;
+    this.errorMsg = null;
 
-  const { email, password } = this.form.value;
+    const { email, password } = this.form.value;
 
-  this.service.login(email, password).pipe(finalize(() => this.loading = false))
-    .subscribe({
-      next: (res) => {
-        const user = res?.data ?? res;
+    this.service.login(email, password).subscribe({
+      next: async (res) => {
+        const user = res?.data ?? null;
         if (!user) { this.errorMsg = 'Credenciales incorrectas'; return; }
+
+        const { data } = await supabase.auth.getSession();
+        console.log('[after login] session?', !!data.session);
 
         const redirect = this.route.snapshot.queryParamMap.get('redirect') || '/admin';
         this.router.navigateByUrl(redirect, { replaceUrl: true });
       },
       error: () => this.errorMsg = 'Correo o contraseña incorrectos'
     });
-}
+
+  }
 
 
 
