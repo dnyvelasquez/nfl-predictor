@@ -7,6 +7,18 @@
       <mat-divider></mat-divider>
     </div>
 
+    <div class="button-container">
+      <button class="left" mat-menu-item routerLink="/admin">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Volver</span>
+      </button>
+      <button class="right" mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
+    </div>
+
+
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
         <mat-form-field appearance="fill" style="flex:1">
         <mat-label>Buscar (email)</mat-label>

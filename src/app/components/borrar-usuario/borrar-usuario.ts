@@ -6,7 +6,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { Service } from '../../services/data';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-borrar-usuario',
@@ -18,14 +20,20 @@ import { Service } from '../../services/data';
     MatFormFieldModule, 
     MatInputModule,
     MatDividerModule,
-    MatIconModule
+    MatIconModule,
+    MatMenuModule,
+    RouterModule
   ],
   templateUrl: './borrar-usuario.html',
   styleUrls: ['./borrar-usuario.css']
 })
 export class BorrarUsuario implements OnInit {
+
   private svc = inject(Service);
   private fb = inject(FormBuilder);
+
+  constructor(private service: Service, private router: Router) {}
+
 
   loading = false;
   errorMsg: string | null = null;
@@ -84,4 +92,14 @@ export class BorrarUsuario implements OnInit {
       complete: () => this.loading = false
     });
   }
+
+  
+  logout(): void {
+    this.service.logout();
+    this.router.navigate(['/login']);
+  }  
+
+
+
+
 }
