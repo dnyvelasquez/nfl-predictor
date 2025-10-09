@@ -14,6 +14,7 @@ import { authGuard } from '../app/auth-guard';
 import { guestGuard } from './guest-guard';
 
 export const routes: Routes = [
+  
   { path: '', component: Home }, 
   { path: 'tabla-puntajes', component: TablaPuntajes },
   { path: 'equipos', component: Equipos },

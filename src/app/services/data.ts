@@ -351,4 +351,34 @@ getJuegosSemanaActual(): Observable<Juego[]> {
     );
   }
 
+  listUsers(page = 1, perPage = 20, q = '') {
+    return from(this.supabase.auth.getSession()).pipe(
+      switchMap(({ data }) => {
+        const token = data.session?.access_token;
+        if (!token) return of({ error: 'No autenticado' });
+        const url = `${environment.functionListUsersUrl}?page=${page}&perPage=${perPage}&q=${encodeURIComponent(q)}`;
+        return this.http.get(url, { headers: { Authorization: `Bearer ${token}` } });
+      }),
+      catchError(err => of({ error: err?.message || 'Error listando usuarios' }))
+    );
+  }
+
+  deleteUser(userId: string) {
+    return from(this.supabase.auth.getSession()).pipe(
+      switchMap(({ data }) => {
+        const token = data.session?.access_token;
+        if (!token) return of({ error: 'No autenticado' });
+        return this.http.post(
+          environment.functionDeleteUserUrl,
+          { userId },
+          { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+        );
+      }),
+      catchError(err => of({ error: err?.message || 'Error eliminando usuario' }))
+    );
+  }
+
+
+
+
 }

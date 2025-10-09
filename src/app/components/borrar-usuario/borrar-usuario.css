@@ -1,0 +1,67 @@
+.borrar-container {
+  padding-top: 50px;
+  padding-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #0b2d5c; 
+}
+
+.borrar-card {
+  margin-top: 10px;
+  padding: 20px;
+  text-align: center;
+  max-width: 90%;
+}
+
+.borrar-table {
+    width:100%; 
+    border-collapse: collapse;
+}
+
+.borrar-table th {
+    text-align:center;
+    padding:8px;
+}
+
+.borrar-table td {
+    padding:8px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.logo {
+  width: 50px;
+}
+
+.box {
+  width: 280px;
+}
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.left {
+  flex: 1 1 150px !important;
+  max-width: 200px !important;
+}
+
+.right {
+  flex: 1 1 150px !important;
+  max-width: 200px !important;
+  justify-content: end;
+}
+
+button mat-icon {
+    padding-left: 12px;
+}

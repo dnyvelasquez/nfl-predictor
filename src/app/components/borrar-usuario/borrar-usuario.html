@@ -1,1 +1,62 @@
-<p>borrar-usuario works!</p>
+<div class="borrar-container">
+  <mat-card class="borrar-card">
+    <div class="header">
+      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
+      <h1>Borrar Usuario</h1>
+      <h1> 🏈</h1>
+      <mat-divider></mat-divider>
+    </div>
+
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+        <mat-form-field appearance="fill" style="flex:1">
+        <mat-label>Buscar (email)</mat-label>
+        <input matInput [formControl]="search" (keyup.enter)="doSearch()" />
+        </mat-form-field>
+        <button mat-raised-button color="primary" (click)="doSearch()">Buscar</button>
+    </div>
+
+    @if (loading) {
+        <p>Cargando…</p>
+    }
+
+    @if (errorMsg) {
+        <div class="error">{{ errorMsg }}</div>
+    }
+
+    @if (okMsg) {
+        <div class="info">{{ okMsg }}</div>
+    }
+
+    @if (!loading && !errorMsg) {
+        <div class="users-table" style="overflow:auto">
+        <table class="borrar-table">
+            <thead>
+            <tr>
+                <th>Email</th>
+            </tr>
+            </thead>
+            <tbody>
+            @for (u of users; track u.id) {
+                <tr>
+                <td>{{ u.email }}</td>
+                <td>
+                    <button mat-button color="warn" (click)="confirmAndDelete(u)">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+        <button mat-stroked-button (click)="prevPage()" [disabled]="page<=1">Anterior</button>
+        <button mat-stroked-button (click)="nextPage()">Siguiente</button>
+        </div>
+    }
+
+
+
+  </mat-card>
+</div>
