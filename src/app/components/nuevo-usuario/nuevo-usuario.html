@@ -18,20 +18,28 @@
       </button>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <mat-form-field appearance="fill" class="full-width">
-        <mat-label>Usuario</mat-label>
-        <input matInput formControlName="nombre">
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field appearance="fill" class="box">
+        <mat-label>email</mat-label>
+      <input matInput formControlName="email" type="email" />
+      @if (f.email.touched && f.email.hasError('required')) { <mat-error>El email es requerido</mat-error> }
+      @if (f.email.touched && f.email.hasError('email')) { <mat-error>Email inválido</mat-error> }
       </mat-form-field>
 
-      <mat-form-field appearance="fill" class="full-width">
+      <mat-form-field appearance="fill" class="box">
         <mat-label>Contraseña</mat-label>
-        <input matInput type="password" formControlName="contrasena">
+        <input matInput formControlName="password" type="password" />
+        @if (f.password.touched && f.password.hasError('required')) { <mat-error>La contraseña es requerida</mat-error> }
+        @if (f.password.touched && f.password.hasError('minlength')) { <mat-error>Mínimo 6 caracteres</mat-error> }
       </mat-form-field>
-
-      <div class="buttons">
-        <button mat-raised-button type="submit">Aceptar</button>
+      <div>
+        <button mat-raised-button type="submit" [disabled]="form.invalid || loading">
+          {{ loading ? 'Creando…' : 'Crear' }}
+        </button>
       </div>
+
+      @if (okMsg)   { <div class="info"  style="margin-top:8px">{{ okMsg }}</div> }
+      @if (errorMsg){ <div class="error" style="margin-top:8px">{{ errorMsg }}</div> }
     </form>
   </mat-card>
 </div>

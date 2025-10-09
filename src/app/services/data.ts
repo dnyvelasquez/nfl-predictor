@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, map, of, switchMap, forkJoin, /*BehaviorSubject,*/ catchError } from 'rxjs';
-import { /*createClient,*/ SupabaseClient } from '@supabase/supabase-js';
-import { HttpClient } from '@angular/common/http';
+import { Observable, from, map, of, switchMap, forkJoin, catchError, throwError } from 'rxjs';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { supabase } from '../core/supabase.client';
 
@@ -53,12 +53,7 @@ export class Service {
   private FUNCTION_URL = environment.functionAuthUrl;
 
   constructor(private http: HttpClient) {
-  this.supabase = supabase;
-
-    // this.supabase = createClient(
-    //   environment.supabaseUrl,
-    //   environment.supabaseAnonKey
-    // );
+    this.supabase = supabase;
   }
   
   getParticipantes(): Observable<Participante[]> {
@@ -179,13 +174,13 @@ export class Service {
     );
   }
 
-private hoyYYYYMMDD(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}/${m}/${day}`;
-}
+  private hoyYYYYMMDD(): string {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}/${m}/${day}`;
+  }
 
 private toTs(fecha?: string, hora?: string): number {
   if (!fecha) return Number.MAX_SAFE_INTEGER;
@@ -275,65 +270,85 @@ getJuegosSemanaActual(): Observable<Juego[]> {
   );
 }
 
-getNextJuegoId() {
-  return from(
-    this.supabase
-      .from('juegos')
-      .select('id')
-      .order('id', { ascending: false })
-      .limit(1)
-  ).pipe(
-    map(({ data, error }: any) => {
-      if (error) throw error;
-      const last = data?.[0]?.id ?? 0;
-      return (Number(last) || 0) + 1;
-    })
-  );
-}
+  getNextJuegoId() {
+    return from(
+      this.supabase
+        .from('juegos')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1)
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        const last = data?.[0]?.id ?? 0;
+        return (Number(last) || 0) + 1;
+      })
+    );
+  }
 
-getSemanaIdPorFecha(fecha: string) {
-  return from(
-    this.supabase
-      .from('semana')
-      .select('id,inicio,fin')
-      .lte('inicio', fecha)
-      .gte('fin', fecha)
-      .limit(1)
-  ).pipe(
-    map(({ data, error }: any) => {
-      if (error) throw error;
-      return data?.[0]?.id ?? null;
-    })
-  );
-}
+  getSemanaIdPorFecha(fecha: string) {
+    return from(
+      this.supabase
+        .from('semana')
+        .select('id,inicio,fin')
+        .lte('inicio', fecha)
+        .gte('fin', fecha)
+        .limit(1)
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return data?.[0]?.id ?? null;
+      })
+    );
+  }
 
-crearJuego(input: { visitante: string; local: string; fecha: string; hora: string }) {
-  return forkJoin({
-    nextId: this.getNextJuegoId(),
-    semanaId: this.getSemanaIdPorFecha(input.fecha),
-  }).pipe(
-    switchMap(({ nextId, semanaId }) =>
-      from(
-        this.supabase
-          .from('juegos')
-          .insert([
-            {
-              id: nextId,
-              semana: semanaId, 
-              visitante: input.visitante,
-              local: input.local,
-              fecha: input.fecha,
-              hora: input.hora,
-            },
-          ])
-          .select()
-      )
-    ),
-    map(({ data, error }: any) => {
-      if (error) throw error;
-      return data?.[0];
-    })
-  );
-}
+  crearJuego(input: { visitante: string; local: string; fecha: string; hora: string }) {
+    return forkJoin({
+      nextId: this.getNextJuegoId(),
+      semanaId: this.getSemanaIdPorFecha(input.fecha),
+    }).pipe(
+      switchMap(({ nextId, semanaId }) =>
+        from(
+          this.supabase
+            .from('juegos')
+            .insert([
+              {
+                id: nextId,
+                semana: semanaId, 
+                visitante: input.visitante,
+                local: input.local,
+                fecha: input.fecha,
+                hora: input.hora,
+              },
+            ])
+            .select()
+        )
+      ),
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return data?.[0];
+      })
+    );
+  }
+
+  createUserAsAdmin(email: string, password: string, fullName?: string) {
+    return from(this.supabase.auth.getSession()).pipe(
+      switchMap(({ data }) => {
+        const token = data.session?.access_token;
+        if (!token) return throwError(() => new Error('No autenticado'));
+
+        return this.http.post(
+          environment.functionCreateUserUrl,
+          { email, password, fullName },
+          {
+            headers: new HttpHeaders({
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            })
+          }
+        );
+      })
+    );
+  }
 
 }

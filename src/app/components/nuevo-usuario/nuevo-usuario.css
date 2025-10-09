@@ -26,6 +26,10 @@
   width: 50px;
 }
 
+.box {
+  width: 280px;
+}
+
 .button-container {
   display: flex;
   justify-content: space-between;
@@ -43,4 +47,3 @@
   max-width: 200px !important;
   justify-content: end;
 }
-
