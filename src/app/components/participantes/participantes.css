@@ -1,0 +1,149 @@
+.participantes-container {
+  padding-top: 80px;
+  padding-bottom: 20px;
+  background-color: #003366;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.participantes-card {
+  max-width: 90%;
+  padding: 20px;
+  text-align: center;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.logo {
+  width: 50px;
+}
+
+.participantes-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.table-container {
+  border-radius: 12px;
+}
+
+.participantes-table {
+  display: flex;
+  flex-direction: row !important;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 8px;
+  border-bottom: 1px solid #ddd;
+  color: #000;
+  background-color: white;
+  overflow: hidden; 
+}
+
+.table {
+    width: 100%; 
+    border: 1px solid #eee; 
+    border-radius: 8px; 
+    overflow: hidden; 
+}
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.left {
+  flex: 1 1 150px !important;
+  max-width: 200px !important;
+}
+
+.right {
+  flex: 1 1 150px !important;
+  max-width: 200px !important;
+  justify-content: end;
+}
+
+.row { 
+    display: grid; 
+    grid-template-columns: 120px 1fr 220px; 
+    gap: 12px; 
+    align-items: center;
+}
+
+.add { 
+    margin-bottom: 16px; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.thead { 
+    padding: 8px 12px; 
+}
+
+.tbody .row { padding: 8px 12px; border-top: 1px solid #f0f0f0; }
+
+.cell { 
+  display: flex; 
+  align-items: center; 
+}
+
+.cell.n { 
+  width: 100%; 
+  max-width: 20px; 
+}
+
+.cell.w { 
+  width: 100%; 
+}
+
+.cell.a { 
+    gap: 8px; 
+    justify-content: center; 
+}
+
+mat-form-field.tight { 
+    width: 100%; 
+}
+
+.error { 
+    color: #b00020; margin: 8px 0; 
+}
+
+.info  { 
+    color: #0b6; margin: 8px 0; 
+}
+
+.n {
+  width: 120px;
+}
+
+.w {
+  width: 200px;
+}
+
+
+.agregar {
+  width: 80px;
+}
+
+@media (max-width: 700px) {
+  .row { 
+    grid-template-columns: 1fr 2fr 3fr; 
+    align-items: stretch; 
+
+  }
+  .cell.a { 
+    justify-content: flex-start; 
+  }
+}

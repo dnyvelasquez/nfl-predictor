@@ -1,0 +1,104 @@
+<div class="participantes-container">
+  <mat-card class="participantes-card">
+    <div class="header">
+      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
+      <mat-card-title class="participantes-title">Participantes</mat-card-title>
+      <h1> 🏈</h1>
+      <mat-divider></mat-divider>
+    </div>
+
+    <div class="button-container">
+      <button class="left" mat-menu-item routerLink="/admin">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Volver</span>
+      </button>
+      <button class="right" mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
+    </div>
+      
+    <div class="table-container">
+
+      <form [formGroup]="addForm" (ngSubmit)="add()" class="add">
+        <mat-form-field appearance="fill" class="w">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre" placeholder="Ej: Juan Pérez" />
+          @if (addForm.get('nombre')?.touched && addForm.get('nombre')?.hasError('required')) {
+            <mat-error>El nombre es requerido</mat-error>
+          }
+          @if (addForm.get('nombre')?.touched && addForm.get('nombre')?.hasError('minlength')) {
+            <mat-error>Mínimo 2 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="n">
+          <mat-label>Número</mat-label>
+          <input matInput type="number" formControlName="numero" placeholder="0" />
+          @if (addForm.get('numero')?.touched && addForm.get('numero')?.hasError('required')) {
+            <mat-error>El número es requerido</mat-error>
+          }
+          @if (addForm.get('numero')?.touched && addForm.get('numero')?.hasError('min')) {
+            <mat-error>No puede ser negativo</mat-error>
+          }
+        </mat-form-field>
+
+        <button mat-raised-button class="agregar" type="submit" [disabled]="addForm.invalid || loading">
+          Agregar
+        </button>
+      </form>
+
+      @if (loading) { <p>Cargando…</p> }
+      @if (errorMsg) { <div class="error">{{ errorMsg }}</div> }
+      @if (okMsg) { <div class="info">{{ okMsg }}</div> }
+
+      <div class="table">
+        <div class="thead row">
+          <div class="cell n">N°</div>
+          <div class="cell w">Nombre</div>
+          <div class="cell a">Acciones</div>
+        </div>
+
+        <div class="tbody">
+          @for (p of participantes; track p.id) {
+            <div class="row">
+              <div class="cell n">
+                @if (!editForms[p.id]) {
+                  <span>{{ p.numero }}</span>
+                } @else {
+                  <mat-form-field appearance="fill" class="tight">
+                    <input matInput type="number" formControlName="numero" />
+                  </mat-form-field>
+                }
+              </div>
+
+              <div class="cell w">
+                @if (!editForms[p.id]) {
+                  <span>{{ p.nombre }}</span>
+                } @else {
+                  <mat-form-field appearance="fill" class="tight">
+                    <input matInput formControlName="nombre" />
+                  </mat-form-field>
+                }
+              </div>
+
+              <div class="cell a">
+                @if (!editForms[p.id]) {
+                  <button mat-stroked-button (click)="startEdit(p)">Editar</button>
+                  <button mat-button color="warn" (click)="remove(p)">Eliminar</button>
+                } @else {
+                  <button mat-raised-button color="primary" (click)="saveEdit(p)" [disabled]="editForms[p.id]?.invalid || loading">Guardar</button>
+                  <button mat-button (click)="cancelEdit(p)">Cancelar</button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>      
+      
+    </div>      
+  </mat-card>
+</div>
+
+
+

@@ -7,6 +7,7 @@ import { supabase } from '../core/supabase.client';
 
 export interface Participante {
   id: string;
+  numero: number;
   nombre: string;
   puntaje?: number;
   equipos?: Equipo[];
@@ -58,13 +59,83 @@ export class Service {
   
   getParticipantes(): Observable<Participante[]> {
     return from(
-      this.supabase.from('participantes').select('*')
+      this.supabase
+        .from('participantes')
+        .select('*')
+        .order('numero', { ascending: true })
+        .order('nombre', { ascending: true })
     ).pipe(
       map((res:any) => {
         if (res.error) {
           return[];
         }
         return res.data as Participante[];
+      })
+    );
+  }
+
+  getParticipantesConPuntaje(): Observable<(Participante & { equipos: Equipo[], puntaje: number })[]> {
+    return this.getParticipantes().pipe(
+      switchMap(participantes =>
+        forkJoin(
+          participantes.map(p =>
+            this.getEquiposDe(p.nombre).pipe(   
+              map(equipos => ({
+                ...p,
+                equipos,
+                puntaje: equipos.reduce((acc, eq) => acc + (eq.puntaje ?? 0), 0) 
+              }))
+            )
+          )
+        )
+      ),
+      map(participantesConPuntaje =>
+        participantesConPuntaje.sort((a, b) => b.puntaje - a.puntaje)        
+      )
+    );
+  }
+
+  createParticipante(nombre: string, numero: number) {
+    return from(
+      this.supabase
+        .from('participantes')
+        .insert([{ nombre, numero }])
+        .select('id, nombre, numero')
+        .single()
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return data;
+      })
+    );
+  }
+
+  updateParticipante(id: string, patch: { nombre?: string; numero?: number }) {
+    return from(
+      this.supabase
+        .from('participantes')
+        .update(patch)
+        .eq('id', id)
+        .select('id, nombre, numero')
+        .single()
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return data;
+      })
+    );
+  }
+
+  deleteParticipante(id: string) {
+    return from(
+      this.supabase
+        .from('participantes')
+        .delete()
+        .eq('id', id)
+    ).pipe(
+      map(({ error }: any) => {
+        if (error) throw error;
+        return { ok: true };
       })
     );
   }
@@ -90,27 +161,6 @@ export class Service {
         .eq('participante', nombre)
     ).pipe(      
       map((res: any) => res.data as Equipo[])
-    );
-  }
-
-  getParticipantesConPuntaje(): Observable<(Participante & { equipos: Equipo[], puntaje: number })[]> {
-    return this.getParticipantes().pipe(
-      switchMap(participantes =>
-        forkJoin(
-          participantes.map(p =>
-            this.getEquiposDe(p.nombre).pipe(   
-              map(equipos => ({
-                ...p,
-                equipos,
-                puntaje: equipos.reduce((acc, eq) => acc + (eq.puntaje ?? 0), 0) 
-              }))
-            )
-          )
-        )
-      ),
-      map(participantesConPuntaje =>
-        participantesConPuntaje.sort((a, b) => b.puntaje - a.puntaje)        
-      )
     );
   }
 
@@ -357,7 +407,7 @@ getJuegosSemanaActual(): Observable<Juego[]> {
         const token = data.session?.access_token;
         if (!token) return of({ error: 'No autenticado' });
         const url = `${environment.functionListUsersUrl}?page=${page}&perPage=${perPage}&q=${encodeURIComponent(q)}`;
-        return this.http.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        return this.callFn(url, { headers: { Authorization: `Bearer ${token}` } });
       }),
       catchError(err => of({ error: err?.message || 'Error listando usuarios' }))
     );
@@ -377,6 +427,46 @@ getJuegosSemanaActual(): Observable<Juego[]> {
       catchError(err => of({ error: err?.message || 'Error eliminando usuario' }))
     );
   }
+
+
+
+
+private callFn<T = any>(url: string, init?: RequestInit) {
+  return from(this.supabase.auth.getSession()).pipe(
+    switchMap(async ({ data }) => {
+      let token = data.session?.access_token;
+      if (!token) {
+        await new Promise(r => setTimeout(r, 200));
+        token = (await this.supabase.auth.getSession()).data.session?.access_token ?? undefined;
+      }
+      if (!token) throw new Error('No autenticado');
+
+      const headers = new Headers(init?.headers);
+      headers.set('Authorization', `Bearer ${token}`);
+      if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+
+      const res1 = await fetch(url, { ...init, headers });
+      if (res1.status !== 401) {
+        if (!res1.ok) throw new Error(await res1.text());
+        return (await res1.json()) as T;
+      }
+
+      const r = await this.supabase.auth.refreshSession();
+      const t2 = r.data.session?.access_token;
+      if (!t2) throw new Error('Sesión expirada');
+
+      const headers2 = new Headers(init?.headers);
+      headers2.set('Authorization', `Bearer ${t2}`);
+      if (!headers2.has('Content-Type')) headers2.set('Content-Type', 'application/json');
+
+      const res2 = await fetch(url, { ...init, headers: headers2 });
+      if (!res2.ok) throw new Error(await res2.text());
+      return (await res2.json()) as T;
+    })
+  );
+}
+
+
 
 
 
