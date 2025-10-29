@@ -37,5 +37,20 @@
     </div>    
 
   </mat-card>
+
+  <button class="fab-left" mat-fab (click)="prevWeek()"
+    [disabled]="currentWeekId === null || minWeek === null || currentWeekId <= minWeek">
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+
+  <button class="fab-right" mat-fab (click)="nextWeek()"
+    [disabled]="currentWeekId === null || maxWeek === null || currentWeekId >= maxWeek">
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+
+
+
+
+
 </div>
 

@@ -232,93 +232,93 @@ export class Service {
     return `${y}/${m}/${day}`;
   }
 
-private toTs(fecha?: string, hora?: string): number {
-  if (!fecha) return Number.MAX_SAFE_INTEGER;
-  const [Y, M, D] = fecha.replace(/-/g, '/').split('/').map(n => parseInt(n, 10));
-  let h = 0, m = 0;
-  if (hora) {
-    const s = hora.trim().toUpperCase();
-    const m1 = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/);
-    if (m1) {
-      h = parseInt(m1[1], 10);
-      m = parseInt(m1[2], 10);
-      const ap = m1[3];
-      if (ap === 'PM' && h < 12) h += 12;
-      if (ap === 'AM' && h === 12) h = 0;
-    } else {
-      const [hh, mm] = s.split(':');
-      h = parseInt(hh || '0', 10);
-      m = parseInt(mm || '0', 10);
+  private toTs(fecha?: string, hora?: string): number {
+    if (!fecha) return Number.MAX_SAFE_INTEGER;
+    const [Y, M, D] = fecha.replace(/-/g, '/').split('/').map(n => parseInt(n, 10));
+    let h = 0, m = 0;
+    if (hora) {
+      const s = hora.trim().toUpperCase();
+      const m1 = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/);
+      if (m1) {
+        h = parseInt(m1[1], 10);
+        m = parseInt(m1[2], 10);
+        const ap = m1[3];
+        if (ap === 'PM' && h < 12) h += 12;
+        if (ap === 'AM' && h === 12) h = 0;
+      } else {
+        const [hh, mm] = s.split(':');
+        h = parseInt(hh || '0', 10);
+        m = parseInt(mm || '0', 10);
+      }
     }
+    return new Date(Y, (M || 1) - 1, D || 1, h, m, 0, 0).getTime();
   }
-  return new Date(Y, (M || 1) - 1, D || 1, h, m, 0, 0).getTime();
-}
 
-getJuegosSemanaActual(): Observable<Juego[]> {
-  const hoy = this.hoyYYYYMMDD();
+  getJuegosSemanaActual(): Observable<Juego[]> {
+    const hoy = this.hoyYYYYMMDD();
 
-  const semanaId$ = from(
-    this.supabase
-      .from('semana')
-      .select('id,inicio,fin')
-      .lte('inicio', hoy)
-      .gte('fin', hoy)
-      .limit(1)
-  ).pipe(
-    map(({ data, error }: any) => {
-      if (error) throw error;
-      return data?.[0]?.id ?? null;
-    }),
-    switchMap(id => {
-      if (id !== null) return of(id);
-      return from(
-        this.supabase
-          .from('semana')
-          .select('id,inicio')
-          .lte('inicio', hoy)
-          .order('inicio', { ascending: false })
-          .limit(1)
-      ).pipe(map(({ data }: any) => data?.[0]?.id ?? null));
-    })
-  );
-
-  return semanaId$.pipe(
-    switchMap((semId) => {
-      if (semId === null) return of({ juegos: [], equipos: [] });
-
-      return forkJoin({
-        juegos: from(
+    const semanaId$ = from(
+      this.supabase
+        .from('semana')
+        .select('id,inicio,fin')
+        .lte('inicio', hoy)
+        .gte('fin', hoy)
+        .limit(1)
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return data?.[0]?.id ?? null;
+      }),
+      switchMap(id => {
+        if (id !== null) return of(id);
+        return from(
           this.supabase
-            .from('juegos')
-            .select('*')
-            .eq('semana', semId)
-            .order('fecha', { ascending: true })
-            .order('hora', { ascending: true })
-        ).pipe(map((res: any) => res.data || [])),
-        equipos: from(
-          this.supabase.from('equipos').select('*')
-        ).pipe(map((res: any) => res.data || [])),
-      });
-    }),
-    map(({ juegos, equipos }: any) => {
-      const enriquecidos = (juegos as any[]).map((juego) => {
-        const visitante = (equipos as any[]).find(e => e.nombre === juego.visitante);
-        const local = (equipos as any[]).find(e => e.nombre === juego.local);
-        return {
-          ...juego,
-          logoVisitante: visitante?.logo || '',
-          logoLocal: local?.logo || '',
-          participanteVisitante: visitante?.participante || '',
-          participanteLocal: local?.participante || '',
-        } as Juego;
-      });
+            .from('semana')
+            .select('id,inicio')
+            .lte('inicio', hoy)
+            .order('inicio', { ascending: false })
+            .limit(1)
+        ).pipe(map(({ data }: any) => data?.[0]?.id ?? null));
+      })
+    );
 
-      return enriquecidos.sort(
-        (a, b) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora)
-      );
-    })
-  );
-}
+    return semanaId$.pipe(
+      switchMap((semId) => {
+        if (semId === null) return of({ juegos: [], equipos: [] });
+
+        return forkJoin({
+          juegos: from(
+            this.supabase
+              .from('juegos')
+              .select('*')
+              .eq('semana', semId)
+              .order('fecha', { ascending: true })
+              .order('hora', { ascending: true })
+          ).pipe(map((res: any) => res.data || [])),
+          equipos: from(
+            this.supabase.from('equipos').select('*')
+          ).pipe(map((res: any) => res.data || [])),
+        });
+      }),
+      map(({ juegos, equipos }: any) => {
+        const enriquecidos = (juegos as any[]).map((juego) => {
+          const visitante = (equipos as any[]).find(e => e.nombre === juego.visitante);
+          const local = (equipos as any[]).find(e => e.nombre === juego.local);
+          return {
+            ...juego,
+            logoVisitante: visitante?.logo || '',
+            logoLocal: local?.logo || '',
+            participanteVisitante: visitante?.participante || '',
+            participanteLocal: local?.participante || '',
+          } as Juego;
+        });
+
+        return enriquecidos.sort(
+          (a, b) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora)
+        );
+      })
+    );
+  }
 
   getNextJuegoId() {
     return from(
@@ -431,44 +431,114 @@ getJuegosSemanaActual(): Observable<Juego[]> {
 
 
 
-private callFn<T = any>(url: string, init?: RequestInit) {
-  return from(this.supabase.auth.getSession()).pipe(
-    switchMap(async ({ data }) => {
-      let token = data.session?.access_token;
-      if (!token) {
-        await new Promise(r => setTimeout(r, 200));
-        token = (await this.supabase.auth.getSession()).data.session?.access_token ?? undefined;
-      }
-      if (!token) throw new Error('No autenticado');
+  private callFn<T = any>(url: string, init?: RequestInit) {
+    return from(this.supabase.auth.getSession()).pipe(
+      switchMap(async ({ data }) => {
+        let token = data.session?.access_token;
+        if (!token) {
+          await new Promise(r => setTimeout(r, 200));
+          token = (await this.supabase.auth.getSession()).data.session?.access_token ?? undefined;
+        }
+        if (!token) throw new Error('No autenticado');
 
-      const headers = new Headers(init?.headers);
-      headers.set('Authorization', `Bearer ${token}`);
-      if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+        const headers = new Headers(init?.headers);
+        headers.set('Authorization', `Bearer ${token}`);
+        if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
 
-      const res1 = await fetch(url, { ...init, headers });
-      if (res1.status !== 401) {
-        if (!res1.ok) throw new Error(await res1.text());
-        return (await res1.json()) as T;
-      }
+        const res1 = await fetch(url, { ...init, headers });
+        if (res1.status !== 401) {
+          if (!res1.ok) throw new Error(await res1.text());
+          return (await res1.json()) as T;
+        }
 
-      const r = await this.supabase.auth.refreshSession();
-      const t2 = r.data.session?.access_token;
-      if (!t2) throw new Error('Sesión expirada');
+        const r = await this.supabase.auth.refreshSession();
+        const t2 = r.data.session?.access_token;
+        if (!t2) throw new Error('Sesión expirada');
 
-      const headers2 = new Headers(init?.headers);
-      headers2.set('Authorization', `Bearer ${t2}`);
-      if (!headers2.has('Content-Type')) headers2.set('Content-Type', 'application/json');
+        const headers2 = new Headers(init?.headers);
+        headers2.set('Authorization', `Bearer ${t2}`);
+        if (!headers2.has('Content-Type')) headers2.set('Content-Type', 'application/json');
 
-      const res2 = await fetch(url, { ...init, headers: headers2 });
-      if (!res2.ok) throw new Error(await res2.text());
-      return (await res2.json()) as T;
-    })
-  );
-}
+        const res2 = await fetch(url, { ...init, headers: headers2 });
+        if (!res2.ok) throw new Error(await res2.text());
+        return (await res2.json()) as T;
+      })
+    );
+  }
 
+  getSemanaActualId() {
+    const hoy = this.hoyYYYYMMDD();
+    return this.getSemanaIdPorFecha(hoy).pipe(
+      switchMap(id => {
+        if (id !== null) return of(id);
+        return from(
+          this.supabase.from('semana')
+            .select('id,inicio')
+            .lte('inicio', hoy)
+            .order('inicio', { ascending: false })
+            .limit(1)
+        ).pipe(map((r: any) => r.data?.[0]?.id ?? null));
+      })
+    );
+  }
 
+  getExtremosSemanas() {
+    return forkJoin({
+      min: from(this.supabase.from('semana').select('id').order('id', { ascending: true }).limit(1))
+            .pipe(map((r: any) => r.data?.[0]?.id ?? null)),
+      max: from(this.supabase.from('semana').select('id').order('id', { ascending: false }).limit(1))
+            .pipe(map((r: any) => r.data?.[0]?.id ?? null)),
+    });
+  }
 
+  getSemanaAnteriorId(currentId: number) {
+    return from(
+      this.supabase.from('semana')
+        .select('id')
+        .lt('id', currentId)
+        .order('id', { ascending: false })
+        .limit(1)
+    ).pipe(map((r: any) => r.data?.[0]?.id ?? null));
+  }
 
+  getSemanaSiguienteId(currentId: number) {
+    return from(
+      this.supabase.from('semana')
+        .select('id')
+        .gt('id', currentId)
+        .order('id', { ascending: true })
+        .limit(1)
+    ).pipe(map((r: any) => r.data?.[0]?.id ?? null));
+  }
+
+  getJuegosPorSemanaId(semId: number): Observable<Juego[]> {
+    return forkJoin({
+      juegos: from(
+        this.supabase
+          .from('juegos')
+          .select('*')
+          .eq('semana', semId)
+          .order('fecha', { ascending: true })
+          .order('hora', { ascending: true })
+      ).pipe(map((res: any) => res.data || [])),
+      equipos: from(this.supabase.from('equipos').select('*'))
+                .pipe(map((res: any) => res.data || []))
+    }).pipe(
+      map(({ juegos, equipos }: any) =>
+        (juegos as any[]).map((j) => {
+          const v = (equipos as any[]).find(e => e.nombre === j.visitante);
+          const l = (equipos as any[]).find(e => e.nombre === j.local);
+          return {
+            ...j,
+            logoVisitante: v?.logo || '',
+            logoLocal: l?.logo || '',
+            participanteVisitante: v?.participante || '',
+            participanteLocal: l?.participante || '',
+          } as Juego;
+        }).sort((a: Juego, b: Juego) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora))
+      )
+    );
+  }
 
 
 }
