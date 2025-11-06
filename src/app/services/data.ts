@@ -19,7 +19,7 @@ export interface Equipo {
   puntaje: number;
   division: string;
   logo: string;
-  participante: string;
+  participante?: string;
 }
 
 export interface EquipoSupa {
@@ -28,7 +28,7 @@ export interface EquipoSupa {
   puntaje: number;
   division: string;
   logo: string;
-  participante: string;
+  participante?: string;
 }
 
 export interface Juego {
@@ -540,5 +540,47 @@ export class Service {
     );
   }
 
+  assignEquipo(participanteNombre: string, division: string, equipoId: string | null) {
+    const clear$ = from(
+      this.supabase
+        .from('equipos')
+        .update({ participante: '' })
+        .eq('division', division)
+        .eq('participante', participanteNombre)
+    );
+
+    const set$ = equipoId
+      ? from(
+          this.supabase
+            .from('equipos')
+            .update({ participante: participanteNombre })
+            .eq('id', equipoId)
+            .select()
+        )
+      : of({});
+    return clear$.pipe(
+      switchMap(() => set$),
+      map(({ error }: any) => {
+        if (error) throw error;
+        return { ok: true };
+      })
+    );
+  }
+
+  resetAsignaciones() {
+    return from(
+      this.supabase
+        .from('equipos')
+        .update({ participante: '' })
+        .neq('participante', '') 
+    ).pipe(
+      map(({ error }: any) => {
+        if (error) throw error;
+        return { ok: true };
+      })
+    );
+  }
+
 
 }
+

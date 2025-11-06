@@ -11,6 +11,7 @@ import { NuevoUsuario } from './components/nuevo-usuario/nuevo-usuario';
 import { IngresarJuego } from './components/ingresar-juego/ingresar-juego';
 import { BorrarUsuario } from './components/borrar-usuario/borrar-usuario';
 import { Participantes } from './components/participantes/participantes';
+import { Asignacion } from './components/asignacion/asignacion';
 import { authGuard } from '../app/auth-guard';
 import { guestGuard } from './guest-guard';
 
@@ -31,6 +32,7 @@ export const routes: Routes = [
   { path: 'borrar-usuario', component: BorrarUsuario, canActivate: [authGuard] },
   { path: 'ingresar-juego', component: IngresarJuego, canActivate: [authGuard] },
   { path: 'participantes', component: Participantes, canActivate: [authGuard] },
+  { path: 'asignacion', component: Asignacion, canActivate: [authGuard] },
 
   { path: '**', redirectTo: '' }
 

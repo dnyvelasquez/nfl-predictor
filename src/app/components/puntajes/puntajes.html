@@ -26,7 +26,9 @@
                 <img [src]="e.logo" alt="{{ e.nombre }}" class="equipo-logo">
                 <div class="info-equipo">
                   <span>{{ e.nombre }}</span>
-                  <span class="participante">{{ e.participante }}</span>
+                  <span class="participante">                    
+                    {{ e.participante?.trim() ? e.participante : 'No asignado' }}
+                  </span>
                 </div>
             </div>
             <div class="info">

@@ -24,7 +24,9 @@
             </div>
             <div class="info">
               <span class="puntaje">{{ e.puntaje }} puntos</span>
-              <span class="participante">{{ e.participante }}</span>
+              <span class="participante">
+                {{ e.participante?.trim() ? e.participante : 'No asignado' }}
+              </span>
             </div>
           </div>
         </div>

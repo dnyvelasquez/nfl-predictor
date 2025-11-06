@@ -20,14 +20,22 @@
               <img [src]="j.logoVisitante" alt="{{ j.visitante }}" class="equipo-logo">
               <div class="equipo">
                 <span>{{ j.visitante }}</span>
-                <span class="participante">{{ j.participanteVisitante }}</span>
+                @if ((j.participanteVisitante || '').trim()) {
+                  <span class="participante">{{ j.participanteVisitante }}</span>
+                } @else {
+                  <span class="participante muted">No asignado</span>
+                }              
               </div>
             </div>
             <span class="vs">Vs</span>
             <div class="equipo-local">
               <div class="equipo">
                 <span>{{ j.local }}</span>
-                <span class="participante">{{ j.participanteLocal }}</span>
+                @if ((j.participanteLocal || '').trim()) {
+                  <span class="participante">{{ j.participanteLocal }}</span>
+                } @else {
+                  <span class="participante muted">No asignado</span>
+                }
               </div>
               <img [src]="j.logoLocal" alt="{{ j.local }}" class="equipo-logo">
             </div>

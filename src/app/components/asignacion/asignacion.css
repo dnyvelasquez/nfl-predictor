@@ -1,0 +1,147 @@
+.asignacion-container {
+  padding-top: 80px;
+  padding-bottom: 20px;
+  background-color: #003366;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.asignacion-card {
+  max-width: 90%;
+  padding: 20px;
+  text-align: center;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.logo {
+  width: 50px;
+}
+
+.asignacion-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.left {
+  flex: 1 1 150px !important;
+  max-width: 200px !important;
+}
+
+.right {
+  flex: 1 1 150px !important;
+  max-width: 200px !important;
+  justify-content: end;
+}
+
+.reset {
+    width: 100px;
+    align-self: center;
+}
+
+.err { 
+    color: #b00020; 
+    margin: 8px 0; 
+}
+
+.ok  { 
+    color: #0b6; 
+    margin: 8px 0; 
+}
+
+.matrix-wrapper { 
+    overflow: auto; 
+    border: 1px solid #eee; 
+    border-radius: 12px; 
+}
+
+.grid {
+    display: grid;
+    grid-auto-rows: minmax(56px, auto);
+    min-width: 720px;
+}
+
+.cell {
+    border-top: 1px solid #f1f1f1;
+    border-left: 1px solid #f1f1f1;
+    padding: 8px;
+    display: flex; 
+    align-items: center;
+    background: #fff;
+    color: #1f2937;
+}
+
+.cell.head {
+    font-weight: 600;
+    background: #fafafa;
+}
+
+.cell.sticky {
+    position: sticky; 
+    top: 0; 
+    z-index: 2;
+}
+
+.cell.sticky-left {
+    position: sticky; 
+    left: 0; 
+    z-index: 3; 
+    background: #fafafa;
+    border-right: 1px solid #eaeaea;
+}
+
+.matrix-wrapper.loading { 
+    opacity: .6; 
+    pointer-events: none; 
+}
+
+.asig-panel { 
+    max-height: 60vh; 
+}
+
+mat-select { 
+    width: 100%; 
+}
+
+:host ::ng-deep .cell .mat-mdc-select .mat-mdc-select-trigger {
+  color: #1f2937 !important; 
+}
+
+:host ::ng-deep .cell .mat-mdc-select-min-line {
+  color: #1f2937 !important; 
+  opacity: 1 !important;
+}
+
+:host ::ng-deep .cell .mat-mdc-select-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+:host ::ng-deep .cell .mat-mdc-select-arrow {
+  color: #1f2937 !important; 
+  opacity: .85 !important;
+}
+
+:host ::ng-deep .asig-panel .mdc-list-item__primary-text {
+  color: #111827 !important; 
+}
+
+:host ::ng-deep .asig-panel .mat-mdc-option.mdc-list-item--disabled .mdc-list-item__primary-text {
+  color: #9ca3af !important;  
+  opacity: 1 !important;
+}

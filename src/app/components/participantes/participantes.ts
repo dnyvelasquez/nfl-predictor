@@ -8,8 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { Observable } from 'rxjs';
-import { Service, Participante } from '../../services/data';
+import { Service } from '../../services/data';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 
