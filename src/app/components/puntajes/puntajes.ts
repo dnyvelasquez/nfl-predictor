@@ -55,4 +55,32 @@ export class Puntajes {
     this.router.navigate(['/login']);
   }  
 
+
+  resetAll() {
+    const ok = confirm('¿Poner en 0 el puntaje de TODOS los equipos?');
+    if (!ok) return;
+
+    this.service.resetPuntajes().subscribe({
+      next: () => {
+        this.equipos$ = this.service.getEquipos();
+        alert('Puntajes reiniciados a 0');
+      },
+      error: (e) => alert('Error al resetear puntajes: ' + (e?.message || ''))
+    });
+  }
+
+  acumular() {
+    const ok = confirm('¿Sumar el puntaje de cada equipo al "acumulado" de su participante?');
+    if (!ok) return;
+
+    this.service.acumularPuntajesEnParticipantes().subscribe({
+      next: (r: any) => {
+        alert(`Acumulado actualizado (${r?.updated ?? 0} participante(s)).`);
+        this.equipos$ = this.service.getEquipos();
+      },
+      error: (e) => alert('Error al acumular: ' + (e?.message || ''))
+    });
+  }
+
+
 }

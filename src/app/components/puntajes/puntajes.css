@@ -112,12 +112,12 @@
 
 .left {
   flex: 1 1 150px !important;
-  max-width: 200px !important;
+  max-width: 120px !important;
 }
 
 .right {
   flex: 1 1 150px !important;
-  max-width: 200px !important;
+  max-width: 120px !important;
   justify-content: end;
 }
 

@@ -60,12 +60,25 @@
   padding: 12px 8px 8px 8px;
 }
 
+.equipos-group {
+  margin: 8px;
+  padding-top: 8px;
+  border-style: dashed;
+  border-color: #333;
+  border-width: 1px;
+  border-radius: 4px;
+}
+
 .equipos-lista {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
   padding: 8px 8px;
+}
+
+.temporada {
+  font-weight: bold;
 }
 
 .equipo-logo {
@@ -121,6 +134,15 @@
   padding: 4px;
   border-radius: 8px;
 }
+
+.acumulado-chip{
+  background-color: #FFB612; 
+  color: #fff;
+  font-size: 0.7em;
+  padding: 4px;
+  border-radius: 8px;
+}
+
 
 @media (max-width: 768px) {
   .tabla-puntajes-table {

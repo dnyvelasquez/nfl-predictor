@@ -7,10 +7,6 @@
             <mat-divider></mat-divider>
         </div>
 
-        <button mat-stroked-button class="reset" (click)="resetAll()">
-            <mat-icon>restart_alt</mat-icon>&nbsp;Reset
-        </button>
-
         <div class="button-container">
         <button class="left" mat-menu-item routerLink="/admin">
             <mat-icon>arrow_back</mat-icon>
@@ -26,8 +22,16 @@
         @if (okMsg())    { <div class="ok">{{ okMsg() }}</div> }
 
         <div class="matrix-wrapper" [class.loading]="loading()">
+
+            <div class="table-header">
+                <H2>Temporada Regular</H2>
+                <button mat-stroked-button class="reset" (click)="resetAll()">
+                    <mat-icon>restart_alt</mat-icon>&nbsp;Reset
+                </button>
+            </div>
+
             <div class="grid" 
-                [style.gridTemplateColumns]="'200px ' + '1fr '.repeat(participantes().length)">
+                [style.gridTemplateColumns]="'100px ' + '1fr '.repeat(participantes().length)">
             <div class="cell head sticky">&nbsp;</div>
             @for (p of participantes(); track p.id) {
                 <div class="cell head sticky">{{ p.numero }} - {{ p.nombre }}</div>
@@ -54,5 +58,6 @@
             }
             </div>
         </div>
+
     </mat-card>
 </div>

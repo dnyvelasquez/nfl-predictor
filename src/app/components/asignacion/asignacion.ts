@@ -133,7 +133,7 @@ export class Asignacion implements OnInit {
   }
 
   resetAll() {
-    const ok = confirm('¿Quitar TODAS las asignaciones?');
+    const ok = confirm('¿Quitar TODAS las asignaciones en temporada regular?');
     if (!ok) return;
 
     this.loading.set(true);
@@ -144,7 +144,7 @@ export class Asignacion implements OnInit {
       next: () => {
         const lista = this.equipos().map(e => ({ ...e, participante: '' as string }));
         this.equipos.set(lista);
-        this.okMsg.set('Asignaciones reiniciadas');
+        this.okMsg.set('Asignaciones de temporada regular reiniciadas');
       },
       error: (e) => this.errorMsg.set(e?.message || 'No se pudo reiniciar'),
       complete: () => this.loading.set(false),

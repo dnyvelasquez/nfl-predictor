@@ -34,7 +34,7 @@ export class TablaPuntajes  {
 
   getDivisiones(participante: any): string[] {
     return participante.equipos?.map((eq: any) => eq.division) ?? [];
-}
+  }
 
 }
 

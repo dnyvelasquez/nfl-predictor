@@ -64,6 +64,12 @@
     margin: 8px 0; 
 }
 
+.table-header {
+  display: flex;
+  justify-content:center;
+  gap: 12px;
+}
+
 .matrix-wrapper { 
     overflow: auto; 
     border: 1px solid #eee; 
@@ -74,6 +80,10 @@
     display: grid;
     grid-auto-rows: minmax(56px, auto);
     min-width: 720px;
+}
+
+.bottom {
+    margin-top: 20px;
 }
 
 .cell {

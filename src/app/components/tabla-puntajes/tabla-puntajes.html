@@ -14,22 +14,42 @@
             <span class="participante-item">{{ p.nombre }}</span>
             <span class="puntaje-item">{{ p.puntaje }} puntos</span>
           </div>
-          <div class="equipos-lista">
-            @for (eq of p.equipos; track eq.nombre) {
+
+            <div class="equipos-lista">            
+
+              @if ((p.acumulado) !== 0) {
                 <div class="equipo-item">
-                  <img [src]="eq.logo" [alt]="eq.nombre" class="equipo-logo" />
-                  <span class="equipo-puntaje">{{ eq.puntaje }} puntos</span>
-                  <div
-                    [ngClass]="{
-                      'chip-afc': eq.division.startsWith('AFC'),
-                      'chip-nfc': eq.division.startsWith('NFC')
-                    }"
-                  >
-                    {{ eq.division }}
-                  </div>
+                  <img
+                    src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg"
+                    alt="NFL"
+                    class="equipo-logo"
+                  />
+                  <span class="equipo-puntaje">{{ p.acumulado }}</span>
+                  <div class="acumulado-chip">Acumulado</div>
+
                 </div>
-            }
-          </div>
+
+              }
+
+              @for (eq of p.equipos; track eq.nombre) {
+                  <div class="equipo-item">
+                    <img [src]="eq.logo" [alt]="eq.nombre" class="equipo-logo" />
+
+
+
+
+                    <span class="equipo-puntaje">{{ eq.puntaje }} puntos</span>
+                    <div
+                      [ngClass]="{
+                        'chip-afc': eq.division.startsWith('AFC'),
+                        'chip-nfc': eq.division.startsWith('NFC')
+                      }"
+                    >
+                      {{ eq.division }}
+                    </div>
+                  </div>
+              }
+            </div>
 
         </div>
       }

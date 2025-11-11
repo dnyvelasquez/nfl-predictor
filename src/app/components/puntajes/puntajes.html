@@ -12,6 +12,12 @@
         <mat-icon>arrow_back</mat-icon>
         <span>Volver</span>
       </button>
+      <button mat-stroked-button (click)="acumular()">
+          <mat-icon>calculate</mat-icon>&nbsp;Acumular
+      </button>
+      <button mat-stroked-button (click)="resetAll()">
+          <mat-icon>restart_alt</mat-icon>&nbsp;Reset
+      </button>
       <button class="right" mat-menu-item (click)="logout()">
         <mat-icon>logout</mat-icon>
         <span>Logout</span>
