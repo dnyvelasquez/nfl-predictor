@@ -118,7 +118,10 @@
 .right {
   flex: 1 1 150px !important;
   max-width: 120px !important;
-  justify-content: end;
+}
+
+.hidden {
+  display: flex;
 }
 
 @media (max-width: 768px) {
@@ -140,4 +143,18 @@
     margin-top: 6px;
     align-items: center;
   }
+
+  .hidden {
+    display: none;
+  }
+
+  .left {
+    max-width: 40px !important;
+  }
+
+  .right {
+    max-width: 40px !important;
+  }
+
+
 }
