@@ -12,6 +12,9 @@
             <mat-icon>arrow_back</mat-icon>
             <span>Volver</span>
         </button>
+        <button mat-stroked-button class="reset" (click)="resetAll()">
+            <mat-icon>restart_alt</mat-icon>&nbsp;Reset
+        </button>
         <button class="right" mat-menu-item (click)="logout()">
             <mat-icon>logout</mat-icon>
             <span>Logout</span>
@@ -22,13 +25,6 @@
         @if (okMsg())    { <div class="ok">{{ okMsg() }}</div> }
 
         <div class="matrix-wrapper" [class.loading]="loading()">
-
-            <div class="table-header">
-                <H2>Temporada Regular</H2>
-                <button mat-stroked-button class="reset" (click)="resetAll()">
-                    <mat-icon>restart_alt</mat-icon>&nbsp;Reset
-                </button>
-            </div>
 
             <div class="grid" 
                 [style.gridTemplateColumns]="'100px ' + '1fr '.repeat(participantes().length)">

@@ -26,18 +26,20 @@
       
     <div class="table-container">
       @for (e of equipos$ | async; track e.id) {
-        <div class="puntajes-table">
-          <div class="equipos">
-            <div class="equipo">
+        @let p = (e.participante ?? '').trim();
+        @if (p && p.toLowerCase() !== 'no asignado') {
+          <div class="puntajes-table">
+            <div class="equipos">
+              <div class="equipo">
                 <img [src]="e.logo" alt="{{ e.nombre }}" class="equipo-logo">
                 <div class="info-equipo">
                   <span>{{ e.nombre }}</span>
                   <span class="participante">                    
-                    {{ e.participante?.trim() ? e.participante : 'No asignado' }}
+                    {{ e.participante }}
                   </span>
                 </div>
-            </div>
-            <div class="info">
+              </div>
+              <div class="info">
                 <span class="puntaje">Puntaje:</span>
                 <button class="controll" mat-icon-button (click)="modificarPuntos(e, -5)">
                     <mat-icon>remove</mat-icon>
@@ -49,9 +51,10 @@
                 <button class="controll" mat-icon-button (click)="guardarPuntos(e)">
                     <mat-icon>update</mat-icon>
                 </button>
+              </div>
             </div>
           </div>
-        </div>
+        }
       }
     </div>      
   </mat-card>

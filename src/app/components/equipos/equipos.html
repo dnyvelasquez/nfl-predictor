@@ -8,28 +8,31 @@
     </div>
     <div class="table-container">
       @for (e of equipos$ | async; track e.id) {
-        <div class="equipos-table">
-          <img [src]="e.logo" alt="{{ e.nombre }}" class="equipo-logo">
-          <div class="equipos">
-            <div class="equipo">
-              <span>{{ e.nombre }}</span>
-              <div
-                [ngClass]="{
-                  'chip-afc': e.division.startsWith('AFC'),
-                  'chip-nfc': e.division.startsWith('NFC')
-                }"
-              >
-                {{ e.division }}
-              </div>
-            </div>
-            <div class="info">
-              <span class="puntaje">{{ e.puntaje }} puntos</span>
-              <span class="participante">
-                {{ e.participante?.trim() ? e.participante : 'No asignado' }}
-              </span>
-            </div>
+        @let p = (e.participante ?? '').trim();
+        @if (p && p.toLowerCase() !== 'no asignado') {
+          <div class="equipos-table">
+              <img [src]="e.logo" alt="{{ e.nombre }}" class="equipo-logo">
+              <div class="equipos">
+                <div class="equipo">
+                  <span>{{ e.nombre }}</span>
+                  <div
+                    [ngClass]="{
+                      'chip-afc': e.division.startsWith('AFC'),
+                      'chip-nfc': e.division.startsWith('NFC')
+                    }"
+                  >
+                    {{ e.division }}
+                  </div>
+                </div>
+                <div class="info">
+                  <span class="puntaje">{{ e.puntaje }} puntos</span>
+                  <span class="participante">
+                    {{ e.participante }}
+                  </span>
+                </div>
+              </div>          
           </div>
-        </div>
+        }
       }
     </div>      
   </mat-card>
