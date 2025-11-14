@@ -45,7 +45,7 @@
                         panelClass="asig-panel"
                     >
                     <mat-option [value]="null">— Sin asignación —</mat-option>
-                    @for (eq of opcionesPara(d, p.nombre); track eq.id) {
+                    @for (eq of opcionesPara(d); track eq.id) {
                         <mat-option [value]="eq.id">{{ eq.nombre }}</mat-option>
                     }
                     </mat-select>

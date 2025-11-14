@@ -46,6 +46,12 @@ export interface Juego {
   participanteLocal? : string;
 }
 
+export interface Asignacion {
+  id?: string;
+  equipo_id: string;
+  participante: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -75,33 +81,28 @@ export class Service {
     );
   }
 
-getParticipantesConPuntaje(): Observable<(Participante & {
-  equipos: Equipo[];
-  puntajeEquipos: number;
-  puntaje: number;        // total = puntajeEquipos + acumulado
-})[]> {
-  return this.getParticipantes().pipe(
-    switchMap(participantes =>
-      forkJoin(
-        participantes.map(p =>
-          this.getEquiposDe(p.nombre).pipe(
-            map(equipos => {
-              const puntajeEquipos = equipos.reduce((acc, eq) => acc + (eq.puntaje ?? 0), 0);
-              const acumulado = p.acumulado ?? 0;
-              return {
-                ...p,
-                equipos,
-                puntajeEquipos,
-                puntaje: puntajeEquipos + acumulado, // ← total que verás en Home
-              };
-            })
+  getParticipantesConPuntaje(): Observable<(Participante & {
+    equipos: Equipo[];
+    puntajeEquipos: number;
+    puntaje: number;
+  })[]> {
+    return this.getParticipantes().pipe(
+      switchMap(participantes =>
+        forkJoin(
+          participantes.map(p =>
+            this.getEquiposDe(p.nombre).pipe(
+              map(equipos => {
+                const puntajeEquipos = equipos.reduce((acc, eq) => acc + (eq.puntaje ?? 0), 0);
+                const acumulado = p.acumulado ?? 0;
+                return { ...p, equipos, puntajeEquipos, puntaje: puntajeEquipos + acumulado };
+              })
+            )
           )
         )
-      )
-    ),
-    map(list => list.sort((a, b) => b.puntaje - a.puntaje))
-  );
-}
+      ),
+      map(list => list.sort((a, b) => b.puntaje - a.puntaje))
+    );
+  }
 
   createParticipante(nombre: string, numero: number) {
     return from(
@@ -149,14 +150,39 @@ getParticipantesConPuntaje(): Observable<(Participante & {
   }
 
   getEquipos(): Observable<Equipo[]> {
-    return from(
-      this.supabase.from('equipos').select('*').order('id', { ascending: true })
-    ).pipe(
-      map((res:any) => {
-        if (res.error) {
-          return[];
+    return forkJoin({
+      equiposRes: from(
+        this.supabase.from('equipos').select('*').order('id', { ascending: true })
+      ),
+      asignRes: from(
+        this.supabase.from('asignacion').select('equipo_id,participante')
+      )
+    }).pipe(
+      map(({ equiposRes, asignRes }: any) => {
+        if (equiposRes.error) throw equiposRes.error;
+        if (asignRes.error)   throw asignRes.error;
+
+        const participantesPorEquipo: Record<string, string[]> = {};
+        for (const a of (asignRes.data ?? [])) {
+          const id = a?.equipo_id;
+          const p  = (a?.participante ?? '').trim();
+          if (!id || !p) continue;
+          (participantesPorEquipo[id] ??= []).push(p);
         }
-        return res.data as Equipo[];
+        for (const id of Object.keys(participantesPorEquipo)) {
+          const uniq = Array.from(new Set(participantesPorEquipo[id]));
+          uniq.sort((a, b) => a.localeCompare(b));
+          participantesPorEquipo[id] = uniq;
+        }
+
+        return (equiposRes.data ?? []).map((e: any) => ({
+          id:       e.id,
+          nombre:   e.nombre,
+          puntaje:  e.puntaje,
+          division: e.division,
+          logo:     e.logo,
+          participante: (participantesPorEquipo[e.id]?.join(' / ')) ?? ''
+        })) as Equipo[];
       })
     );
   }
@@ -164,14 +190,30 @@ getParticipantesConPuntaje(): Observable<(Participante & {
   getEquiposDe(nombre: string): Observable<Equipo[]> {
     return from(
       this.supabase
-        .from('equipos')
-        .select('*')
+        .from('asignacion')
+        .select('equipo_id, participante, equipos!inner(id,nombre,puntaje,division,logo)')
         .eq('participante', nombre)
-    ).pipe(      
-      map((res: any) => res.data as Equipo[])
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return (data ?? []).map((row: any) => ({
+          id: row.equipos.id,
+          nombre: row.equipos.nombre,
+          puntaje: row.equipos.puntaje,
+          division: row.equipos.division,
+          logo: row.equipos.logo,
+          participante: row.participante,
+        })) as Equipo[];
+      })
     );
   }
   
+
+
+
+
+
+
   actualizarPuntaje(id: string, nuevoPuntaje: number): Observable<any> {
     return from(
       this.supabase
@@ -292,7 +334,7 @@ getParticipantesConPuntaje(): Observable<(Participante & {
 
     return semanaId$.pipe(
       switchMap((semId) => {
-        if (semId === null) return of({ juegos: [], equipos: [] });
+        if (semId === null) return of({ juegos: [], equipos: [], asign: [] });
 
         return forkJoin({
           juegos: from(
@@ -306,24 +348,43 @@ getParticipantesConPuntaje(): Observable<(Participante & {
           equipos: from(
             this.supabase.from('equipos').select('*')
           ).pipe(map((res: any) => res.data || [])),
+          asign: from(
+            this.supabase.from('asignacion').select('equipo_id,participante')
+          ).pipe(map((res: any) => res.data || []))
         });
       }),
-      map(({ juegos, equipos }: any) => {
-        const enriquecidos = (juegos as any[]).map((juego) => {
-          const visitante = (equipos as any[]).find(e => e.nombre === juego.visitante);
-          const local = (equipos as any[]).find(e => e.nombre === juego.local);
-          return {
-            ...juego,
-            logoVisitante: visitante?.logo || '',
-            logoLocal: local?.logo || '',
-            participanteVisitante: visitante?.participante || '',
-            participanteLocal: local?.participante || '',
-          } as Juego;
-        });
+      map(({ juegos, equipos, asign }: any) => {
+        const byNombre: Record<string, any> = {};
+        const byId: Record<string, any> = {};
+        for (const e of equipos) { byNombre[e.nombre] = e; byId[e.id] = e; }
 
-        return enriquecidos.sort(
-          (a, b) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora)
-        );
+        const participantesPorEquipoId: Record<string, string[]> = {};
+        for (const a of asign as Array<{equipo_id: string; participante: string}>) {
+          if (!a?.equipo_id) continue;
+          const p = (a.participante || '').trim();
+          if (!p) continue;
+          (participantesPorEquipoId[a.equipo_id] ??= []).push(p);
+        }
+
+        const enrich = (j: any): Juego => {
+          const v = byNombre[j.visitante];
+          const l = byNombre[j.local];
+
+          const listV = v ? (participantesPorEquipoId[v.id] ?? []) : [];
+          const listL = l ? (participantesPorEquipoId[l.id] ?? []) : [];
+
+          return {
+            ...j,
+            logoVisitante: v?.logo || '',
+            logoLocal:     l?.logo || '',
+            participanteVisitante: listV.join(' / '), 
+            participanteLocal:     listL.join(' / '),
+          } as Juego;
+        };
+
+        return (juegos as any[])
+          .map(enrich)
+          .sort((a: Juego, b: Juego) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora));
       })
     );
   }
@@ -530,63 +591,94 @@ getParticipantesConPuntaje(): Observable<(Participante & {
           .order('hora', { ascending: true })
       ).pipe(map((res: any) => res.data || [])),
       equipos: from(this.supabase.from('equipos').select('*'))
-                .pipe(map((res: any) => res.data || []))
+                .pipe(map((res: any) => res.data || [])),
+      asign: from(this.supabase.from('asignacion').select('equipo_id,participante'))
+              .pipe(map((res: any) => res.data || []))
     }).pipe(
-      map(({ juegos, equipos }: any) =>
-        (juegos as any[]).map((j) => {
-          const v = (equipos as any[]).find(e => e.nombre === j.visitante);
-          const l = (equipos as any[]).find(e => e.nombre === j.local);
+      map(({ juegos, equipos, asign }: any) => {
+        const byNombre: Record<string, any> = {};
+        const byId: Record<string, any> = {};
+        for (const e of equipos) { byNombre[e.nombre] = e; byId[e.id] = e; }
+
+        const participantesPorEquipoId: Record<string, string[]> = {};
+        for (const a of asign as Array<{equipo_id: string; participante: string}>) {
+          if (!a?.equipo_id) continue;
+          const p = (a.participante || '').trim();
+          if (!p) continue;
+          (participantesPorEquipoId[a.equipo_id] ??= []).push(p);
+        }
+
+        const enrich = (j: any): Juego => {
+          const v = byNombre[j.visitante];
+          const l = byNombre[j.local];
+          const listV = v ? (participantesPorEquipoId[v.id] ?? []) : [];
+          const listL = l ? (participantesPorEquipoId[l.id] ?? []) : [];
+
           return {
             ...j,
             logoVisitante: v?.logo || '',
-            logoLocal: l?.logo || '',
-            participanteVisitante: v?.participante || '',
-            participanteLocal: l?.participante || '',
+            logoLocal:     l?.logo || '',
+            participanteVisitante: listV.join(' / '),
+            participanteLocal:     listL.join(' / '),
           } as Juego;
-        }).sort((a: Juego, b: Juego) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora))
-      )
+        };
+
+        return (juegos as any[])
+          .map(enrich)
+          .sort((a: Juego, b: Juego) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora));
+      })
     );
   }
 
   assignEquipo(participanteNombre: string, division: string, equipoId: string | null) {
-    const clear$ = from(
-      this.supabase
-        .from('equipos')
-        .update({ participante: '' })
-        .eq('division', division)
-        .eq('participante', participanteNombre)
-    );
+    return this.getEquipoIdsPorDivision(division).pipe(
+      switchMap((idsMismaDivision) => {
+        const delParticipante$ = idsMismaDivision.length
+          ? from(
+              this.supabase
+                .from('asignacion')
+                .delete()
+                .eq('participante', participanteNombre)
+                .in('equipo_id', idsMismaDivision)
+            )
+          : of({});
 
-    const set$ = equipoId
-      ? from(
+        if (!equipoId) {
+          return delParticipante$.pipe(
+            map(({ error }: any) => {
+              if (error) throw error;
+              return { ok: true };
+            })
+          );
+        }
+
+        const insert$ = from(
           this.supabase
-            .from('equipos')
-            .update({ participante: participanteNombre })
-            .eq('id', equipoId)
+            .from('asignacion')
+            .insert([{ equipo_id: equipoId, participante: participanteNombre }])
             .select()
-        )
-      : of({});
-    return clear$.pipe(
-      switchMap(() => set$),
-      map(({ error }: any) => {
-        if (error) throw error;
-        return { ok: true };
+        );
+
+        return delParticipante$.pipe(
+          switchMap(() => insert$),
+          map(({ error }: any) => {
+            if (error && error.code !== '23505') throw error;
+            return { ok: true };
+          })
+        );
       })
     );
   }
 
+
   resetAsignaciones() {
-    return from(
-      this.supabase
-        .from('equipos')
-        .update({ participante: '' })
-        .neq('participante', '') 
-    ).pipe(
-      map(({ error }: any) => {
-        if (error) throw error;
-        return { ok: true };
-      })
-    );
+    return from(this.supabase.from('asignacion').delete().neq('equipo_id', ''))
+      .pipe(
+        map(({ error }: any) => {
+          if (error) throw error;
+          return { ok: true };
+        })
+      );
   }
 
   resetPuntajes() {
@@ -605,45 +697,71 @@ getParticipantesConPuntaje(): Observable<(Participante & {
 
   acumularPuntajesEnParticipantes() {
     return forkJoin({
-      equiposRes: from(this.supabase.from('equipos').select('puntaje,participante')),
-      partsRes:   from(this.supabase.from('participantes').select('id,nombre,acumulado'))
+      asign: from(
+        this.supabase
+          .from('asignacion')
+          .select('participante, equipos!inner(puntaje)')
+      ),
+      parts: from(
+        this.supabase
+          .from('participantes')
+          .select('id,nombre,acumulado')
+      )
     }).pipe(
-      switchMap(({ equiposRes, partsRes }: any) => {
-        if (equiposRes.error) throw equiposRes.error;
-        if (partsRes.error) throw partsRes.error;
-
-        const equipos: Array<{puntaje: number; participante: string}> = equiposRes.data ?? [];
-        const participantes: Array<{id: string; nombre: string; acumulado: number}> = partsRes.data ?? [];
+      switchMap(({ asign, parts }: any) => {
+        if (asign.error) throw asign.error;
+        if (parts.error) throw parts.error;
 
         const totales: Record<string, number> = {};
-        for (const e of equipos) {
-          const p = (e.participante || '').trim();
-          if (!p || p.toLowerCase() === 'no asignado') continue;
-          const pts = Number(e.puntaje ?? 0);
-          if (!pts) continue;
-          totales[p] = (totales[p] ?? 0) + pts;
+        for (const row of asign.data ?? []) {
+          const nombre = (row.participante || '').trim();
+          const pts = Number(row.equipos?.puntaje ?? 0);
+          if (!nombre || !pts) continue;
+          totales[nombre] = (totales[nombre] ?? 0) + pts;
         }
 
-        const updates = participantes
-          .filter(p => totales[p.nombre])
-          .map(p => {
-            const nuevo = (Number(p.acumulado ?? 0)) + totales[p.nombre];
-            return from(
+        const updates = (parts.data ?? [])
+          .filter((p: any) => totales[p.nombre])
+          .map((p: any) =>
+            from(
               this.supabase
                 .from('participantes')
-                .update({ acumulado: nuevo })
+                .update({ acumulado: Number(p.acumulado ?? 0) + totales[p.nombre] })
                 .eq('id', p.id)
-            );
-          });
+            )
+          );
 
-        if (updates.length === 0) return of({ ok: true, updated: 0 });
-
-        return forkJoin(updates).pipe(
-          map(() => ({ ok: true, updated: updates.length }))
-        );
+        if (!updates.length) return of({ ok: true, updated: 0 });
+        return forkJoin(updates).pipe(map(() => ({ ok: true, updated: updates.length })));
       })
     );
   }
+
+  private getEquipoIdsPorDivision(division: string) {
+    return from(
+      this.supabase.from('equipos').select('id').eq('division', division)
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return (data ?? []).map((r: any) => r.id as string);
+      })
+    );
+  }
+
+  getAsignaciones() {
+    return from(
+      this.supabase
+        .from('asignacion')
+        .select('id,equipo_id,participante')
+        .order('equipo_id', { ascending: true })
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return (data ?? []) as Asignacion[];
+      })
+    );
+  }
+
 
 }
 

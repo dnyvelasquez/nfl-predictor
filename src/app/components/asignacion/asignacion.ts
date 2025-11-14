@@ -10,20 +10,16 @@ import { Service, Participante, Equipo } from '../../services/data';
 import { forkJoin } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
 
-type Celda = {
-  division: string;
-  participante: string;
-  value: string | null;
-};
+type AsignacionRow = { id?: string; equipo_id: string; participante: string };
 
 @Component({
   selector: 'app-asignacion',
   standalone: true,
   imports: [
-    CommonModule, 
-    MatCardModule, 
-    MatSelectModule, 
-    MatButtonModule, 
+    CommonModule,
+    MatCardModule,
+    MatSelectModule,
+    MatButtonModule,
     MatIconModule,
     MatDividerModule,
     RouterModule,
@@ -38,10 +34,42 @@ export class Asignacion implements OnInit {
 
   loading = signal(true);
   errorMsg = signal<string | null>(null);
-  okMsg = signal<string | null>(null);
+  okMsg    = signal<string | null>(null);
 
   participantes = signal<Participante[]>([]);
-  equipos = signal<Equipo[]>([]);
+  equipos       = signal<Equipo[]>([]);
+  asignaciones  = signal<AsignacionRow[]>([]);
+
+  ngOnInit(): void { this.cargarTodo(); }
+
+  private cargarTodo() {
+    this.loading.set(true);
+    this.errorMsg.set(null);
+    this.okMsg.set(null);
+
+    forkJoin({
+      participantes: this.svc.getParticipantes(),
+      equipos:       this.svc.getEquipos(), 
+      asign:         this.svc.getAsignaciones(),
+    }).subscribe({
+      next: ({ participantes, equipos, asign }) => {
+        const ordPart = [...participantes].sort(
+          (a, b) => (a.numero ?? 0) - (b.numero ?? 0) || a.nombre.localeCompare(b.nombre)
+        );
+        this.participantes.set(ordPart);
+        this.equipos.set(equipos);
+        this.asignaciones.set(asign ?? []);
+      },
+      error: (e) => this.errorMsg.set(e?.message || 'No fue posible cargar la asignación'),
+      complete: () => this.loading.set(false)
+    });
+  }
+
+  private equipoById = computed<Record<string, Equipo>>(() => {
+    const map: Record<string, Equipo> = {};
+    for (const e of this.equipos()) map[e.id] = e;
+    return map;
+  });
 
   divisiones = computed(() => {
     const set = new Set(this.equipos().map(e => e.division));
@@ -51,80 +79,45 @@ export class Asignacion implements OnInit {
   equiposPorDivision = computed(() => {
     const mapDiv: Record<string, Equipo[]> = {};
     for (const d of this.divisiones()) mapDiv[d] = [];
-    for (const e of this.equipos()) {
-      (mapDiv[e.division] ??= []).push(e);
-    }
-    for (const d of Object.keys(mapDiv)) {
-      mapDiv[d].sort((a, b) => a.nombre.localeCompare(b.nombre));
-    }
+    for (const e of this.equipos()) (mapDiv[e.division] ??= []).push(e);
+    for (const d of Object.keys(mapDiv)) mapDiv[d].sort((a, b) => a.nombre.localeCompare(b.nombre));
     return mapDiv;
   });
 
-  equiposOcupadosIds = computed(() => {
-    const used = new Set<string>();
-    for (const e of this.equipos()) {
-      if (e.participante && e.participante.trim() !== '') used.add(e.id);
-    }
-    return used;
-  });
-
   valorCelda(d: string, participanteNombre: string): string | null {
-    const eq = this.equipos()
-      .find(e => e.division === d && e.participante === participanteNombre);
-    return eq ? eq.id : null;
+    const byId = this.equipoById();
+    const row = this.asignaciones()
+      .find(a => a.participante === participanteNombre && byId[a.equipo_id]?.division === d);
+    return row ? row.equipo_id : null;
   }
 
-  ngOnInit(): void {
-    this.cargarTodo();
+  opcionesPara(d: string): Equipo[] {
+    return this.equiposPorDivision()[d] ?? [];
   }
 
-  private cargarTodo() {
+  asignadoA(equipoId: string): string[] {
+    return this.asignaciones()
+      .filter(a => a.equipo_id === equipoId)
+      .map(a => a.participante);
+  }
+
+  onChangeCelda(division: string, participanteNombre: string, equipoId: string | null) {
     this.loading.set(true);
     this.errorMsg.set(null);
     this.okMsg.set(null);
 
-    forkJoin({
-      participantes: this.svc.getParticipantes(),
-      equipos: this.svc.getEquipos()
-    }).subscribe({
-      next: ({ participantes, equipos }) => {
-        const ordPart = [...participantes].sort(
-          (a, b) => (a.numero ?? 0) - (b.numero ?? 0) || a.nombre.localeCompare(b.nombre)
-        );
-        this.participantes.set(ordPart);
-        this.equipos.set(equipos);
-      },
-      error: (e) => this.errorMsg.set(e?.message || 'No fue posible cargar la asignación'),
-      complete: () => this.loading.set(false)
-    });
-  }
-
-  opcionesPara(d: string, participanteNombre: string): Equipo[] {
-    const usados = this.equiposOcupadosIds();
-    const actualId = this.valorCelda(d, participanteNombre);
-    return (this.equiposPorDivision()[d] ?? []).filter(eq =>
-      !usados.has(eq.id) || eq.id === actualId
-    );
-  }
-
-  onChangeCelda(d: string, participanteNombre: string, equipoId: string | null) {
-    this.loading.set(true);
-    this.errorMsg.set(null);
-    this.okMsg.set(null);
-
-    this.svc.assignEquipo(participanteNombre, d, equipoId).subscribe({
+    this.svc.assignEquipo(participanteNombre, division, equipoId).subscribe({
       next: () => {
-        const lista = [...this.equipos()];
-        for (const e of lista) {
-          if (e.division === d && e.participante === participanteNombre) {
-            e.participante = '';
-          }
-        }
+        const byId = this.equipoById();
+        const prev = this.asignaciones().filter(
+          a => !(a.participante === participanteNombre && byId[a.equipo_id]?.division === division)
+        );
+
         if (equipoId) {
-          const target = lista.find(e => e.id === equipoId);
-          if (target) target.participante = participanteNombre;
+          prev.push({ equipo_id: equipoId, participante: participanteNombre });
         }
-        this.equipos.set(lista);
+
+        this.asignaciones.set(prev);
         this.okMsg.set('Asignación actualizada');
       },
       error: (e) => this.errorMsg.set(e?.message || 'No se pudo actualizar la asignación'),
@@ -133,7 +126,7 @@ export class Asignacion implements OnInit {
   }
 
   resetAll() {
-    const ok = confirm('¿Quitar TODAS las asignaciones en temporada regular?');
+    const ok = confirm('¿Quitar TODAS las asignaciones?');
     if (!ok) return;
 
     this.loading.set(true);
@@ -142,19 +135,16 @@ export class Asignacion implements OnInit {
 
     this.svc.resetAsignaciones().subscribe({
       next: () => {
-        const lista = this.equipos().map(e => ({ ...e, participante: '' as string }));
-        this.equipos.set(lista);
-        this.okMsg.set('Asignaciones de temporada regular reiniciadas');
+        this.asignaciones.set([]);
+        this.okMsg.set('Asignaciones reiniciadas');
       },
       error: (e) => this.errorMsg.set(e?.message || 'No se pudo reiniciar'),
       complete: () => this.loading.set(false),
     });
   }
 
-
   logout(): void {
     this.svc.logout();
     this.router.navigate(['/login']);
-  }  
-
+  }
 }
