@@ -17,9 +17,8 @@ import { guestGuard } from './guest-guard';
 
 export const routes: Routes = [
   
-  { path: '', component: Home }, 
+  { path: '', component: Home, pathMatch: 'full' }, 
   { path: 'tabla-puntajes', component: TablaPuntajes },
-  { path: 'equipos', component: Equipos },
   { path: 'equipos', component: Equipos },
   { path: 'juegos', component: Juegos },
   { path: 'reglamento', component: Reglamento },
