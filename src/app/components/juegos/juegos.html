@@ -3,10 +3,26 @@
     <div class="header">
       <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
       <mat-card-title class="juegos-title">
-        Juegos de la Semana
-          @if (currentWeekId !== null) {
-             {{ currentWeekId }}
+        @if (currentWeekId === 22) {
+          SUPER BOWL
+        } @else {
+          Juegos de
+          @if (currentWeekId === 21) {
+            Finales de Conferencia
+          } @else {
+            @if (currentWeekId === 20) {
+              Ronda Divisional
+            } @else {
+              @if (currentWeekId === 19) {
+                Ronda de Comodines
+              } @else {
+                @if (currentWeekId !== null) {
+                  la Semana {{ currentWeekId }}
+                }
+              }
+            }
           }
+        }
       </mat-card-title>
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
