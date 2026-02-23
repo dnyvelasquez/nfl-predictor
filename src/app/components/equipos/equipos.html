@@ -14,7 +14,10 @@
               <img [src]="e.logo" alt="{{ e.nombre }}" class="equipo-logo">
               <div class="equipos">
                 <div class="equipo">
-                  <span>{{ e.nombre }}</span>
+                  <div>
+                    <div>{{ e.nombre }}</div>                
+                    <div class="score">{{ e.pg }}-{{ e.pe }}-{{ e.pp }}</div>                                      
+                  </div>
                   <div
                     [ngClass]="{
                       'chip-afc': e.division.startsWith('AFC'),
@@ -25,7 +28,7 @@
                   </div>
                 </div>
                 <div class="info">
-                  <span class="puntaje">{{ e.puntaje }} puntos</span>
+                  <span class="puntaje">{{ e.pg * 10 + e.pe * 5 }} puntos</span>
                   <span class="participante">
                     {{ e.participante }}
                   </span>

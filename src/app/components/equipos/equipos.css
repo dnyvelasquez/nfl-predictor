@@ -66,6 +66,10 @@
   gap: 20px;
 }
 
+.score{
+  font-size: 0.8rem;
+}
+
 .equipo-logo {
   width: 60px;
   height: 60px;

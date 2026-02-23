@@ -18,15 +18,13 @@ export interface Equipo {
   id: string;
   nombre: string;
   puntaje: number;
-  division: string;
-  logo: string;
-  participante?: string;
-}
-
-export interface EquipoSupa {
-  id: string;
-  nombre: string;
-  puntaje: number;
+  pg: number;
+  pe: number;
+  pp: number;
+  pw: number;
+  pd: number;
+  pc: number;
+  sb: number;
   division: string;
   logo: string;
   participante?: string;
@@ -92,7 +90,7 @@ export class Service {
           participantes.map(p =>
             this.getEquiposDe(p.nombre).pipe(
               map(equipos => {
-                const puntajeEquipos = equipos.reduce((acc, eq) => acc + (eq.puntaje ?? 0), 0);
+                const puntajeEquipos = equipos.reduce((acc, eq) => acc + (eq.pg ?? 0), 0);
                 const acumulado = p.acumulado ?? 0;
                 return { ...p, equipos, puntajeEquipos, puntaje: puntajeEquipos + acumulado };
               })
@@ -176,11 +174,18 @@ export class Service {
         }
 
         return (equiposRes.data ?? []).map((e: any) => ({
-          id:       e.id,
-          nombre:   e.nombre,
-          puntaje:  e.puntaje,
-          division: e.division,
-          logo:     e.logo,
+          id: e.id,
+          nombre: e.nombre,
+          puntaje: e.puntaje,
+          division:e.division,
+          logo: e.logo,
+          pg: e.pg,
+          pe: e.pe,
+          pp: e.pp,
+          pw: e.pw,
+          pd: e.pd,
+          pc: e.pc,
+          sb: e.sb,
           participante: (participantesPorEquipo[e.id]?.join(' / ')) ?? ''
         })) as Equipo[];
       })
@@ -202,6 +207,13 @@ export class Service {
           puntaje: row.equipos.puntaje,
           division: row.equipos.division,
           logo: row.equipos.logo,
+          pg: row.equipos.pg,
+          pe: row.equipos.pe,
+          pp: row.equipos.pp,
+          pw: row.equipos.pw,
+          pd: row.equipos.pd,
+          pc: row.equipos.pc,
+          sb: row.equipos.sb,
           participante: row.participante,
         })) as Equipo[];
       })
