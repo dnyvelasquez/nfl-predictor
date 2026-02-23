@@ -90,7 +90,7 @@ export class Service {
           participantes.map(p =>
             this.getEquiposDe(p.nombre).pipe(
               map(equipos => {
-                const puntajeEquipos = equipos.reduce((acc, eq) => acc + (eq.pg ?? 0), 0);
+                const puntajeEquipos = equipos.reduce((acc, eq) => acc + (eq.pg ?? 0) * 10 + (eq.pe ?? 0) * 5 , 0);
                 const acumulado = p.acumulado ?? 0;
                 return { ...p, equipos, puntajeEquipos, puntaje: puntajeEquipos + acumulado };
               })
@@ -196,7 +196,7 @@ export class Service {
     return from(
       this.supabase
         .from('asignacion')
-        .select('equipo_id, participante, equipos!inner(id,nombre,puntaje,division,logo)')
+        .select('equipo_id, participante, equipos!inner(id,nombre,puntaje,pg,pe,pp,pw,pd,pc,sb,division,logo)')
         .eq('participante', nombre)
     ).pipe(
       map(({ data, error }: any) => {
@@ -220,12 +220,6 @@ export class Service {
     );
   }
   
-
-
-
-
-
-
   actualizarPuntaje(id: string, nuevoPuntaje: number): Observable<any> {
     return from(
       this.supabase

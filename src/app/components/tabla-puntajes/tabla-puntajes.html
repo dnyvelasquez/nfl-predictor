@@ -28,17 +28,11 @@
                   <div class="acumulado-chip">Acumulado</div>
 
                 </div>
-
               }
-
               @for (eq of p.equipos; track eq.nombre) {
                   <div class="equipo-item">
                     <img [src]="eq.logo" [alt]="eq.nombre" class="equipo-logo" />
-
-
-
-
-                    <span class="equipo-puntaje">{{ eq.puntaje }} puntos</span>
+                    <span class="equipo-puntaje">{{ eq.pg * 10 + eq.pe * 5 }} puntos</span>
                     <div
                       [ngClass]="{
                         'chip-afc': eq.division.startsWith('AFC'),
