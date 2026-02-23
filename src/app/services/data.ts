@@ -80,6 +80,9 @@ export class Service {
   }
 
   getParticipantesConPuntaje(): Observable<(Participante & {
+    equipos: Equipo[];
+    puntajeEquipos: number;
+    puntaje: number;
   })[]> {
     return this.getParticipantes().pipe(
       switchMap(participantes =>
@@ -87,7 +90,7 @@ export class Service {
           participantes.map(p =>
             this.getEquiposDe(p.nombre).pipe(
               map(equipos => {
-                const puntajeEquipos = equipos.reduce((acc, eq) => acc + (eq.puntaje ?? 0), 0);
+                const puntajeEquipos = equipos.reduce((acc, eq) => acc + (eq.pg ?? 0), 0);
                 const acumulado = p.acumulado ?? 0;
                 return { ...p, equipos, puntajeEquipos, puntaje: puntajeEquipos + acumulado };
               })
@@ -217,6 +220,12 @@ export class Service {
     );
   }
   
+
+
+
+
+
+
   actualizarPuntaje(id: string, nuevoPuntaje: number): Observable<any> {
     return from(
       this.supabase
