@@ -6,7 +6,6 @@
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
-
     <div class="table-container">
       @for (p of participantes$ | async; track p.id) {
         <div class="tabla-puntajes-table">
@@ -14,9 +13,7 @@
             <span class="participante-item">{{ p.nombre }}</span>
             <span class="puntaje-item">{{ p.puntaje }} puntos</span>
           </div>
-
             <div class="equipos-lista">            
-
               @if ((p.acumulado) !== 0) {
                 <div class="equipo-item">
                   <img
@@ -26,7 +23,6 @@
                   />
                   <span class="equipo-puntaje">{{ p.acumulado }}</span>
                   <div class="acumulado-chip">Acumulado</div>
-
                 </div>
               }
               @for (eq of p.equipos; track eq.nombre) {
@@ -44,10 +40,8 @@
                   </div>
               }
             </div>
-
         </div>
       }
-
     </div>
   </mat-card>
 </div>
