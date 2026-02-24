@@ -80,9 +80,6 @@ export class Service {
   }
 
   getParticipantesConPuntaje(): Observable<(Participante & {
-    equipos: Equipo[];
-    puntajeEquipos: number;
-    puntaje: number;
   })[]> {
     return this.getParticipantes().pipe(
       switchMap(participantes =>
@@ -196,7 +193,7 @@ export class Service {
     return from(
       this.supabase
         .from('asignacion')
-        .select('equipo_id, participante, equipos!inner(id,nombre,puntaje,pg,pe,pp,pw,pd,pc,sb,division,logo)')
+        .select('equipo_id, participante, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,logo)')
         .eq('participante', nombre)
     ).pipe(
       map(({ data, error }: any) => {
@@ -204,7 +201,6 @@ export class Service {
         return (data ?? []).map((row: any) => ({
           id: row.equipos.id,
           nombre: row.equipos.nombre,
-          puntaje: row.equipos.puntaje,
           division: row.equipos.division,
           logo: row.equipos.logo,
           pg: row.equipos.pg,
