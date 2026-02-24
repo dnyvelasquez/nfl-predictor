@@ -97,6 +97,10 @@
   color: #003366; 
 }
 
+.score{
+  width: 68px;
+}
+
 .controll {
   color: black;
   margin: 0 4px;

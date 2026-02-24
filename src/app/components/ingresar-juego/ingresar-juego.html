@@ -22,15 +22,15 @@
 
       <form [formGroup]="form" (ngSubmit)="guardar()" novalidate class="pg-form">
           <mat-form-field appearance="fill">
-          <mat-label>Equipo visitante</mat-label>
-          <mat-select formControlName="visitante">
-              @for (e of equipos; track e.id) {
-              <mat-option [value]="e.nombre">{{ e.nombre }}</mat-option>
-              }
-          </mat-select>
-          @if (f.visitante.touched && f.visitante.hasError('required')) {
-              <mat-error>Selecciona el equipo visitante</mat-error>
-          }
+            <mat-label>Equipo visitante</mat-label>
+            <mat-select formControlName="visitante">
+                @for (e of equipos; track e.id) {
+                <mat-option [value]="e.nombre">{{ e.nombre }}</mat-option>
+                }
+            </mat-select>
+            @if (f.visitante.touched && f.visitante.hasError('required')) {
+                <mat-error>Selecciona el equipo visitante</mat-error>
+            }
           </mat-form-field>
 
           <mat-form-field appearance="fill">
@@ -66,14 +66,12 @@
               <mat-error>La fecha es requerida</mat-error>
           }
           </mat-form-field>
-
           <mat-form-field appearance="fill">
-          <mat-label>Hora (HH:mm 24h)</mat-label>
-          <input matInput placeholder="20:15" formControlName="hora" />
-          @if (f.hora.touched && f.hora.hasError('required')) { <mat-error>La hora es requerida</mat-error> }
-          @if (f.hora.touched && f.hora.hasError('pattern')) { <mat-error>Formato válido: 00:00 a 23:59</mat-error> }
+            <mat-label>Hora (HH:mm 24h)</mat-label>
+            <input matInput placeholder="20:15" formControlName="hora" />
+            @if (f.hora.touched && f.hora.hasError('required')) { <mat-error>La hora es requerida</mat-error> }
+            @if (f.hora.touched && f.hora.hasError('pattern')) { <mat-error>Formato válido: 00:00 a 23:59</mat-error> }
           </mat-form-field>
-
           <div class="pg-actions">
           <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">
               {{ loading ? 'Guardando…' : 'Guardar' }}

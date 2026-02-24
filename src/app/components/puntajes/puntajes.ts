@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { AsyncPipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { Service, Equipo } from '../../services/data';
@@ -23,7 +26,10 @@ import { Router, RouterModule } from '@angular/router';
     MatIconModule,
     MatMenuModule,
     MatButtonModule,
-    RouterModule
+    RouterModule,
+    MatFormFieldModule,
+    MatInputModule,
+    FormsModule
   ],
   templateUrl: './puntajes.html',
   styleUrls: ['./puntajes.css']
@@ -38,12 +44,8 @@ export class Puntajes {
 
   }
 
-  modificarPuntos(equipo: Equipo, cambio: number) {
-    equipo.puntaje = (equipo.puntaje ?? 0) + cambio;
-  }
-
   guardarPuntos(equipo: Equipo) {
-    this.service.actualizarPuntaje(equipo.id, equipo.puntaje)
+    this.service.actualizarPuntaje(equipo.id, equipo.pg, equipo.pe, equipo.pp, equipo.pw, equipo.pd, equipo.pc, equipo.sb)
       .subscribe({
         next: () => alert(`Puntaje actualizado para ${equipo.nombre}`),
         error: () => alert('Error al actualizar puntaje:')

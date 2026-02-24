@@ -39,19 +39,45 @@
                   </span>
                 </div>
               </div>
+
+
               <div class="info">
-                <span class="puntaje">Puntaje:</span>
-                <button class="controll" mat-icon-button (click)="modificarPuntos(e, -5)">
-                    <mat-icon>remove</mat-icon>
-                </button>
-                <span class="puntaje">{{ e.puntaje }}</span>
-                <button class="controll" mat-icon-button (click)="modificarPuntos(e, 5)">
-                    <mat-icon>add</mat-icon>
-                </button>
-                <button class="controll" mat-icon-button (click)="guardarPuntos(e)">
-                    <mat-icon>update</mat-icon>
-                </button>
+                <mat-form-field appearance="fill" class="score">
+                  <mat-label>PG</mat-label>
+                  <input type="number" matInput placeholder="0" [(ngModel)]="e.pg" />                  
+                </mat-form-field>
+                <mat-form-field appearance="fill" class="score">
+                  <mat-label>PE</mat-label>
+                  <input type="number" matInput placeholder="0" [(ngModel)]="e.pe"  />
+                </mat-form-field>
+                <mat-form-field appearance="fill" class="score">
+                  <mat-label>PP</mat-label>
+                  <input type="number" matInput placeholder="0" [(ngModel)]="e.pp"  />
+                </mat-form-field>
               </div>
+              <div class="info">
+                <mat-form-field appearance="fill" class="score">
+                  <mat-label>PW</mat-label>
+                  <input type="number" matInput placeholder="0"  [(ngModel)]="e.pw" />                  
+                </mat-form-field>
+                <mat-form-field appearance="fill" class="score">
+                  <mat-label>PD</mat-label>
+                  <input type="number" matInput placeholder="0"  [(ngModel)]="e.pd" />                  
+                </mat-form-field>
+              </div>
+              <div class="info">
+                <mat-form-field appearance="fill" class="score">
+                  <mat-label>PC</mat-label>
+                  <input type="number" matInput placeholder="0"  [(ngModel)]="e.pc" />                  
+                </mat-form-field>
+                <mat-form-field appearance="fill" class="score">
+                  <mat-label>SB</mat-label>
+                  <input type="number" matInput placeholder="0"  [(ngModel)]="e.sb" />                  
+                </mat-form-field>
+              </div>
+              <button class="controll" mat-icon-button (click)="guardarPuntos(e)">
+                  <mat-icon>update</mat-icon>
+              </button>
             </div>
           </div>
         }
