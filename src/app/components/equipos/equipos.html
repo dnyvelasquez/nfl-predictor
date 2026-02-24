@@ -15,8 +15,10 @@
               <div class="equipos">
                 <div class="equipo">
                   <div>
-                    <div>{{ e.nombre }}</div>                
-                    <div class="score">{{ e.pg }}-{{ e.pe }}-{{ e.pp }}</div>                                      
+                    <div>{{ e.nombre }}</div> 
+                    @if (e.pg !== 0 || e.pe !== 0 || e.pp !== 0 ){
+                      <div class="score">{{ e.pg }}-{{ e.pe }}-{{ e.pp }}</div>
+                    }                                                                      
                   </div>
                   <div
                     [ngClass]="{
@@ -28,7 +30,7 @@
                   </div>
                 </div>
                 <div class="info">
-                  <span class="puntaje">{{ e.pg * 10 + e.pe * 5 }} puntos</span>
+                  <span class="puntaje">{{ e.pg * 10 + e.pe * 5 + e.pw * 20 + e.pd * 30 + e.pc * 40 + e.sb * 50 }} puntos</span>
                   <span class="participante">
                     {{ e.participante }}
                   </span>

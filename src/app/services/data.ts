@@ -220,23 +220,6 @@ export class Service {
     );
   }
   
-  actualizarPuntaje(id: string, pg: number, pe: number, pp: number, pw: number, pd: number, pc: number, sb: number): Observable<any> {
-    return from(
-      this.supabase
-        .from('equipos')
-        .update({ 
-          pg: pg,
-          pe: pe,
-          pp: pp,
-          pw: pw,
-          pd: pd,
-          pc: pc,
-          sb: sb,
-        })
-        .eq('id', id)
-    );
-  }  
-
   validarUsuario(): Observable<any> {
     return from(this.supabase.auth.getSession()).pipe(
       switchMap((sessionRes) => {
@@ -695,7 +678,24 @@ export class Service {
       );
   }
 
-  resetPuntajes() {
+  actualizarPuntaje(id: string, pg: number, pe: number, pp: number, pw: number, pd: number, pc: number, sb: number): Observable<any> {
+    return from(
+      this.supabase
+        .from('equipos')
+        .update({ 
+          pg: pg,
+          pe: pe,
+          pp: pp,
+          pw: pw,
+          pd: pd,
+          pc: pc,
+          sb: sb,
+        })
+        .eq('id', id)
+    );
+  }  
+
+  resetPuntajes(): Observable<any> {
     return from(
       this.supabase
         .from('equipos')
@@ -708,12 +708,7 @@ export class Service {
           pc: 0,
           sb: 0,
         })
-        .neq('pg', 0)
-    ).pipe(
-      map(({ error }: any) => {
-        if (error) throw error;
-        return { ok: true };
-      })
+        .not('id', 'is', null)
     );
   }
 

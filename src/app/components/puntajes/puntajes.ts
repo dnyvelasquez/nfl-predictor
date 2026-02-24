@@ -52,13 +52,7 @@ export class Puntajes {
       });
   }
   
-  logout(): void {
-    this.service.logout();
-    this.router.navigate(['/login']);
-  }  
-
-
-  resetAll() {
+    resetAll() {
     const ok = confirm('¿Poner en 0 el puntaje de TODOS los equipos?');
     if (!ok) return;
 
@@ -70,6 +64,11 @@ export class Puntajes {
       error: (e) => alert('Error al resetear puntajes: ' + (e?.message || ''))
     });
   }
+
+logout(): void {
+    this.service.logout();
+    this.router.navigate(['/login']);
+  }  
 
   acumular() {
     const ok = confirm('¿Sumar el puntaje de cada equipo al "acumulado" de su participante?');
@@ -83,6 +82,5 @@ export class Puntajes {
       error: (e) => alert('Error al acumular: ' + (e?.message || ''))
     });
   }
-
 
 }
