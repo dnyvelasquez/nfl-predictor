@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "fifa-predictor": {
+    "nfl-predictor": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -26,7 +26,7 @@
               "src/styles.css"
             ],
             "baseHref": "/",
-            "outputPath": "dist/fifa-predictor"
+            "outputPath": "dist/nfl-predictor"
           },
           "configurations": {
             "production": {
@@ -62,10 +62,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "fifa-predictor:build:production"
+              "buildTarget": "nfl-predictor:build:production"
             },
             "development": {
-              "buildTarget": "fifa-predictor:build:development"
+              "buildTarget": "nfl-predictor:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -91,7 +91,7 @@
         "deploy": {
           "builder": "angular-cli-ghpages:deploy",
           "options": {
-            "baseHref": "/fifa-predictor/", 
+            "baseHref": "/nfl-predictor/", 
             "name": "dnyvelasquez",
             "email": "dny.velasquez@gmail.com"
           }
