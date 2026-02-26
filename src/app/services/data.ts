@@ -299,7 +299,6 @@ export class Service {
 
   getJuegosSemanaActual(): Observable<Juego[]> {
     const hoy = this.hoyYYYYMMDD();
-
     const semanaId$ = from(
       this.supabase
         .from('semana')
