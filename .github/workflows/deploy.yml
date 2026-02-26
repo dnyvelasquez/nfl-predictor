@@ -24,8 +24,13 @@ jobs:
       - name: Build Angular app
         run: npx ng build nfl-predictor --configuration production
 
+      - name: SPA fallback for GitHub Pages
+        run: cp ./dist/nfl-predictor/browser/index.html ./dist/nfl-predictor/browser/404.html
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist/nfl-predictor/browser
+
+      
