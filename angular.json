@@ -16,16 +16,13 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
+              { "glob": "**/*", "input": "public" }
             ],
             "styles": [
               "src/custom-theme.scss",
               "src/styles.css"
             ],
-            "baseHref": "/",
+            "baseHref": "/nfl-predictor/",
             "outputPath": "dist/nfl-predictor"
           },
           "configurations": {
