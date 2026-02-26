@@ -1,5 +1,5 @@
 {
-  "name": "nfl-predictor",
+  "name": "fifa-predictor",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:nfl-predictor": "node dist/nfl-predictor/server/server.mjs"
+    "serve:ssr:fifa-predictor": "node dist/fifa-predictor/server/server.mjs"
   },
   "prettier": {
     "printWidth": 100,
