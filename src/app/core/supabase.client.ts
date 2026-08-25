@@ -1,14 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseAuthAdapter } from '@neondatabase/neon-js';
 import { environment } from '../../environments/environment';
 
-export const supabase = createClient(
-  environment.supabaseUrl,
-  environment.supabaseAnonKey,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  }
-);
+export const supabase: any = createClient({
+  auth: {
+    url: environment.neonAuthUrl,
+    adapter: SupabaseAuthAdapter(),
+    allowAnonymous: true,
+  },
+  dataApi: {
+    url: environment.neonDataApiUrl,
+  },
+});

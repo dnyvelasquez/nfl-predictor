@@ -1,8 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, map, of, switchMap, forkJoin, catchError, throwError } from 'rxjs';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { environment } from '../../environments/environment';
+import { Observable, from, map, of, switchMap, forkJoin, catchError } from 'rxjs';
 import { supabase } from '../core/supabase.client';
 
 export interface Participante {
@@ -55,11 +52,10 @@ export interface Asignacion {
 })
 export class Service { 
 
-  private supabase: SupabaseClient;
-  private FUNCTION_URL = environment.functionAuthUrl;
+  private supabase = supabase;
 
-  constructor(private http: HttpClient) {
-    this.supabase = supabase;
+  private admin() {
+    return this.supabase.auth.getBetterAuthInstance().admin;
   }
   
   getParticipantes(): Observable<Participante[]> {
@@ -216,26 +212,9 @@ export class Service {
     );
   }
   
-  validarUsuario(): Observable<any> {
-    return from(this.supabase.auth.getSession()).pipe(
-      switchMap((sessionRes) => {
-        const token = sessionRes.data.session?.access_token;
-        if (!token) {
-          return of({ error: 'No hay sesión activa' });
-        }
-        return this.http.get(this.FUNCTION_URL, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-      }),
-      catchError(err => of({ error: err.message }))
-    );
-  }
-
   getSession$() {
     return from(this.supabase.auth.getSession()).pipe(
-      map(({ data }) => data.session ?? null)
+      map(({ data }: any) => data.session ?? null)
     );
   }
 
@@ -247,7 +226,7 @@ export class Service {
     return from(
       this.supabase.auth.signInWithPassword({ email, password })
     ).pipe(
-      map(({ data, error }) => {
+      map(({ data, error }: any) => {
         if (error) {
           return { error: error.message };
         }
@@ -258,7 +237,7 @@ export class Service {
 
   logout(): Observable<any> {
     return from(this.supabase.auth.signOut()).pipe(
-      map(({ error }) => {
+      map(({ error }: any) => {
         if (error) {
           return { error: error.message };
         }
@@ -443,86 +422,55 @@ export class Service {
   }
 
   createUserAsAdmin(email: string, password: string, fullName?: string) {
-    return from(this.supabase.auth.getSession()).pipe(
-      switchMap(({ data }) => {
-        const token = data.session?.access_token;
-        if (!token) return throwError(() => new Error('No autenticado'));
-
-        return this.http.post(
-          environment.functionCreateUserUrl,
-          { email, password, fullName },
-          {
-            headers: new HttpHeaders({
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            })
-          }
-        );
+    return from(
+      this.admin().createUser({
+        email,
+        password,
+        name: fullName || email,
+      })
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return { ok: true, userId: data?.user?.id };
       })
     );
   }
 
   listUsers(page = 1, perPage = 20, q = '') {
-    return from(this.supabase.auth.getSession()).pipe(
-      switchMap(({ data }) => {
-        const token = data.session?.access_token;
-        if (!token) return of({ error: 'No autenticado' });
-        const url = `${environment.functionListUsersUrl}?page=${page}&perPage=${perPage}&q=${encodeURIComponent(q)}`;
-        return this.callFn(url, { headers: { Authorization: `Bearer ${token}` } });
+    return from(
+      this.admin().listUsers({ query: { limit: perPage, offset: (page - 1) * perPage } })
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        let users = data?.users ?? [];
+        const query = q.toLowerCase().trim();
+        if (query) {
+          users = users.filter((u: any) =>
+            u.email?.toLowerCase().includes(query) ||
+            (u.name ?? '').toLowerCase().includes(query)
+          );
+        }
+        return {
+          page,
+          perPage,
+          users: users.map((u: any) => ({
+            id: u.id,
+            email: u.email,
+            full_name: u.name ?? null,
+            created_at: u.createdAt,
+            last_sign_in_at: null,
+          })),
+        };
       }),
-      catchError(err => of({ error: err?.message || 'Error listando usuarios' }))
+      catchError((err) => of({ error: err?.message || 'Error listando usuarios', users: [] }))
     );
   }
 
   deleteUser(userId: string) {
-    return from(this.supabase.auth.getSession()).pipe(
-      switchMap(({ data }) => {
-        const token = data.session?.access_token;
-        if (!token) return of({ error: 'No autenticado' });
-        return this.http.post(
-          environment.functionDeleteUserUrl,
-          { userId },
-          { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-        );
-      }),
-      catchError(err => of({ error: err?.message || 'Error eliminando usuario' }))
-    );
-  }
-
-
-
-
-  private callFn<T = any>(url: string, init?: RequestInit) {
-    return from(this.supabase.auth.getSession()).pipe(
-      switchMap(async ({ data }) => {
-        let token = data.session?.access_token;
-        if (!token) {
-          await new Promise(r => setTimeout(r, 200));
-          token = (await this.supabase.auth.getSession()).data.session?.access_token ?? undefined;
-        }
-        if (!token) throw new Error('No autenticado');
-
-        const headers = new Headers(init?.headers);
-        headers.set('Authorization', `Bearer ${token}`);
-        if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-
-        const res1 = await fetch(url, { ...init, headers });
-        if (res1.status !== 401) {
-          if (!res1.ok) throw new Error(await res1.text());
-          return (await res1.json()) as T;
-        }
-
-        const r = await this.supabase.auth.refreshSession();
-        const t2 = r.data.session?.access_token;
-        if (!t2) throw new Error('Sesión expirada');
-
-        const headers2 = new Headers(init?.headers);
-        headers2.set('Authorization', `Bearer ${t2}`);
-        if (!headers2.has('Content-Type')) headers2.set('Content-Type', 'application/json');
-
-        const res2 = await fetch(url, { ...init, headers: headers2 });
-        if (!res2.ok) throw new Error(await res2.text());
-        return (await res2.json()) as T;
+    return from(this.admin().removeUser({ userId })).pipe(
+      map(({ error }: any) => {
+        if (error) throw error;
+        return { ok: true };
       })
     );
   }
@@ -727,7 +675,7 @@ export class Service {
         const totales: Record<string, number> = {};
         for (const row of asign.data ?? []) {
           const nombre = (row.participante || '').trim();
-          const pts = Number((row.equipos?.pg ?? 0) * 10 + (row.equipos?.pe ?? 0) * 5 + (row.equipos?.pw ?? 0) * 20 + (row.equipos?.pd ?? 0) * 30 + (row.equipos?.pc ?? 0) * 40 + (row.equipos?.pe ?? 0) * 50);
+          const pts = Number((row.equipos?.pg ?? 0) * 10 + (row.equipos?.pe ?? 0) * 5 + (row.equipos?.pw ?? 0) * 20 + (row.equipos?.pd ?? 0) * 30 + (row.equipos?.pc ?? 0) * 40 + (row.equipos?.sb ?? 0) * 50);
           if (!nombre || !pts) continue;
           totales[nombre] = (totales[nombre] ?? 0) + pts;
         }
