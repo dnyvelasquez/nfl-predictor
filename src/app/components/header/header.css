@@ -18,6 +18,12 @@
   flex: 1 1 auto;
 }
 
+.title {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
 .menu-desktop {
   display: none;
 }
@@ -50,7 +56,7 @@
   .mobile-2 {
     display: none;
   }
-} 
+}
 
 @media (min-width: 1020px) {
   .menu-desktop {
@@ -68,4 +74,51 @@
   .menu-mobile-2 {
     display: none;
   }
-} 
+}
+
+.menu-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-left: 4px;
+}
+
+/* Elimina el espacio entre el botón y el menú */
+::ng-deep .submenu-hover {
+  top: calc(100% - 8px) !important;
+}
+
+::ng-deep .submenu-hover .mat-menu-panel {
+  min-width: 180px !important;
+  margin-top: 0 !important;
+}
+
+/* Hace que el menú sea más amigable con el hover */
+::ng-deep .submenu-hover .mat-menu-content {
+  padding: 0 !important;
+}
+
+/* El div interno captura el hover correctamente */
+::ng-deep .submenu-hover .mat-menu-content > div {
+  padding: 8px 0;
+}
+
+::ng-deep .mat-menu-item {
+  font-size: 14px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+}
+
+/* Asegura que el menú no desaparezca bruscamente */
+::ng-deep .cdk-overlay-connected-position-bounding-box {
+  pointer-events: auto !important;
+}
+
+::ng-deep .mat-menu-panel {
+  transition-delay: 0s !important;
+}

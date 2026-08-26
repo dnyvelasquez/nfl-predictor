@@ -11,35 +11,34 @@
     <mat-divider></mat-divider>
 
     <div class="button-container">
-      <button mat-menu-item routerLink="/puntajes">
+      <button mat-button routerLink="/puntajes">
         <mat-icon>leaderboard</mat-icon>
         <span>Puntajes</span>
       </button>
-      <button mat-menu-item routerLink="/ingresar-juego">
+      <button mat-button routerLink="/ingresar-juego">
         <mat-icon>sports_football</mat-icon>
         <span>Ingresar Juego</span>
       </button>
-      <button mat-menu-item routerLink="/participantes">
+      <button mat-button routerLink="/participantes">
         <mat-icon>people</mat-icon>
         <span>Participantes</span>
       </button>
-      <button mat-menu-item routerLink="/asignacion">
+      <button mat-button routerLink="/asignacion">
         <mat-icon>dashboard_customize</mat-icon>
         <span>Asignación</span>
       </button>
-      <button mat-menu-item routerLink="/nuevo-usuario">
+      <button mat-button routerLink="/nuevo-usuario">
         <mat-icon>add-user</mat-icon>
         <span>Nuevo Usuario</span>
       </button>
-      <button mat-menu-item routerLink="/borrar-usuario">
+      <button mat-button routerLink="/borrar-usuario">
         <mat-icon>delete-user</mat-icon>
         <span>Borrar Usuario</span>
       </button>
-      <button mat-menu-item (click)="logout()">
+      <button mat-button (click)="logout()">
         <mat-icon>logout</mat-icon>
         <span>Logout</span>
       </button>
     </div>
   </mat-card>
 </div>
-

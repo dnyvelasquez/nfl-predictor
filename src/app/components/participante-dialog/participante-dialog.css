@@ -1,0 +1,295 @@
+.tabla-puntajes-container-dialog {
+    background-color: #003B73;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: auto;
+}
+
+.tabla-puntajes-card-dialog {
+    margin: 8px;
+    padding: 20px;
+    text-align: center;
+    width: 100%;
+    max-width: 600px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.logo {
+    width: 60px;
+}
+
+.tabla-puntajes-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    margin: 0;
+}
+
+.close-button {
+    position: absolute;
+    right: 0;
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: white;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+    opacity: 0.8;
+}
+
+.close-button:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.table-container {
+    margin-top: 20px;
+    border-radius: 12px;
+}
+
+.tabla-puntajes-table {
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.participante-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 4px 0;
+}
+
+.participante {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 12px 20px;
+    color: white;
+}
+
+.participante-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.puntaje-item {
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.equipos-section {
+    padding: 16px;
+}
+
+.equipos-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+}
+
+.equipo-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background-color: #f5f5f5;
+    border-radius: 12px;
+    min-width: 100px;
+    transition: all 0.2s;
+}
+
+.equipo-item:hover {
+    background-color: #e8e8e8;
+    transform: translateY(-2px);
+}
+
+.equipo-nombre {
+    font-size: 0.9rem;
+    text-align: center;
+    color: #003B73;
+}
+
+.equipo-logo {
+    width: 100px;
+    height: 60px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.equipo-puntaje {
+    font-weight: bold;
+    color: #003366;
+    font-size: 0.85rem;
+    background-color: rgba(0, 51, 102, 0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.chip-afc,
+.chip-nfc {
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.chip-afc {
+    background-color: #d32f2f;
+}
+
+.chip-nfc {
+    background-color: #1976d2;
+}
+
+.acumulado-chip {
+    background-color: #FFB612;
+    color: #fff;
+}
+
+
+@media (min-width: 769px) {
+    .tabla-puntajes-card-dialog {
+    max-width: 700px;
+    }
+
+    .equipos-lista {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 24px;
+    }
+
+    .equipo-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    min-width: 80px;
+    padding: 16px 24px;
+    }
+
+    .equipo-info-derecha {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
+    }
+
+    .equipo-nombre {
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-align: left;
+    margin: 0;
+    color: #003B73;
+    }
+
+    .equipo-puntaje {
+    font-size: 0.95rem;
+    display: inline-block;
+    background-color: rgba(0, 51, 102, 0.1);
+    }
+
+    .chip-afc,
+    .chip-nfc {
+    font-size: 0.75rem;
+    display: inline-block;
+    }
+}
+
+@media (max-width: 768px) {
+    .tabla-puntajes-card-dialog {
+    max-width: 95%;
+    padding: 16px;
+    }
+
+    .header {
+    gap: 8px;
+    }
+
+    .tabla-puntajes-title {
+    font-size: 20px;
+    }
+
+    .logo {
+    width: 45px;
+    }
+
+    .participante {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+    }
+
+    .equipos-lista {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    }
+
+    .equipo-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 160px;
+    padding: 12px;
+    }
+
+    .equipo-nombre {
+    font-size: 1rem;
+    font-weight: bold;
+    order: 1;
+    }
+
+    .equipo-logo {
+    width: 60px;
+    height: 40px;
+    order: 2;
+    }
+
+    .equipo-puntaje {
+    font-size: 0.9rem;
+    order: 3;
+    }
+
+    .chip-afc,
+    .chip-nfc {
+    font-size: 0.75rem;
+    order: 4;
+    }
+
+    .acumulado-chip {
+    order: 4;
+    }
+
+    .equipo-info-derecha {
+    display: contents;
+    }
+}

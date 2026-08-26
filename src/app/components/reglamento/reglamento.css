@@ -1,7 +1,7 @@
 .reglamento-container {
   padding-top: 80px;
   padding-bottom: 20px;
-  background-color: #003366;
+  background-color: #003B73;
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -11,7 +11,7 @@
 .reglamento-card {
   max-width: 90%;
   padding: 20px;
-  }
+}
 
 .reglamento-title {
   font-size: 24px;
@@ -22,30 +22,37 @@
 .container {
   overflow-x: auto;
   background-color: white;
-  border-radius: 2%;
+  border-radius: 16px;
   color: black;
 }
 
 .logo {
   width: 50px;
+  height: auto;
+  content-visibility: auto;
 }
-
 
 .header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
-  margin-bottom: 15px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 li {
-  padding-top: 4px;
-  padding-bottom: 4px;
-  padding-left: 4px;
+  padding: 4px;
 }
 
 li::marker {
-  color: #003366;
+  color: #003B73;
   font-weight: bold;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

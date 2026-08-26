@@ -8,13 +8,11 @@
     </div>
 
     <div class="button-container">
-      <button class="left" mat-menu-item routerLink="/admin">
+      <button class="left" mat-icon-button routerLink="/admin" aria-label="Volver">
         <mat-icon>arrow_back</mat-icon>
-        <span>Volver</span>
       </button>
-      <button class="right" mat-menu-item (click)="logout()">
+      <button class="right" mat-icon-button (click)="logout()" aria-label="Logout">
         <mat-icon>logout</mat-icon>
-        <span>Logout</span>
       </button>
     </div>
 

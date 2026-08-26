@@ -2,3 +2,21 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.participante-dialog-panel {
+  max-width: 90vw !important;
+  width: auto !important;
+}
+
+.participante-dialog-panel .mat-mdc-dialog-container {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  background-color: transparent !important;
+}
+
+.participante-dialog-panel .mat-mdc-dialog-container .mdc-dialog__surface {
+  border-radius: 16px !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}

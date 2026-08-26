@@ -1,7 +1,7 @@
 .tabla-puntajes-container {
   padding-top: 80px;
   padding-bottom: 20px;
-  background-color: #003366;
+  background-color: #003B73;
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -9,9 +9,10 @@
 }
 
 .tabla-puntajes-card {
-  max-width: 90%;
+  margin-top: 32px;
   padding: 20px;
   text-align: center;
+  max-width: 90%;
 }
 
 .header {
@@ -23,132 +24,294 @@
 }
 
 .logo {
-  width: 50px;
+  width: 60px;
 }
 
 .tabla-puntajes-title {
   font-size: 24px;
   font-weight: bold;
+  color: white;
 }
 
 .table-container {
-  overflow-x: auto;
+  margin-top: 20px;
   border-radius: 12px;
-  color: black;
 }
 
 .tabla-puntajes-table {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
   background-color: white;
-  overflow: hidden; 
-  border-bottom: 1px solid #ddd;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
 }
 
-.puntaje {
-  font-size: large;
-  font-weight: bold;
+.tabla-puntajes-table:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.participante-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 4px 0;
 }
 
 .participante {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: large;
+  justify-content: space-between;
+  font-size: 1.1rem;
   font-weight: bold;
-  padding: 12px 8px 8px 8px;
+  padding: 12px 20px;
+  color: white;
 }
 
-.equipos-group {
-  margin: 8px;
-  padding-top: 8px;
-  border-style: dashed;
-  border-color: #333;
-  border-width: 1px;
-  border-radius: 4px;
+.participante-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.puntaje-item {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.equipos-section {
+  padding: 16px;
 }
 
 .equipos-lista {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 16px;
   justify-content: center;
-  padding: 8px 8px;
-}
-
-.temporada {
-  font-weight: bold;
-}
-
-.equipo-logo {
-  width: 40px;
-  height: 40px;
-}
-
-.equipo-puntaje {
-  font-weight: bold;
-  color: #000;
-  font-size: 14px;
 }
 
 .equipo-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-left: 8px;
-  padding-right: 8px;
-  gap: 4px;
+  gap: 8px;
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  min-width: 80px;
+  transition: all 0.2s;
 }
 
-.equipo-info {
-  display: flex;
-  flex-direction: column;
-  font-size: 12px;
-  color: #333;
+.equipo-item:hover {
+  background-color: #e8e8e8;
+  transform: translateY(-2px);
 }
 
-.participante-item {
-  padding-left: 8px;
-  padding-right: 8px;
+.equipo-nombre {
+  font-size: 0.9rem;
+  text-align: center;
+  color: #003B73;
 }
 
-.puntaje-item {
-  padding-left: 8px;
-  padding-right: 8px;
-  color: #003366; 
+.equipo-logo {
+  width: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.equipo-puntaje {
+  font-weight: bold;
+  color: #003B73;
+  font-size: 0.85rem;
+  background-color: rgba(0, 51, 102, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.chip-afc,
+.chip-nfc {
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 500;
 }
 
 .chip-afc {
-  background-color: #d32f2f; 
-  color: #fff;
-  font-size: 0.7em;
-  padding: 4px;
-  border-radius: 8px;
+  background-color: #d32f2f;
 }
 
 .chip-nfc {
-  background-color: #1976d2; 
-  color: #fff;
-  font-size: 0.7em;
-  padding: 4px;
-  border-radius: 8px;
+  background-color: #1976d2;
 }
 
-.acumulado-chip{
-  background-color: #FFB612; 
+.acumulado-chip {
+  background-color: #FFB612;
   color: #fff;
-  font-size: 0.7em;
-  padding: 4px;
-  border-radius: 8px;
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 500;
 }
 
+@media (min-width: 769px) {
+  .tabla-puntajes-card {
+    max-width: 80%;
+  }
+
+  .equipos-lista {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .equipo-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    min-width: 80px;
+    padding: 16px 24px;
+  }
+
+  .equipo-info-derecha {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .equipo-nombre {
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-align: left;
+    margin: 0;
+    color: #003B73;
+  }
+
+  .equipo-puntaje {
+    font-size: 0.95rem;
+    display: inline-block;
+    background-color: rgba(0, 51, 102, 0.1);
+  }
+
+  .chip-afc,
+  .chip-nfc {
+    font-size: 0.75rem;
+    display: inline-block;
+  }
+}
 
 @media (max-width: 768px) {
-  .tabla-puntajes-table {
+  .participante {
     flex-direction: column;
+    gap: 8px;
+    text-align: center;
   }
+
+  .equipos-lista {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
   .equipo-item {
-    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 240px;
+    min-width: 80px;
+    padding: 12px;
   }
+
+  .equipo-nombre {
+    font-size: 1rem;
+    font-weight: bold;
+    order: 1;
+  }
+
+  .equipo-logo {
+    width: 80px;
+    order: 2;
+  }
+
+  .equipo-puntaje {
+    font-size: 0.9rem;
+    order: 3;
+  }
+
+  .chip-afc,
+  .chip-nfc {
+    font-size: 0.75rem;
+    order: 4;
+  }
+
+  .acumulado-chip {
+    order: 4;
+  }
+
+  .equipo-info-derecha {
+    display: contents;
+  }
+}
+
+.loading-overlay,
+.error-overlay,
+.empty-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 16px;
+  background-color: white;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.loading-overlay p,
+.error-overlay p,
+.empty-overlay p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.error-overlay {
+  color: #d32f2f;
+}
+
+.error-overlay mat-icon {
+  color: #d32f2f;
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+.empty-overlay mat-icon {
+  color: #999;
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabla-puntajes-table,
+  .equipo-item {
+    transition: none;
+  }
+
+  .tabla-puntajes-table:hover,
+  .equipo-item:hover {
+    transform: none;
+  }
+}
+
+img[loading="lazy"] {
+  content-visibility: auto;
 }

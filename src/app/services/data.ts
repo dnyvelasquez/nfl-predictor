@@ -9,6 +9,8 @@ export interface Participante {
   acumulado: number;
   puntaje?: number;
   equipos?: Equipo[];
+  max?: boolean;
+  second?: boolean;
 }
 
 export interface Equipo {
@@ -91,7 +93,21 @@ export class Service {
           )
         )
       ),
-      map(list => list.sort((a, b) => b.puntaje - a.puntaje))
+      map(list => {
+        const participantesOrdenados = list.sort((a, b) => b.puntaje - a.puntaje);
+        const puntajesUnicos = [...new Set(participantesOrdenados.map(p => p.puntaje))]
+          .filter(p => p > 0)
+          .sort((a, b) => b - a);
+        const primerPuntaje = puntajesUnicos.length > 0 ? puntajesUnicos[0] : 0;
+        const hayEmpatePrimerLugar = participantesOrdenados.filter(p => p.puntaje === primerPuntaje).length > 1;
+        const segundoPuntaje = !hayEmpatePrimerLugar && puntajesUnicos.length > 1 ? puntajesUnicos[1] : 0;
+
+        return participantesOrdenados.map(p => ({
+          ...p,
+          max: p.puntaje === primerPuntaje && p.puntaje > 0,
+          second: !hayEmpatePrimerLugar && p.puntaje === segundoPuntaje && p.puntaje > 0
+        }));
+      })
     );
   }
 

@@ -5,7 +5,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #0b2d5c; 
+  background-color: #003B73;
 }
 
 .admin-card {
@@ -13,6 +13,7 @@
   padding: 20px;
   text-align: center;
   max-width: 70%;
+  width: 100%;
 }
 
 .header {
@@ -20,10 +21,13 @@
   align-items: center;
   justify-content: center;
   gap: 15px;
+  flex-wrap: wrap;
 }
 
 .logo {
   width: 50px;
+  height: auto;
+  content-visibility: auto;
 }
 
 .subtitle {
@@ -36,11 +40,72 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 10px;
+  justify-content: center;
+  gap: 12px;
   width: 100%;
+  margin-top: 20px;
 }
 
 .button-container button {
-  flex: 1 1 150px !important;
-  max-width: 200px !important;
+  min-width: 160px;
+  padding: 12px 16px;
+  color: #003B73;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  transition: transform 0.2s, background-color 0.2s;
+  cursor: pointer;
+}
+
+.button-container button:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+.button-container button:active {
+  transform: translateY(0);
+}
+
+.button-container mat-icon {
+  margin-right: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-card {
+    max-width: 90%;
+  }
+
+  .button-container button {
+    min-width: 140px;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-card {
+    max-width: 95%;
+  }
+
+  .button-container button {
+    min-width: 120px;
+    flex: 1 1 auto;
+  }
+
+  .header {
+    gap: 8px;
+  }
+
+  .header h1 {
+    font-size: 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button-container button {
+    transition: none;
+  }
+
+  .button-container button:hover {
+    transform: none;
+  }
 }

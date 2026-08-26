@@ -1,7 +1,7 @@
 .puntajes-container {
   padding-top: 80px;
   padding-bottom: 20px;
-  background-color: #003366;
+  background-color: #003B73;
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -94,11 +94,89 @@
 
 .puntaje {
   font-weight: bold;
-  color: #003366; 
+  color: #003B73; 
 }
 
-.score{
-  width: 68px;
+.score {
+  width: 75px;
+}
+
+::ng-deep .score .mdc-text-field {
+  background-color: transparent !important;
+}
+
+::ng-deep .score .mdc-text-field--filled {
+  background-color: transparent !important;
+  border: 2.5px solid #1a1a1a !important;
+  border-radius: 10px !important;
+}
+
+::ng-deep .score .mdc-text-field--focused {
+  border-color: #FFB612 !important;
+  border-width: 2.5px !important;
+}
+
+::ng-deep .score .mdc-text-field__input {
+  color: #1a1a1a !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+  padding: 14px 8px 10px 8px !important;
+  font-size: 14px !important;
+}
+
+/* Label más grande y centrado en la línea - SIN fondo azul */
+::ng-deep .score .mdc-floating-label {
+  left: 12px !important;
+  color: #1a1a1a !important;
+  background-color: transparent !important;
+  padding: 0 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Cuando el label está flotando (arriba) - SIN fondo azul */
+::ng-deep .score .mdc-floating-label--float-above {
+  transform: translateY(-135%) scale(0.9) !important;
+  background-color: transparent !important;
+  color: #1a1a1a !important;
+}
+
+/* Focus - label cambia de color */
+::ng-deep .score .mdc-text-field--focused .mdc-floating-label {
+  color: #FFB612 !important;
+}
+
+/* Quitar efectos de Material */
+::ng-deep .score .mdc-line-ripple::before,
+::ng-deep .score .mdc-line-ripple::after {
+  display: none !important;
+}
+
+::ng-deep .score .mat-mdc-form-field-focus-overlay {
+  background-color: transparent !important;
+}
+
+::ng-deep .score .mdc-text-field--filled:hover {
+  background-color: transparent !important;
+}
+
+::ng-deep .score .mat-mdc-form-field-subscript-wrapper {
+  display: none !important;
+}
+
+/* Quitar el fondo gris del autocompletado */
+::ng-deep .score input:-webkit-autofill,
+::ng-deep .score input:-webkit-autofill:hover,
+::ng-deep .score input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px #003B73 inset !important;
+  -webkit-text-fill-color: #1a1a1a !important;
+}
+
+/* Ajuste del contenedor */
+::ng-deep .score .mat-mdc-form-field-infix {
+  padding: 8px 0 !important;
+  min-height: auto !important;
 }
 
 .controll {
@@ -112,6 +190,7 @@
   justify-content: space-between;
   gap: 10px;
   width: 100%;
+  margin-bottom: 20px;
 }
 
 .left {

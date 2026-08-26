@@ -8,16 +8,14 @@
         </div>
 
         <div class="button-container">
-        <button class="left" mat-menu-item routerLink="/admin">
+        <button class="left" mat-icon-button routerLink="/admin" aria-label="Volver">
             <mat-icon>arrow_back</mat-icon>
-            <span>Volver</span>
         </button>
         <button mat-stroked-button class="reset" (click)="resetAll()">
             <mat-icon>restart_alt</mat-icon>&nbsp;Reset
         </button>
-        <button class="right" mat-menu-item (click)="logout()">
+        <button class="right" mat-icon-button (click)="logout()" aria-label="Logout">
             <mat-icon>logout</mat-icon>
-            <span>Logout</span>
         </button>
         </div>
 

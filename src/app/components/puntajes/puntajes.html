@@ -8,9 +8,8 @@
     </div>
 
     <div class="button-container">
-      <button class="left" mat-menu-item routerLink="/admin">
+      <button class="left" mat-icon-button routerLink="/admin" aria-label="Volver">
         <mat-icon>arrow_back</mat-icon>
-        <span class="hidden">Volver</span>
       </button>
       <button mat-stroked-button (click)="acumular()">
           <mat-icon>calculate</mat-icon>&nbsp;Acumular
@@ -18,9 +17,8 @@
       <button mat-stroked-button (click)="resetAll()">
           <mat-icon>restart_alt</mat-icon>&nbsp;Reset
       </button>
-      <button class="right" mat-menu-item (click)="logout()">
+      <button class="right" mat-icon-button (click)="logout()" aria-label="Logout">
         <mat-icon>logout</mat-icon>
-        <span class="hidden">Logout</span>
       </button>
     </div>
       
