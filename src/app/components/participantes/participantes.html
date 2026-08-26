@@ -46,7 +46,12 @@
         </button>
       </form>
 
-      @if (loading) { <p>Cargando…</p> }
+      @if (loading) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Cargando participantes...</p>
+        </div>
+      }
       @if (errorMsg) { <div class="error">{{ errorMsg }}</div> }
       @if (okMsg) { <div class="info">{{ okMsg }}</div> }
 
@@ -72,8 +77,8 @@
                 </div>
 
                 <div class="cell a">
-                  <button mat-stroked-button (click)="startEdit(p)">Editar</button>
-                  <button mat-button color="warn" (click)="remove(p)">Eliminar</button>
+                  <button mat-stroked-button (click)="startEdit(p)" [disabled]="loading">Editar</button>
+                  <button mat-button color="warn" (click)="remove(p)" [disabled]="loading">Eliminar</button>
                 </div>
               </div>
             } @else {
@@ -96,7 +101,7 @@
                     [disabled]="editForms[p.id]?.invalid || loading">
                     Guardar
                   </button>
-                  <button mat-button (click)="cancelEdit(p)">Cancelar</button>
+                  <button mat-button (click)="cancelEdit(p)" [disabled]="loading">Cancelar</button>
                 </div>
               </div>
             }

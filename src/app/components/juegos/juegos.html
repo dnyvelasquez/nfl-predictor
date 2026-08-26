@@ -1,7 +1,7 @@
 <div class="juegos-container">
   <mat-card class="juegos-card">
     <div class="header">
-      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
+      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo" loading="lazy">
       <mat-card-title class="juegos-title">
         @if (currentWeekId === 22) {
           SUPER BOWL
@@ -28,58 +28,73 @@
       <mat-divider></mat-divider>
     </div>
 
-    <div class="table-container">
-      @for (j of juegos$ | async; track j.id) {
-        <div class="juegos-table">
-          <div class="equipos">
-            <div class="equipo-visitante">
-              <img [src]="j.logoVisitante" alt="{{ j.visitante }}" class="equipo-logo">
-              <div class="equipo">
-                <span>{{ j.visitante }}</span>
-                @if ((j.participanteVisitante || '').trim()) {
-                  <span class="participante">{{ j.participanteVisitante }}</span>
-                } @else {
-                  <span class="participante muted">No asignado</span>
-                }              
+    @if (loading) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Cargando juegos...</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        @for (grupo of juegosAgrupados; track grupo.fecha) {
+          <div class="fecha-group">
+            <div class="fecha-header">
+              <div class="info">
+                <mat-icon>calendar_today</mat-icon>
+                <h3>{{ grupo.fecha }}</h3>
               </div>
             </div>
-            <span class="vs">Vs</span>
-            <div class="equipo-local">
-              <div class="equipo">
-                <span>{{ j.local }}</span>
-                @if ((j.participanteLocal || '').trim()) {
-                  <span class="participante">{{ j.participanteLocal }}</span>
-                } @else {
-                  <span class="participante muted">No asignado</span>
-                }
-              </div>
-              <img [src]="j.logoLocal" alt="{{ j.local }}" class="equipo-logo">
+            <div class="subtable">
+              @for (j of grupo.juegos; track j.id) {
+                <div class="grid-row">
+                  <div class="equipo equipo-local">
+                    <img [src]="j.logoLocal" [alt]="j.local" class="equipo-logo" loading="lazy">
+                    <div class="equipo-info">
+                      <span class="nombre">{{ j.local }}</span>
+                      @if ((j.participanteLocal || '').trim()) {
+                        <span class="participante">{{ j.participanteLocal }}</span>
+                      } @else {
+                        <span class="participante">No asignado</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="vs">
+                    <span>Vs</span>
+                  </div>
+                  <div class="equipo equipo-visitante">
+                    <img [src]="j.logoVisitante" [alt]="j.visitante" class="equipo-logo" loading="lazy">
+                    <div class="equipo-info">
+                      <span class="nombre">{{ j.visitante }}</span>
+                      @if ((j.participanteVisitante || '').trim()) {
+                        <span class="participante">{{ j.participanteVisitante }}</span>
+                      } @else {
+                        <span class="participante muted">No asignado</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="scheduled">
+                    <mat-icon>schedule</mat-icon>
+                    <span>{{ j.hora }}</span>
+                  </div>
+                </div>
+              }
             </div>
           </div>
-
-          <div class="info">
-            <span class="schec">{{ j.fecha }}</span>
-            <span class="schec">{{ j.hora }}</span>
+        } @empty {
+          <div class="no-juegos">
+            <mat-icon>sports_football</mat-icon>
+            <p>No hay juegos programados para esta semana</p>
           </div>
-        </div>
-      }
-    </div>    
-
+        }
+      </div>
+    }
   </mat-card>
 
   <button class="fab-left" mat-fab (click)="prevWeek()"
-    [disabled]="currentWeekId === null || minWeek === null || currentWeekId <= minWeek">
+    [disabled]="currentWeekId === null || minWeek === null || currentWeekId <= minWeek || loading">
     <mat-icon>chevron_left</mat-icon>
   </button>
-
   <button class="fab-right" mat-fab (click)="nextWeek()"
-    [disabled]="currentWeekId === null || maxWeek === null || currentWeekId >= maxWeek">
+    [disabled]="currentWeekId === null || maxWeek === null || currentWeekId >= maxWeek || loading">
     <mat-icon>chevron_right</mat-icon>
   </button>
-
-
-
-
-
 </div>
-

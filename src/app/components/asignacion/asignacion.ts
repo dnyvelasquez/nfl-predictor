@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, signal } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Service, Participante, Equipo } from '../../services/data';
 import { forkJoin } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
@@ -23,10 +24,12 @@ type AsignacionRow = { id?: string; equipo_id: string; participante: string };
     MatIconModule,
     MatDividerModule,
     RouterModule,
-    MatMenuModule
+    MatMenuModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './asignacion.html',
   styleUrls: ['./asignacion.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Asignacion implements OnInit {
   private svc = inject(Service);

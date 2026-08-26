@@ -6,53 +6,76 @@
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
-    <div class="table-container">
-      @for (p of participantes$ | async; track p.id) {
-        <div class="tabla-puntajes-table">
-          <div class="participante-section">
-            <div class="participante">
-              <span class="participante-item">{{ p.nombre }}</span>
-              <span class="puntaje-item">{{ p.puntaje }} puntos</span>
-            </div>
-          </div>
-          <div class="equipos-section">
-            <div class="equipos-lista">
-              @if ((p.acumulado) !== 0) {
-                <div class="equipo-item">
-                  <img
-                    src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg"
-                    alt="NFL"
-                    class="equipo-logo"
-                  />
-                  <div class="equipo-info-derecha">
-                    <strong class="equipo-nombre">Acumulado</strong>
-                    <span class="equipo-puntaje">{{ p.acumulado }} puntos</span>
-                    <div class="acumulado-chip">Acumulado</div>
-                  </div>
+    @if (loading$ | async) {
+      <div class="loading-overlay">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Cargando puntajes...</p>
+      </div>
+    }
+
+    @if (error$ | async; as error) {
+      <div class="error-overlay">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error }}</p>
+      </div>
+    }
+
+    @if ((participantes$ | async); as participantes) {
+      @if (participantes.length === 0) {
+        <div class="empty-overlay">
+          <mat-icon>info_outline</mat-icon>
+          <p>No hay participantes registrados</p>
+        </div>
+      } @else {
+        <div class="table-container">
+          @for (p of participantes; track p.id) {
+            <div class="tabla-puntajes-table">
+              <div class="participante-section">
+                <div class="participante">
+                  <span class="participante-item">{{ p.nombre }}</span>
+                  <span class="puntaje-item">{{ p.puntaje }} puntos</span>
                 </div>
-              }
-              @for (eq of p.equipos; track eq.nombre) {
-                  <div class="equipo-item">
-                    <img [src]="eq.logo" [alt]="eq.nombre" class="equipo-logo" />
-                    <div class="equipo-info-derecha">
-                      <strong class="equipo-nombre">{{ eq.nombre }}</strong>
-                      <span class="equipo-puntaje">{{ eq.pg * 10 + eq.pe * 5 + eq.pw * 20 + eq.pd * 30 + eq.pc * 40 + eq.sb * 50 }} puntos</span>
-                      <div
-                        [ngClass]="{
-                          'chip-afc': eq.division.startsWith('AFC'),
-                          'chip-nfc': eq.division.startsWith('NFC')
-                        }"
-                      >
-                        {{ eq.division }}
+              </div>
+              <div class="equipos-section">
+                <div class="equipos-lista">
+                  @if ((p.acumulado) !== 0) {
+                    <div class="equipo-item">
+                      <img
+                        src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg"
+                        alt="NFL"
+                        class="equipo-logo"
+                      />
+                      <div class="equipo-info-derecha">
+                        <strong class="equipo-nombre">Acumulado</strong>
+                        <span class="equipo-puntaje">{{ p.acumulado }} puntos</span>
+                        <div class="acumulado-chip">Acumulado</div>
                       </div>
                     </div>
-                  </div>
-              }
+                  }
+                  @for (eq of p.equipos; track eq.nombre) {
+                      <div class="equipo-item">
+                        <img [src]="eq.logo" [alt]="eq.nombre" class="equipo-logo" />
+                        <div class="equipo-info-derecha">
+                          <strong class="equipo-nombre">{{ eq.nombre }}</strong>
+                          <span class="equipo-puntaje">{{ eq.pg * 10 + eq.pe * 5 + eq.pw * 20 + eq.pd * 30 + eq.pc * 40 + eq.sb * 50 }} puntos</span>
+                          <div
+                            [ngClass]="{
+                              'chip-afc': eq.division.startsWith('AFC'),
+                              'chip-nfc': eq.division.startsWith('NFC')
+                            }"
+                          >
+                            {{ eq.division }}
+                          </div>
+                        </div>
+                      </div>
+                  }
+                </div>
+              </div>
             </div>
-          </div>
+          }
         </div>
       }
-    </div>
+    }
   </mat-card>
 </div>
 

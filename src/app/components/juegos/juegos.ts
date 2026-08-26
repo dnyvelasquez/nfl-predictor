@@ -1,14 +1,20 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { Service, Juego } from '../../services/data';
-import { AsyncPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { forkJoin, Observable, of } from 'rxjs';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Subject, forkJoin, of, map } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { takeUntil, catchError, finalize } from 'rxjs/operators';
+
+interface GrupoFecha {
+  fecha: string;
+  juegos: Juego[];
+}
 
 @Component({
   selector: 'app-juegos',
@@ -20,50 +26,137 @@ import { CommonModule } from '@angular/common';
     MatChipsModule,
     MatIconModule,
     MatButtonModule,
-    AsyncPipe,
+    MatProgressSpinnerModule,
     CommonModule
-],
+  ],
   templateUrl: './juegos.html',
-  styleUrls: ['./juegos.css']
+  styleUrls: ['./juegos.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
+export class Juegos implements OnDestroy {
 
-export class Juegos  {
-  juegos$!: Observable<Juego[]>;
+  juegosAgrupados: GrupoFecha[] = [];
   currentWeekId: number | null = null;
   minWeek: number | null = null;
   maxWeek: number | null = null;
+  loading = true;
 
-  constructor(private service: Service) {
+  private destroy$ = new Subject<void>();
+  private service = inject(Service);
+  private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
+    this.loadInitialData();
+  }
+
+  private loadInitialData(): void {
+    this.loading = true;
+
     forkJoin({
       sem: this.service.getSemanaActualId(),
       lim: this.service.getExtremosSemanas()
-    }).subscribe(({ sem, lim }) => {
-      this.currentWeekId = sem ?? lim.min ?? null;
-      this.minWeek = lim.min;
-      this.maxWeek = lim.max;
+    }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: ({ sem, lim }) => {
+        this.minWeek = lim.min;
+        this.maxWeek = lim.max;
+        this.currentWeekId = sem ?? lim.min ?? null;
 
-      if (this.currentWeekId != null) {
-        this.juegos$ = this.service.getJuegosPorSemanaId(this.currentWeekId);
-      } else {
-        this.juegos$ = of([]);
+        if (this.currentWeekId !== null) {
+          this.loadGames();
+        } else {
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  private loadWeek(id: number | null) {
-    if (id == null) return;
-    this.currentWeekId = id;
-    this.juegos$ = this.service.getJuegosPorSemanaId(id);
+  private loadGames(): void {
+    if (this.currentWeekId === null) return;
+
+    this.loading = true;
+
+    this.service.getJuegosPorSemanaId(this.currentWeekId).pipe(
+      map(juegos => this.agruparPorFecha(juegos)),
+      catchError(() => of([])),
+      finalize(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe(grupos => {
+      this.juegosAgrupados = grupos;
+    });
   }
 
-  prevWeek() {
-    if (this.currentWeekId == null) return;
-    this.service.getSemanaAnteriorId(this.currentWeekId).subscribe(id => this.loadWeek(id));
+  private agruparPorFecha(juegos: Juego[]): GrupoFecha[] {
+    const gruposMap = new Map<string, Juego[]>();
+
+    for (const j of juegos) {
+      if (!gruposMap.has(j.fecha)) {
+        gruposMap.set(j.fecha, []);
+      }
+      gruposMap.get(j.fecha)!.push(j);
+    }
+
+    return Array.from(gruposMap.entries())
+      .map(([fecha, juegos]) => ({
+        fecha,
+        juegos: juegos.sort((a, b) => a.hora.localeCompare(b.hora))
+      }))
+      .sort((a, b) => a.fecha.localeCompare(b.fecha));
   }
 
-  nextWeek() {
-    if (this.currentWeekId == null) return;
-    this.service.getSemanaSiguienteId(this.currentWeekId).subscribe(id => this.loadWeek(id));
+  prevWeek(): void {
+    if (this.currentWeekId === null || this.currentWeekId <= (this.minWeek ?? 0)) return;
+
+    this.loading = true;
+    this.service.getSemanaAnteriorId(this.currentWeekId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(id => {
+      if (id !== null) {
+        this.currentWeekId = id;
+        this.loadGames();
+      } else {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  nextWeek(): void {
+    if (this.currentWeekId === null || this.currentWeekId >= (this.maxWeek ?? 0)) return;
+
+    this.loading = true;
+    this.service.getSemanaSiguienteId(this.currentWeekId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(id => {
+      if (id !== null) {
+        this.currentWeekId = id;
+        this.loadGames();
+      } else {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  trackByFecha(index: number, grupo: GrupoFecha): string {
+    return grupo.fecha;
+  }
+
+  trackByJuegoId(index: number, juego: Juego): string {
+    return juego.id;
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
-

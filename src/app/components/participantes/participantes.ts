@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
@@ -8,9 +8,11 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Service } from '../../services/data';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 
 type Row = { id: string; nombre: string; numero: number };
 
@@ -28,16 +30,19 @@ type Row = { id: string; nombre: string; numero: number };
     RouterModule,
     ReactiveFormsModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './participantes.html',
-  styleUrls: ['./participantes.css']
+  styleUrls: ['./participantes.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Participantes implements OnInit {
 
   private fb = inject(FormBuilder);
   private svc = inject(Service);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   loading = false;
   errorMsg: string | null = null;
@@ -58,10 +63,11 @@ export class Participantes implements OnInit {
 
   load(): void {
     this.loading = true; this.errorMsg = this.okMsg = null;
-    this.svc.getParticipantes().subscribe({
+    this.svc.getParticipantes().pipe(
+      finalize(() => { this.loading = false; this.cdr.detectChanges(); })
+    ).subscribe({
       next: (rows) => { this.participantes = rows; },
       error: (e) => this.errorMsg = e?.message || 'No se pudieron cargar los participantes',
-      complete: () => this.loading = false
     });
   }
 
@@ -73,7 +79,9 @@ export class Participantes implements OnInit {
     const { nombre, numero } = this.addForm.value;
     this.loading = true; this.errorMsg = this.okMsg = null;
 
-    this.svc.createParticipante(String(nombre), Number(numero)).subscribe({
+    this.svc.createParticipante(String(nombre), Number(numero)).pipe(
+      finalize(() => { this.loading = false; this.cdr.detectChanges(); })
+    ).subscribe({
       next: (row: Row) => {
         this.okMsg = 'Participante creado';
         this.addForm.reset();
@@ -81,7 +89,6 @@ export class Participantes implements OnInit {
           .sort((a, b) => a.numero - b.numero || a.nombre.localeCompare(b.nombre));
       },
       error: (e) => this.errorMsg = e?.message || 'No se pudo crear el participante',
-      complete: () => this.loading = false
     });
   }
 
@@ -113,7 +120,9 @@ export class Participantes implements OnInit {
     }
 
     this.loading = true; this.errorMsg = this.okMsg = null;
-    this.svc.updateParticipante(p.id, patch).subscribe({
+    this.svc.updateParticipante(p.id, patch).pipe(
+      finalize(() => { this.loading = false; this.cdr.detectChanges(); })
+    ).subscribe({
       next: (row: Row) => {
         this.okMsg = 'Participante actualizado';
         this.participantes = this.participantes
@@ -122,7 +131,6 @@ export class Participantes implements OnInit {
         this.cancelEdit(p);
       },
       error: (e) => this.errorMsg = e?.message || 'No se pudo actualizar',
-      complete: () => this.loading = false
     });
   }
 
@@ -131,14 +139,15 @@ export class Participantes implements OnInit {
     if (!ok) return;
 
     this.loading = true; this.errorMsg = this.okMsg = null;
-    this.svc.deleteParticipante(p.id).subscribe({
+    this.svc.deleteParticipante(p.id).pipe(
+      finalize(() => { this.loading = false; this.cdr.detectChanges(); })
+    ).subscribe({
       next: () => {
         this.okMsg = 'Participante eliminado';
         this.participantes = this.participantes.filter(x => x.id !== p.id);
         delete this.editForms[p.id];
       },
       error: (e) => this.errorMsg = e?.message || 'No se pudo eliminar',
-      complete: () => this.loading = false
     });
   }
 

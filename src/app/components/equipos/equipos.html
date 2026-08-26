@@ -1,47 +1,59 @@
 <div class="equipos-container">
   <mat-card class="equipos-card">
     <div class="header">
-      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
+      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo" loading="lazy">
       <mat-card-title class="equipos-title">Equipos en Competición</mat-card-title>
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
-    <div class="table-container">
-      @for (e of equipos$ | async; track e.id) {
-        @let p = (e.participante ?? '').trim();
-        @if (p && p.toLowerCase() !== 'no asignado') {
-          <div class="equipos-table">
-              <img [src]="e.logo" alt="{{ e.nombre }}" class="equipo-logo">
-              <div class="equipos">
-                <div class="equipo">
-                  <div>
-                    <div>{{ e.nombre }}</div> 
-                    @if (e.pg !== 0 || e.pe !== 0 || e.pp !== 0 ){
-                      <div class="score">{{ e.pg }}-{{ e.pe }}-{{ e.pp }}</div>
-                    }                                                                      
-                  </div>
-                  <div
-                    [ngClass]="{
-                      'chip-afc': e.division.startsWith('AFC'),
-                      'chip-nfc': e.division.startsWith('NFC')
-                    }"
-                  >
-                    {{ e.division }}
-                  </div>
-                </div>
-                <div class="info">
-                  <span class="puntaje">{{ e.pg * 10 + e.pe * 5 + e.pw * 20 + e.pd * 30 + e.pc * 40 + e.sb * 50 }} puntos</span>
-                  <span class="participante">
-                    {{ e.participante }}
-                  </span>
-                </div>
-              </div>          
+
+    @if (loading) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Cargando equipos...</p>
+      </div>
+    } @else if (error) {
+      <div class="error-container">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error }}</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        @for (e of equipos; track e.id) {
+          <div class="grid-row">
+            <div>
+              <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo" loading="lazy">
+            </div>
+            <div class="equipo">
+              <span>{{ e.nombre }}</span>
+              @if (e.pg !== 0 || e.pe !== 0 || e.pp !== 0) {
+                <span class="score">{{ e.pg }}-{{ e.pe }}-{{ e.pp }}</span>
+              }
+            </div>
+            <div
+              [ngClass]="{
+                'chip-afc': e.division.startsWith('AFC'),
+                'chip-nfc': e.division.startsWith('NFC')
+              }"
+            >
+              {{ e.division }}
+            </div>
+            <div class="punt-part">
+              <div class="puntaje">
+                {{ calcularPuntajeEquipo(e) }} puntos
+              </div>
+              <div class="participante">
+                {{ e.participante }}
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-container">
+            <mat-icon>sports_football</mat-icon>
+            <p>No hay equipos con participantes asignados</p>
           </div>
         }
-      }
-    </div>      
+      </div>
+    }
   </mat-card>
 </div>
-
-
-
