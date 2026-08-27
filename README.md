@@ -38,7 +38,7 @@ Ejecuta las pruebas unitarias con Karma/Jasmine.
 
 - **Equipos**: catálogo de los 32 equipos de la NFL agrupados por división.
 - **Participantes**: personas inscritas en la quiniela.
-- **Asignación**: cada participante recibe equipos por división siguiendo un orden de selección basado en puntaje (ver reglamento completo en la app); conserva o cede equipos entre rondas de playoffs según cuántos de los suyos avanzan.
+- **Asignación** (admin): cada participante recibe equipos por división siguiendo un orden de selección basado en puntaje (ver reglamento completo en la app). Hay un cuadro de asignación independiente por etapa del campeonato — Temporada Regular, Wild Card, Ronda Divisional, Final de Conferencia y Super Bowl — para que un mismo equipo pueda quedar con un participante distinto en cada ronda.
 - **Puntajes** (admin): a diferencia de un cálculo automático por resultados, aquí el admin ingresa a mano, por equipo, cuántas veces ganó en temporada regular y en cada ronda de playoffs (Comodines, Divisional, Campeonato de Conferencia, Super Bowl). Los puntos se calculan con esos contadores: victoria de temporada regular 10 pts, Comodines 20, Divisional 30, Campeonato de Conferencia 40, Super Bowl 50, empate la mitad de los puntos de esa ronda.
 - **Ingresar Juego** (admin): programa el calendario semanal (equipo local/visitante, fecha, hora) — es solo informativo, no alimenta el cálculo de puntajes.
 - **Nuevo Usuario / Borrar Usuario** (admin): gestión de las cuentas que pueden entrar al panel de administración.
