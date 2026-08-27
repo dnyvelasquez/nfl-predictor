@@ -152,6 +152,11 @@
   border-radius: 12px;
 }
 
+.equipo-record {
+  font-size: 0.8rem;
+  color: #555;
+}
+
 .chip-afc,
 .chip-nfc {
   color: #fff;
@@ -167,15 +172,6 @@
 
 .chip-nfc {
   background-color: #1976d2;
-}
-
-.acumulado-chip {
-  background-color: #FFB612;
-  color: #fff;
-  font-size: 0.7rem;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-weight: 500;
 }
 
 @media (min-width: 769px) {
@@ -274,7 +270,7 @@
     order: 4;
   }
 
-  .acumulado-chip {
+  .equipo-record {
     order: 4;
   }
 

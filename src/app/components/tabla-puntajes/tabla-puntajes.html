@@ -38,36 +38,23 @@
               </div>
               <div class="equipos-section">
                 <div class="equipos-lista">
-                  @if ((p.acumulado) !== 0) {
-                    <div class="equipo-item">
-                      <img
-                        src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg"
-                        alt="NFL"
-                        class="equipo-logo"
-                      />
-                      <div class="equipo-info-derecha">
-                        <strong class="equipo-nombre">Acumulado</strong>
-                        <span class="equipo-puntaje">{{ p.acumulado }} puntos</span>
-                        <div class="acumulado-chip">Acumulado</div>
-                      </div>
-                    </div>
-                  }
                   @for (grupo of p.equiposPorEtapa; track grupo.etapa) {
                     <div class="etapa-group">
                       <div class="etapa-group-label">{{ grupo.label }}</div>
-                      @for (eq of grupo.equipos; track eq.nombre) {
+                      @for (item of grupo.equipos; track item.equipo.nombre) {
                           <div class="equipo-item">
-                            <img [src]="eq.logo" [alt]="eq.nombre" class="equipo-logo" />
+                            <img [src]="item.equipo.logo" [alt]="item.equipo.nombre" class="equipo-logo" />
                             <div class="equipo-info-derecha">
-                              <strong class="equipo-nombre">{{ eq.nombre }}</strong>
-                              <span class="equipo-puntaje">{{ eq.pg * 10 + eq.pe * 5 + eq.pw * 20 + eq.pd * 30 + eq.pc * 40 + eq.sb * 50 }} puntos</span>
+                              <strong class="equipo-nombre">{{ item.equipo.nombre }}</strong>
+                              <span class="equipo-record">{{ item.wins }}-{{ item.ties }}-{{ item.losses }}</span>
+                              <span class="equipo-puntaje">{{ item.puntos }} puntos</span>
                               <div
                                 [ngClass]="{
-                                  'chip-afc': eq.division.startsWith('AFC'),
-                                  'chip-nfc': eq.division.startsWith('NFC')
+                                  'chip-afc': item.equipo.division.startsWith('AFC'),
+                                  'chip-nfc': item.equipo.division.startsWith('NFC')
                                 }"
                               >
-                                {{ eq.division }}
+                                {{ item.equipo.division }}
                               </div>
                             </div>
                           </div>

@@ -6,7 +6,6 @@ import { Reglamento } from './components/reglamento/reglamento';
 import { Juegos } from './components/juegos/juegos';
 import { Login } from './components/login/login';
 import { Admin } from './components/admin/admin';
-import { Puntajes } from './components/puntajes/puntajes';
 import { NuevoUsuario } from './components/nuevo-usuario/nuevo-usuario';
 import { IngresarJuego } from './components/ingresar-juego/ingresar-juego';
 import { BorrarUsuario } from './components/borrar-usuario/borrar-usuario';
@@ -26,7 +25,6 @@ export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [guestGuard] },
 
   { path: 'admin', component: Admin, canActivate: [authGuard] },
-  { path: 'puntajes', component: Puntajes, canActivate: [authGuard] },
   { path: 'nuevo-usuario', component: NuevoUsuario, canActivate: [authGuard] },
   { path: 'borrar-usuario', component: BorrarUsuario, canActivate: [authGuard] },
   { path: 'ingresar-juego', component: IngresarJuego, canActivate: [authGuard] },

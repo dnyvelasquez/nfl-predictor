@@ -19,40 +19,45 @@
       </div>
     } @else {
       <div class="table-container">
-        @for (e of equipos; track e.id) {
-          <div class="grid-row">
-            <div>
-              <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo" loading="lazy">
-            </div>
-            <div class="equipo">
-              <span>{{ e.nombre }}</span>
-              @if (e.pg !== 0 || e.pe !== 0 || e.pp !== 0) {
-                <span class="score">{{ e.pg }}-{{ e.pe }}-{{ e.pp }}</span>
+        <div class="grid-table">
+          <div class="head-cell logo-col"></div>
+          <div class="head-cell">Equipo</div>
+          <div class="head-cell">División</div>
+          <div class="head-cell">Etapa</div>
+          <div class="head-cell col-izq">Puntos</div>
+          <div class="head-cell col-izq">Participante</div>
+
+          @for (e of equipos; track e.id) {
+            @for (item of e.porEtapa; track item.etapa; let first = $first) {
+              @if (first) {
+                <div class="cell logo-cell" [style.grid-row]="'span ' + e.porEtapa.length">
+                  <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo" loading="lazy">
+                </div>
+                <div class="cell equipo-cell" [style.grid-row]="'span ' + e.porEtapa.length">
+                  {{ e.nombre }}
+                </div>
+                <div class="cell division-cell" [style.grid-row]="'span ' + e.porEtapa.length">
+                  <span
+                    [ngClass]="{
+                      'chip-afc': e.division.startsWith('AFC'),
+                      'chip-nfc': e.division.startsWith('NFC')
+                    }"
+                  >
+                    {{ e.division }}
+                  </span>
+                </div>
               }
+              <div class="cell etapa-cell">{{ item.label }}</div>
+              <div class="cell puntos-cell col-izq">{{ item.puntos }} puntos</div>
+              <div class="cell participante-cell col-izq">{{ item.participante }}</div>
+            }
+          } @empty {
+            <div class="empty-container">
+              <mat-icon>sports_football</mat-icon>
+              <p>No hay equipos con participantes asignados</p>
             </div>
-            <div
-              [ngClass]="{
-                'chip-afc': e.division.startsWith('AFC'),
-                'chip-nfc': e.division.startsWith('NFC')
-              }"
-            >
-              {{ e.division }}
-            </div>
-            <div class="punt-part">
-              <div class="puntaje">
-                {{ calcularPuntajeEquipo(e) }} puntos
-              </div>
-              <div class="participante">
-                {{ e.participante }}
-              </div>
-            </div>
-          </div>
-        } @empty {
-          <div class="empty-container">
-            <mat-icon>sports_football</mat-icon>
-            <p>No hay equipos con participantes asignados</p>
-          </div>
-        }
+          }
+        </div>
       </div>
     }
   </mat-card>

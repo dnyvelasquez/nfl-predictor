@@ -2,14 +2,28 @@ import { Injectable } from '@angular/core';
 import { Observable, from, map, of, switchMap, forkJoin, catchError } from 'rxjs';
 import { supabase } from '../core/supabase.client';
 
+export interface RegistroEquipoParticipante {
+  equipo: Equipo & { etapa: Etapa };
+  wins: number;
+  ties: number;
+  losses: number;
+  puntos: number;
+}
+
+export interface RegistroEquipoPorEtapa {
+  etapa: Etapa;
+  label: string;
+  participante: string;
+  puntos: number;
+}
+
 export interface Participante {
   id: string;
   numero: number;
   nombre: string;
   acumulado: number;
   puntaje?: number;
-  equipos?: Equipo[];
-  equiposPorEtapa?: { etapa: Etapa; label: string; equipos: Equipo[] }[];
+  equiposPorEtapa?: { etapa: Etapa; label: string; equipos: RegistroEquipoParticipante[] }[];
   max?: boolean;
   second?: boolean;
 }
@@ -92,23 +106,69 @@ export class Service {
     );
   }
 
+  getJuegosConResultado(): Observable<Juego[]> {
+    return from(
+      this.supabase
+        .from('juegos')
+        .select('*')
+        .not('resultado_local', 'is', null)
+        .not('resultado_visitante', 'is', null)
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return (data ?? []) as Juego[];
+      })
+    );
+  }
+
+  private static readonly PUNTOS_POR_ETAPA: Record<Etapa, number> = {
+    regular: 10, wildcard: 20, divisional: 30, conferencia: 40, superbowl: 50,
+  };
+
+  private registroEquipoEnEtapa(
+    nombreEquipo: string, etapa: Etapa, juegos: Juego[]
+  ): { wins: number; ties: number; losses: number; puntos: number } {
+    let wins = 0, ties = 0, losses = 0;
+    for (const j of juegos) {
+      if (j.etapa !== etapa) continue;
+      let propio: number | null, rival: number | null;
+      if (j.local === nombreEquipo) { propio = j.resultado_local; rival = j.resultado_visitante; }
+      else if (j.visitante === nombreEquipo) { propio = j.resultado_visitante; rival = j.resultado_local; }
+      else continue;
+      if (propio === null || rival === null) continue;
+      if (propio > rival) wins++;
+      else if (propio === rival) ties++;
+      else losses++;
+    }
+    const valorWin = Service.PUNTOS_POR_ETAPA[etapa];
+    const puntos = wins * valorWin + ties * (valorWin / 2);
+    return { wins, ties, losses, puntos };
+  }
+
   getParticipantesConPuntaje(): Observable<(Participante & {
   })[]> {
-    return this.getParticipantes().pipe(
-      switchMap(participantes =>
+    return forkJoin({
+      participantes: this.getParticipantes(),
+      juegos: this.getJuegosConResultado(),
+    }).pipe(
+      switchMap(({ participantes, juegos }) =>
         forkJoin(
           participantes.map(p =>
             this.getEquiposDeTodasEtapas(p.nombre).pipe(
               map(equiposTodasEtapas => {
-                // El puntaje solo cuenta los equipos de temporada regular por ahora;
-                // atribuir cada ronda a su propia asignación queda pendiente.
-                const equiposRegular = equiposTodasEtapas.filter(eq => eq.etapa === 'regular');
-                const puntajeEquipos = equiposRegular.reduce((acc, eq) => acc + (eq.pg ?? 0) * 10 + (eq.pe ?? 0) * 5 + (eq.pw ?? 0) * 20 + (eq.pd ?? 0) * 30 + (eq.pc ?? 0) * 40 + (eq.sb ?? 0) * 50, 0);
-                const acumulado = p.acumulado ?? 0;
                 const equiposPorEtapa = ETAPAS
-                  .map(e => ({ etapa: e.value, label: e.label, equipos: equiposTodasEtapas.filter(eq => eq.etapa === e.value) }))
+                  .map(e => ({
+                    etapa: e.value,
+                    label: e.label,
+                    equipos: equiposTodasEtapas
+                      .filter(eq => eq.etapa === e.value)
+                      .map(equipo => ({ equipo, ...this.registroEquipoEnEtapa(equipo.nombre, e.value, juegos) })),
+                  }))
                   .filter(g => g.equipos.length > 0);
-                return { ...p, equipos: equiposRegular, equiposPorEtapa, puntajeEquipos, puntaje: puntajeEquipos + acumulado };
+                const puntaje = equiposPorEtapa.reduce(
+                  (acc, g) => acc + g.equipos.reduce((a, it) => a + it.puntos, 0), 0
+                );
+                return { ...p, equiposPorEtapa, puntaje };
               })
             )
           )
@@ -218,6 +278,59 @@ export class Service {
           sb: e.sb,
           participante: (participantesPorEquipo[e.id]?.join(' / ')) ?? ''
         })) as Equipo[];
+      })
+    );
+  }
+
+  getEquiposConPuntajePorEtapa(): Observable<(Equipo & { porEtapa: RegistroEquipoPorEtapa[] })[]> {
+    return forkJoin({
+      equiposRes: from(
+        this.supabase.from('equipos').select('*').order('id', { ascending: true })
+      ),
+      asignRes: from(
+        this.supabase.from('asignacion').select('equipo_id,participante,etapa')
+      ),
+      juegos: this.getJuegosConResultado(),
+    }).pipe(
+      map(({ equiposRes, asignRes, juegos }: any) => {
+        if (equiposRes.error) throw equiposRes.error;
+        if (asignRes.error) throw asignRes.error;
+
+        const participantesPorEquipoEtapa: Record<string, string[]> = {};
+        for (const a of (asignRes.data ?? [])) {
+          const id = a?.equipo_id;
+          const p = (a?.participante ?? '').trim();
+          if (!id || !p) continue;
+          const key = `${id}|${a.etapa}`;
+          (participantesPorEquipoEtapa[key] ??= []).push(p);
+        }
+
+        return (equiposRes.data ?? []).map((e: any) => {
+          const porEtapa = ETAPAS
+            .map(et => {
+              const participantes = participantesPorEquipoEtapa[`${e.id}|${et.value}`] ?? [];
+              const participante = participantes.join(' / ');
+              const { puntos } = this.registroEquipoEnEtapa(e.nombre, et.value, juegos);
+              return { etapa: et.value, label: et.label, participante, puntos };
+            })
+            .filter(g => g.participante);
+
+          return {
+            id: e.id,
+            nombre: e.nombre,
+            puntaje: e.puntaje,
+            division: e.division,
+            logo: e.logo,
+            pg: e.pg,
+            pe: e.pe,
+            pp: e.pp,
+            pw: e.pw,
+            pd: e.pd,
+            pc: e.pc,
+            sb: e.sb,
+            porEtapa,
+          };
+        }) as (Equipo & { porEtapa: RegistroEquipoPorEtapa[] })[];
       })
     );
   }
@@ -684,83 +797,6 @@ export class Service {
           return { ok: true };
         })
       );
-  }
-
-  actualizarPuntaje(id: string, pg: number, pe: number, pp: number, pw: number, pd: number, pc: number, sb: number): Observable<any> {
-    return from(
-      this.supabase
-        .from('equipos')
-        .update({ 
-          pg: pg,
-          pe: pe,
-          pp: pp,
-          pw: pw,
-          pd: pd,
-          pc: pc,
-          sb: sb,
-        })
-        .eq('id', id)
-    );
-  }  
-
-  resetPuntajes(): Observable<any> {
-    return from(
-      this.supabase
-        .from('equipos')
-        .update({ 
-          pg: 0,
-          pe: 0,
-          pp: 0,
-          pw: 0,
-          pd: 0,
-          pc: 0,
-          sb: 0,
-        })
-        .not('id', 'is', null)
-    );
-  }
-
-  acumularPuntajesEnParticipantes() {
-    return forkJoin({
-      asign: from(
-        this.supabase
-          .from('asignacion')
-          .select('participante, equipos!inner(pg, pe, pp, pw, pd, pc, sb)')
-          .eq('etapa', 'regular')
-      ),
-      parts: from(
-        this.supabase
-          .from('participantes')
-          .select('id,nombre,acumulado')
-      )
-    }).pipe(
-      switchMap(({ asign, parts }: any) => {
-        if (asign.error) throw asign.error;
-        if (parts.error) throw parts.error;
-
-        const totales: Record<string, number> = {};
-        for (const row of asign.data ?? []) {
-          const nombre = (row.participante || '').trim();
-          const pts = Number((row.equipos?.pg ?? 0) * 10 + (row.equipos?.pe ?? 0) * 5 + (row.equipos?.pw ?? 0) * 20 + (row.equipos?.pd ?? 0) * 30 + (row.equipos?.pc ?? 0) * 40 + (row.equipos?.sb ?? 0) * 50);
-          if (!nombre || !pts) continue;
-          totales[nombre] = (totales[nombre] ?? 0) + pts;
-        }
-
-        const updates = (parts.data ?? [])
-          .filter((p: any) => totales[p.nombre])
-          .map((p: any) =>
-            from(
-              this.supabase
-                .from('participantes')
-                .update({ acumulado: Number(p.acumulado ?? 0) + totales[p.nombre] })
-                .eq('id', p.id)
-            )
-          );
-
-        if (!updates.length) return of({ ok: true, updated: 0 });
-        return forkJoin(updates).pipe(map(() => ({ ok: true, updated: updates.length })));
-      })
-    );
   }
 
   private getEquipoIdsPorDivision(division: string) {

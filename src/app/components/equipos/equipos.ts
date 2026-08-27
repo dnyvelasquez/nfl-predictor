@@ -7,7 +7,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { Subject, of } from 'rxjs';
 import { takeUntil, catchError, finalize } from 'rxjs/operators';
-import { Service, Equipo } from '../../services/data';
+import { Service, Equipo, RegistroEquipoPorEtapa } from '../../services/data';
+
+type EquipoConEtapas = Equipo & { porEtapa: RegistroEquipoPorEtapa[] };
 
 @Component({
   selector: 'app-equipos',
@@ -26,7 +28,7 @@ import { Service, Equipo } from '../../services/data';
 })
 export class Equipos implements OnInit, OnDestroy {
 
-  equipos: Equipo[] = [];
+  equipos: EquipoConEtapas[] = [];
   loading = true;
   error: string | null = null;
 
@@ -42,7 +44,7 @@ export class Equipos implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
 
-    this.service.getEquipos().pipe(
+    this.service.getEquiposConPuntajePorEtapa().pipe(
       catchError(err => {
         console.error('Error loading equipos:', err);
         this.error = 'Error al cargar los equipos. Por favor, intenta de nuevo.';
@@ -54,20 +56,8 @@ export class Equipos implements OnInit, OnDestroy {
       }),
       takeUntil(this.destroy$)
     ).subscribe(equipos => {
-      this.equipos = equipos.filter(e => {
-        const participante = (e.participante ?? '').trim();
-        return participante && participante.toLowerCase() !== 'no asignado';
-      });
+      this.equipos = equipos.filter(e => e.porEtapa.length > 0);
     });
-  }
-
-  calcularPuntajeEquipo(equipo: Equipo): number {
-    return (equipo.pg || 0) * 10 +
-           (equipo.pe || 0) * 5 +
-           (equipo.pw || 0) * 20 +
-           (equipo.pd || 0) * 30 +
-           (equipo.pc || 0) * 40 +
-           (equipo.sb || 0) * 50;
   }
 
   trackByEquipoId(index: number, equipo: Equipo): string {

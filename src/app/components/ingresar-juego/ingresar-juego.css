@@ -200,3 +200,26 @@ mat-form-field.tight.score {
   }
 }
 
+@media (max-width: 600px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .thead {
+    display: none;
+  }
+
+  .tbody .row {
+    padding: 12px;
+  }
+
+  .cell {
+    justify-content: space-between;
+  }
+
+  .cell.a {
+    justify-content: flex-start;
+  }
+}
+

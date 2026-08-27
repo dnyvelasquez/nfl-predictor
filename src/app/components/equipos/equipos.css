@@ -10,6 +10,7 @@
 
 .equipos-card {
   max-width: 90%;
+  width: 900px;
   padding: 20px;
   text-align: center;
 }
@@ -36,29 +37,81 @@
   border-radius: 12px;
 }
 
-.equipo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+.grid-table {
+  display: grid;
+  grid-template-columns: 100px 1.4fr 110px 1.2fr 130px 1.4fr;
+  align-items: stretch;
+  min-width: 720px;
+  background-color: white;
+  color: #000;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.score {
-  font-size: 0.8rem;
+.head-cell {
+  background-color: #667eea;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.head-cell.col-izq {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.cell {
+  padding: 10px 16px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+}
+
+.col-izq {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.logo-cell {
+  justify-content: center;
+  padding: 8px;
 }
 
 .equipo-logo {
-  width: 60px;
-  height: 40px;
+  height: 100%;
+  width: 100%;
+  max-height: 120px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
 
-.participante {
+.equipo-cell {
+  font-weight: 700;
+  color: #003B73;
+}
+
+.division-cell {
+  justify-content: center;
+}
+
+.etapa-cell {
+  font-weight: 600;
+  color: #003B73;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.participante-cell {
   color: #555;
   font-weight: bold;
 }
 
-.puntaje {
+.puntos-cell {
   font-weight: bold;
   color: #003366;
 }
@@ -69,6 +122,7 @@
   font-size: 0.7em;
   padding: 4px 8px;
   border-radius: 8px;
+  white-space: nowrap;
 }
 
 .chip-afc {
@@ -77,27 +131,6 @@
 
 .chip-nfc {
   background-color: #1976d2;
-}
-
-.punt-part {
-  display: flex;
-  justify-content: space-around;
-  gap: 8px;
-}
-
-.grid-row {
-  display: grid;
-  grid-template-columns:
-    1.2fr     /* Logo */
-    2fr       /* Equipo */
-    1.2fr     /* Division */
-    3fr;      /* Puntos + Participante */
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
-  background-color: white;
-  color: #000;
 }
 
 .loading-container,
@@ -140,14 +173,8 @@
   height: 48px;
 }
 
-@media (max-width: 768px) {
-  .punt-part {
-    flex-direction: column;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .grid-row {
+  .grid-table {
     transition: none;
   }
 }
