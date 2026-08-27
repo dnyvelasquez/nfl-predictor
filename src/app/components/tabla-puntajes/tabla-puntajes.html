@@ -52,22 +52,27 @@
                       </div>
                     </div>
                   }
-                  @for (eq of p.equipos; track eq.nombre) {
-                      <div class="equipo-item">
-                        <img [src]="eq.logo" [alt]="eq.nombre" class="equipo-logo" />
-                        <div class="equipo-info-derecha">
-                          <strong class="equipo-nombre">{{ eq.nombre }}</strong>
-                          <span class="equipo-puntaje">{{ eq.pg * 10 + eq.pe * 5 + eq.pw * 20 + eq.pd * 30 + eq.pc * 40 + eq.sb * 50 }} puntos</span>
-                          <div
-                            [ngClass]="{
-                              'chip-afc': eq.division.startsWith('AFC'),
-                              'chip-nfc': eq.division.startsWith('NFC')
-                            }"
-                          >
-                            {{ eq.division }}
+                  @for (grupo of p.equiposPorEtapa; track grupo.etapa) {
+                    <div class="etapa-group">
+                      <div class="etapa-group-label">{{ grupo.label }}</div>
+                      @for (eq of grupo.equipos; track eq.nombre) {
+                          <div class="equipo-item">
+                            <img [src]="eq.logo" [alt]="eq.nombre" class="equipo-logo" />
+                            <div class="equipo-info-derecha">
+                              <strong class="equipo-nombre">{{ eq.nombre }}</strong>
+                              <span class="equipo-puntaje">{{ eq.pg * 10 + eq.pe * 5 + eq.pw * 20 + eq.pd * 30 + eq.pc * 40 + eq.sb * 50 }} puntos</span>
+                              <div
+                                [ngClass]="{
+                                  'chip-afc': eq.division.startsWith('AFC'),
+                                  'chip-nfc': eq.division.startsWith('NFC')
+                                }"
+                              >
+                                {{ eq.division }}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                      }
+                    </div>
                   }
                 </div>
               </div>

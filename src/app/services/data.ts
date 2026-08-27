@@ -9,6 +9,7 @@ export interface Participante {
   acumulado: number;
   puntaje?: number;
   equipos?: Equipo[];
+  equiposPorEtapa?: { etapa: Etapa; label: string; equipos: Equipo[] }[];
   max?: boolean;
   second?: boolean;
 }
@@ -37,6 +38,9 @@ export interface Juego {
   fecha: string;
   hora: string;
   actual: boolean;
+  etapa: Etapa;
+  resultado_local: number | null;
+  resultado_visitante: number | null;
   logoVisitante?: string;
   logoLocal?: string;
   participanteVisitante? : string;
@@ -94,11 +98,17 @@ export class Service {
       switchMap(participantes =>
         forkJoin(
           participantes.map(p =>
-            this.getEquiposDe(p.nombre).pipe(
-              map(equipos => {
-                const puntajeEquipos = equipos.reduce((acc, eq) => acc + (eq.pg ?? 0) * 10 + (eq.pe ?? 0) * 5 + (eq.pw ?? 0) * 20 + (eq.pd ?? 0) * 30 + (eq.pc ?? 0) * 40 + (eq.sb ?? 0) * 50, 0);
+            this.getEquiposDeTodasEtapas(p.nombre).pipe(
+              map(equiposTodasEtapas => {
+                // El puntaje solo cuenta los equipos de temporada regular por ahora;
+                // atribuir cada ronda a su propia asignación queda pendiente.
+                const equiposRegular = equiposTodasEtapas.filter(eq => eq.etapa === 'regular');
+                const puntajeEquipos = equiposRegular.reduce((acc, eq) => acc + (eq.pg ?? 0) * 10 + (eq.pe ?? 0) * 5 + (eq.pw ?? 0) * 20 + (eq.pd ?? 0) * 30 + (eq.pc ?? 0) * 40 + (eq.sb ?? 0) * 50, 0);
                 const acumulado = p.acumulado ?? 0;
-                return { ...p, equipos, puntajeEquipos, puntaje: puntajeEquipos + acumulado };
+                const equiposPorEtapa = ETAPAS
+                  .map(e => ({ etapa: e.value, label: e.label, equipos: equiposTodasEtapas.filter(eq => eq.etapa === e.value) }))
+                  .filter(g => g.equipos.length > 0);
+                return { ...p, equipos: equiposRegular, equiposPorEtapa, puntajeEquipos, puntaje: puntajeEquipos + acumulado };
               })
             )
           )
@@ -239,7 +249,35 @@ export class Service {
       })
     );
   }
-  
+
+  getEquiposDeTodasEtapas(nombre: string): Observable<(Equipo & { etapa: Etapa })[]> {
+    return from(
+      this.supabase
+        .from('asignacion')
+        .select('equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,logo)')
+        .eq('participante', nombre)
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return (data ?? []).map((row: any) => ({
+          id: row.equipos.id,
+          nombre: row.equipos.nombre,
+          division: row.equipos.division,
+          logo: row.equipos.logo,
+          pg: row.equipos.pg,
+          pe: row.equipos.pe,
+          pp: row.equipos.pp,
+          pw: row.equipos.pw,
+          pd: row.equipos.pd,
+          pc: row.equipos.pc,
+          sb: row.equipos.sb,
+          participante: row.participante,
+          etapa: row.etapa,
+        })) as (Equipo & { etapa: Etapa })[];
+      })
+    );
+  }
+
   getSession$() {
     return from(this.supabase.auth.getSession()).pipe(
       map(({ data }: any) => data.session ?? null)
@@ -348,43 +386,11 @@ export class Service {
             this.supabase.from('equipos').select('*')
           ).pipe(map((res: any) => res.data || [])),
           asign: from(
-            this.supabase.from('asignacion').select('equipo_id,participante')
+            this.supabase.from('asignacion').select('equipo_id,participante,etapa')
           ).pipe(map((res: any) => res.data || []))
         });
       }),
-      map(({ juegos, equipos, asign }: any) => {
-        const byNombre: Record<string, any> = {};
-        const byId: Record<string, any> = {};
-        for (const e of equipos) { byNombre[e.nombre] = e; byId[e.id] = e; }
-
-        const participantesPorEquipoId: Record<string, string[]> = {};
-        for (const a of asign as Array<{equipo_id: string; participante: string}>) {
-          if (!a?.equipo_id) continue;
-          const p = (a.participante || '').trim();
-          if (!p) continue;
-          (participantesPorEquipoId[a.equipo_id] ??= []).push(p);
-        }
-
-        const enrich = (j: any): Juego => {
-          const v = byNombre[j.visitante];
-          const l = byNombre[j.local];
-
-          const listV = v ? (participantesPorEquipoId[v.id] ?? []) : [];
-          const listL = l ? (participantesPorEquipoId[l.id] ?? []) : [];
-
-          return {
-            ...j,
-            logoVisitante: v?.logo || '',
-            logoLocal:     l?.logo || '',
-            participanteVisitante: listV.join(' / '), 
-            participanteLocal:     listL.join(' / '),
-          } as Juego;
-        };
-
-        return (juegos as any[])
-          .map(enrich)
-          .sort((a: Juego, b: Juego) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora));
-      })
+      map(({ juegos, equipos, asign }: any) => this.enrichJuegos(juegos, equipos, asign))
     );
   }
 
@@ -420,7 +426,7 @@ export class Service {
     );
   }
 
-  crearJuego(input: { visitante: string; local: string; fecha: string; hora: string }) {
+  crearJuego(input: { visitante: string; local: string; fecha: string; hora: string; etapa: Etapa }) {
     return forkJoin({
       nextId: this.getNextJuegoId(),
       semanaId: this.getSemanaIdPorFecha(input.fecha),
@@ -432,11 +438,12 @@ export class Service {
             .insert([
               {
                 id: nextId,
-                semana: semanaId, 
+                semana: semanaId,
                 visitante: input.visitante,
                 local: input.local,
                 fecha: input.fecha,
                 hora: input.hora,
+                etapa: input.etapa,
               },
             ])
             .select()
@@ -445,6 +452,31 @@ export class Service {
       map(({ data, error }: any) => {
         if (error) throw error;
         return data?.[0];
+      })
+    );
+  }
+
+  actualizarJuego(id: string, patch: Partial<{
+    visitante: string;
+    local: string;
+    fecha: string;
+    hora: string;
+    etapa: Etapa;
+    resultado_local: number | null;
+    resultado_visitante: number | null;
+  }>): Observable<Juego> {
+    const semanaId$ = patch.fecha ? this.getSemanaIdPorFecha(patch.fecha) : of(undefined);
+
+    return semanaId$.pipe(
+      switchMap((semanaId) => {
+        const fullPatch = semanaId !== undefined ? { ...patch, semana: semanaId } : patch;
+        return from(
+          this.supabase.from('juegos').update(fullPatch).eq('id', id).select().single()
+        );
+      }),
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return data as Juego;
       })
     );
   }
@@ -560,42 +592,46 @@ export class Service {
       ).pipe(map((res: any) => res.data || [])),
       equipos: from(this.supabase.from('equipos').select('*'))
                 .pipe(map((res: any) => res.data || [])),
-      asign: from(this.supabase.from('asignacion').select('equipo_id,participante'))
+      asign: from(this.supabase.from('asignacion').select('equipo_id,participante,etapa'))
               .pipe(map((res: any) => res.data || []))
     }).pipe(
-      map(({ juegos, equipos, asign }: any) => {
-        const byNombre: Record<string, any> = {};
-        const byId: Record<string, any> = {};
-        for (const e of equipos) { byNombre[e.nombre] = e; byId[e.id] = e; }
-
-        const participantesPorEquipoId: Record<string, string[]> = {};
-        for (const a of asign as Array<{equipo_id: string; participante: string}>) {
-          if (!a?.equipo_id) continue;
-          const p = (a.participante || '').trim();
-          if (!p) continue;
-          (participantesPorEquipoId[a.equipo_id] ??= []).push(p);
-        }
-
-        const enrich = (j: any): Juego => {
-          const v = byNombre[j.visitante];
-          const l = byNombre[j.local];
-          const listV = v ? (participantesPorEquipoId[v.id] ?? []) : [];
-          const listL = l ? (participantesPorEquipoId[l.id] ?? []) : [];
-
-          return {
-            ...j,
-            logoVisitante: v?.logo || '',
-            logoLocal:     l?.logo || '',
-            participanteVisitante: listV.join(' / '),
-            participanteLocal:     listL.join(' / '),
-          } as Juego;
-        };
-
-        return (juegos as any[])
-          .map(enrich)
-          .sort((a: Juego, b: Juego) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora));
-      })
+      map(({ juegos, equipos, asign }: any) => this.enrichJuegos(juegos, equipos, asign))
     );
+  }
+
+  /** Adjunta logos y el participante asignado (para la misma etapa del juego) a cada juego. */
+  private enrichJuegos(juegos: any[], equipos: any[], asign: Array<{ equipo_id: string; participante: string; etapa: Etapa }>): Juego[] {
+    const byNombre: Record<string, any> = {};
+    for (const e of equipos) { byNombre[e.nombre] = e; }
+
+    const participantesPorEquipoEtapa: Record<string, string[]> = {};
+    for (const a of asign) {
+      if (!a?.equipo_id) continue;
+      const p = (a.participante || '').trim();
+      if (!p) continue;
+      const key = `${a.equipo_id}|${a.etapa}`;
+      (participantesPorEquipoEtapa[key] ??= []).push(p);
+    }
+
+    const enrich = (j: any): Juego => {
+      const v = byNombre[j.visitante];
+      const l = byNombre[j.local];
+
+      const listV = v ? (participantesPorEquipoEtapa[`${v.id}|${j.etapa}`] ?? []) : [];
+      const listL = l ? (participantesPorEquipoEtapa[`${l.id}|${j.etapa}`] ?? []) : [];
+
+      return {
+        ...j,
+        logoVisitante: v?.logo || '',
+        logoLocal:     l?.logo || '',
+        participanteVisitante: listV.join(' / '),
+        participanteLocal:     listL.join(' / '),
+      } as Juego;
+    };
+
+    return (juegos as any[])
+      .map(enrich)
+      .sort((a: Juego, b: Juego) => this.toTs(a.fecha, a.hora) - this.toTs(b.fecha, b.hora));
   }
 
   assignEquipo(participanteNombre: string, division: string, equipoId: string | null, etapa: Etapa = 'regular') {

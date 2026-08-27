@@ -9,6 +9,12 @@
 -- Conferencia, Super Bowl) además de la temporada regular. Este archivo define
 -- el esquema de una base nueva; sobre una base Neon ya existente hay que aplicar
 -- la migración manualmente (ver PR/commit correspondiente para el ALTER TABLE).
+--
+-- 2026-08-26: se agregaron las columnas `etapa`, `resultado_local` y
+-- `resultado_visitante` a `juegos`, para registrar la etapa del campeonato de
+-- cada juego y permitir editar el resultado desde "Ingresar Juego". El
+-- resultado es puramente informativo: no alimenta el cálculo de puntajes
+-- (`equipos.pg/pw/pd/pc/sb`), igual que el resto del calendario.
 
 -- ============================================================
 -- TABLAS
@@ -35,12 +41,16 @@ CREATE TABLE semana (
 );
 
 CREATE TABLE juegos (
-  id         smallint PRIMARY KEY,
-  semana     numeric NOT NULL,
-  visitante  text,
-  local      text,
-  fecha      text,
-  hora       text
+  id                   smallint PRIMARY KEY,
+  semana               numeric NOT NULL,
+  visitante            text,
+  local                text,
+  fecha                text,
+  hora                 text,
+  etapa                text NOT NULL DEFAULT 'regular'
+    CHECK (etapa IN ('regular', 'wildcard', 'divisional', 'conferencia', 'superbowl')),
+  resultado_local      smallint,
+  resultado_visitante  smallint
 );
 
 CREATE TABLE asignacion (

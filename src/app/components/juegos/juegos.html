@@ -2,28 +2,16 @@
   <mat-card class="juegos-card">
     <div class="header">
       <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo" loading="lazy">
-      <mat-card-title class="juegos-title">
-        @if (currentWeekId === 22) {
-          SUPER BOWL
-        } @else {
-          Juegos de
-          @if (currentWeekId === 21) {
-            Finales de Conferencia
-          } @else {
-            @if (currentWeekId === 20) {
-              Ronda Divisional
-            } @else {
-              @if (currentWeekId === 19) {
-                Ronda de Comodines
-              } @else {
-                @if (currentWeekId !== null) {
-                  la Semana {{ currentWeekId }}
-                }
-              }
-            }
+      <div class="titulos">
+        <mat-card-title class="juegos-title">
+          @if (currentWeekId !== null) {
+            Juegos de la Semana {{ currentWeekId }}
           }
+        </mat-card-title>
+        @if (etapaActual()) {
+          <div class="etapa-subtitle">{{ etapaLabel(etapaActual()!) }}</div>
         }
-      </mat-card-title>
+      </div>
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
@@ -56,6 +44,9 @@
                         <span class="participante">No asignado</span>
                       }
                     </div>
+                    @if (j.resultado_local !== null && j.resultado_visitante !== null) {
+                      <span class="marcador">{{ j.resultado_local }}</span>
+                    }
                   </div>
                   <div class="vs">
                     <span>Vs</span>
@@ -70,10 +61,18 @@
                         <span class="participante muted">No asignado</span>
                       }
                     </div>
+                    @if (j.resultado_local !== null && j.resultado_visitante !== null) {
+                      <span class="marcador">{{ j.resultado_visitante }}</span>
+                    }
                   </div>
                   <div class="scheduled">
-                    <mat-icon>schedule</mat-icon>
-                    <span>{{ j.hora }}</span>
+                    @if (j.resultado_local !== null && j.resultado_visitante !== null) {
+                      <mat-icon>sports_score</mat-icon>
+                      <span>Final</span>
+                    } @else {
+                      <mat-icon>schedule</mat-icon>
+                      <span>{{ j.hora }}</span>
+                    }
                   </div>
                 </div>
               }

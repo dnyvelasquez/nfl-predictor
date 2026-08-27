@@ -91,6 +91,29 @@
   justify-content: center;
 }
 
+.etapa-group {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.etapa-group-label {
+  width: 100%;
+  font-weight: 700;
+  color: #003B73;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: center;
+  border-bottom: 2px solid #FFB612;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+
 .equipo-item {
   display: flex;
   flex-direction: column;

@@ -70,6 +70,19 @@
             @if (f.hora.touched && f.hora.hasError('required')) { <mat-error>La hora es requerida</mat-error> }
             @if (f.hora.touched && f.hora.hasError('pattern')) { <mat-error>Formato válido: 00:00 a 23:59</mat-error> }
           </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Etapa</mat-label>
+            <mat-select formControlName="etapa">
+              @for (e of etapas; track e.value) {
+                <mat-option [value]="e.value">{{ e.label }}</mat-option>
+              }
+            </mat-select>
+            @if (f.etapa.touched && f.etapa.hasError('required')) {
+              <mat-error>Selecciona la etapa</mat-error>
+            }
+          </mat-form-field>
+
           <div class="pg-actions">
           <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">
               {{ loading ? 'Guardando…' : 'Guardar' }}
@@ -79,9 +92,139 @@
           @if (errorMsg) {
           <div class="error">{{ errorMsg }}</div>
           }
+          @if (okMsg) {
+          <div class="info">{{ okMsg }}</div>
+          }
       </form>
 
-    </div>      
+      <mat-divider></mat-divider>
+
+      <div class="week-nav">
+        <button mat-icon-button (click)="prevWeek()"
+          [disabled]="currentWeekId === null || minWeek === null || currentWeekId <= minWeek || listLoading"
+          aria-label="Semana anterior">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span>Semana {{ currentWeekId }}</span>
+        <button mat-icon-button (click)="nextWeek()"
+          [disabled]="currentWeekId === null || maxWeek === null || currentWeekId >= maxWeek || listLoading"
+          aria-label="Semana siguiente">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+
+      @if (listLoading) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Cargando juegos...</p>
+        </div>
+      }
+
+      <div class="table">
+        <div class="thead row">
+          <div class="cell fecha">Fecha / Hora</div>
+          <div class="cell equipo">Visitante</div>
+          <div class="cell equipo">Local</div>
+          <div class="cell etapa">Etapa</div>
+          <div class="cell resultado">Resultado</div>
+          <div class="cell a">Acciones</div>
+        </div>
+
+        <div class="tbody">
+          @for (grupo of juegosAgrupados; track grupo.fecha) {
+            @for (j of grupo.juegos; track j.id) {
+
+              @if (!editForms[j.id]) {
+                <div class="row">
+                  <div class="cell fecha">
+                    <span>{{ j.fecha }}</span>
+                    <span class="hora">{{ j.hora }}</span>
+                  </div>
+                  <div class="cell equipo"><span>{{ j.visitante }}</span></div>
+                  <div class="cell equipo"><span>{{ j.local }}</span></div>
+                  <div class="cell etapa">
+                    <span>{{ etapaLabel(j.etapa) }}</span>
+                  </div>
+                  <div class="cell resultado">
+                    @if (j.resultado_local !== null && j.resultado_visitante !== null) {
+                      <span>{{ j.resultado_local }} - {{ j.resultado_visitante }}</span>
+                    } @else {
+                      <span class="muted">Sin resultado</span>
+                    }
+                  </div>
+                  <div class="cell a">
+                    <button mat-stroked-button (click)="startEdit(j)" [disabled]="listLoading">Editar</button>
+                  </div>
+                </div>
+              } @else {
+                <div class="row edit-row" [formGroup]="editForms[j.id]">
+                  <div class="cell fecha">
+                    <mat-form-field appearance="fill" class="tight">
+                      <input matInput [matDatepicker]="editPicker" formControlName="fecha" />
+                      <mat-datepicker-toggle matSuffix [for]="editPicker"></mat-datepicker-toggle>
+                      <mat-datepicker #editPicker></mat-datepicker>
+                    </mat-form-field>
+                    <mat-form-field appearance="fill" class="tight">
+                      <input matInput placeholder="20:15" formControlName="hora" />
+                    </mat-form-field>
+                  </div>
+                  <div class="cell equipo">
+                    <mat-form-field appearance="fill" class="tight">
+                      <mat-select formControlName="visitante">
+                        @for (e of equipos; track e.id) {
+                          <mat-option [value]="e.nombre">{{ e.nombre }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="cell equipo">
+                    <mat-form-field appearance="fill" class="tight">
+                      <mat-select formControlName="local">
+                        @for (e of equipos; track e.id) {
+                          <mat-option [value]="e.nombre">{{ e.nombre }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="cell etapa">
+                    <mat-form-field appearance="fill" class="tight">
+                      <mat-select formControlName="etapa">
+                        @for (e of etapas; track e.value) {
+                          <mat-option [value]="e.value">{{ e.label }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="cell resultado">
+                    <mat-form-field appearance="fill" class="tight score">
+                      <input matInput type="number" placeholder="Local" formControlName="resultadoLocal" />
+                    </mat-form-field>
+                    <mat-form-field appearance="fill" class="tight score">
+                      <input matInput type="number" placeholder="Visit." formControlName="resultadoVisitante" />
+                    </mat-form-field>
+                  </div>
+                  <div class="cell a">
+                    <button mat-raised-button color="primary"
+                      (click)="saveEdit(j)"
+                      [disabled]="editForms[j.id]?.invalid || listLoading">
+                      Guardar
+                    </button>
+                    <button mat-button (click)="cancelEdit(j)" [disabled]="listLoading">Cancelar</button>
+                  </div>
+                </div>
+              }
+
+            }
+          } @empty {
+            <div class="no-juegos">
+              <mat-icon>sports_football</mat-icon>
+              <p>No hay juegos programados para esta semana</p>
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
   </mat-card>
 </div>
 

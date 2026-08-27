@@ -1,5 +1,5 @@
 import { Component, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
-import { Service, Juego } from '../../services/data';
+import { Service, Juego, Etapa, ETAPAS } from '../../services/data';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatDividerModule } from '@angular/material/divider';
@@ -145,6 +145,14 @@ export class Juegos implements OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  etapaActual(): Etapa | null {
+    return this.juegosAgrupados[0]?.juegos[0]?.etapa ?? null;
+  }
+
+  etapaLabel(etapa: Etapa): string {
+    return ETAPAS.find(e => e.value === etapa)?.label ?? etapa;
   }
 
   trackByFecha(index: number, grupo: GrupoFecha): string {

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,9 +12,15 @@ import { MatDatepickerInputEvent } from '@angular/material/datepicker';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { firstValueFrom } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
-import { Service, Equipo } from '../../services/data';
+import { Service, Equipo, Juego, Etapa, ETAPAS } from '../../services/data';
+
+interface GrupoFecha {
+  fecha: string;
+  juegos: Juego[];
+}
 
 function distintos(control: AbstractControl): ValidationErrors | null {
   const v = control.get('visitante')?.value;
@@ -39,7 +45,8 @@ function distintos(control: AbstractControl): ValidationErrors | null {
     RouterModule,
     MatIconModule,
     MatDividerModule,
-    MatMenuModule
+    MatMenuModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './ingresar-juego.html',
   styleUrls: ['./ingresar-juego.css'],
@@ -54,12 +61,24 @@ export class IngresarJuego implements OnInit {
   equipos: Equipo[] = [];
   loading = false;
   errorMsg: string | null = null;
+  okMsg: string | null = null;
+
+  etapas = ETAPAS;
+
+  juegosAgrupados: GrupoFecha[] = [];
+  currentWeekId: number | null = null;
+  minWeek: number | null = null;
+  maxWeek: number | null = null;
+  listLoading = false;
+
+  editForms: Record<string, FormGroup> = {};
 
   form = this.fb.group({
     visitante: ['', Validators.required],
     local: ['', Validators.required],
     fecha: [null as Date | null, Validators.required],
     hora:  ['', [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)]],
+    etapa: ['regular' as Etapa, Validators.required],
   }, { validators: [distintos] });
 
   ngOnInit(): void {
@@ -67,9 +86,113 @@ export class IngresarJuego implements OnInit {
       next: (eqs) => this.equipos = eqs ?? [],
       error: (e) => this.errorMsg = e?.message || 'No fue posible cargar equipos',
     });
+
+    this.svc.getSemanaActualId().subscribe(sem => {
+      this.svc.getExtremosSemanas().subscribe(lim => {
+        this.minWeek = lim.min;
+        this.maxWeek = lim.max;
+        this.currentWeekId = sem ?? lim.min ?? null;
+        if (this.currentWeekId !== null) this.loadGames();
+      });
+    });
   }
 
   get f() { return this.form.controls; }
+
+  etapaLabel(etapa: Etapa): string {
+    return this.etapas.find(e => e.value === etapa)?.label ?? etapa;
+  }
+
+  private loadGames(): void {
+    if (this.currentWeekId === null) return;
+
+    this.listLoading = true;
+    this.svc.getJuegosPorSemanaId(this.currentWeekId).subscribe({
+      next: (juegos) => {
+        this.juegosAgrupados = this.agruparPorFecha(juegos);
+        this.editForms = {};
+      },
+      error: (e) => {
+        this.errorMsg = e?.message || 'No fue posible cargar los juegos';
+        this.listLoading = false;
+      },
+      complete: () => this.listLoading = false,
+    });
+  }
+
+  private agruparPorFecha(juegos: Juego[]): GrupoFecha[] {
+    const gruposMap = new Map<string, Juego[]>();
+    for (const j of juegos) {
+      if (!gruposMap.has(j.fecha)) gruposMap.set(j.fecha, []);
+      gruposMap.get(j.fecha)!.push(j);
+    }
+    return Array.from(gruposMap.entries())
+      .map(([fecha, juegos]) => ({ fecha, juegos: juegos.sort((a, b) => a.hora.localeCompare(b.hora)) }))
+      .sort((a, b) => a.fecha.localeCompare(b.fecha));
+  }
+
+  prevWeek(): void {
+    if (this.currentWeekId === null || this.currentWeekId <= (this.minWeek ?? 0)) return;
+    this.svc.getSemanaAnteriorId(this.currentWeekId).subscribe(id => {
+      if (id !== null) { this.currentWeekId = id; this.loadGames(); }
+    });
+  }
+
+  nextWeek(): void {
+    if (this.currentWeekId === null || this.currentWeekId >= (this.maxWeek ?? 0)) return;
+    this.svc.getSemanaSiguienteId(this.currentWeekId).subscribe(id => {
+      if (id !== null) { this.currentWeekId = id; this.loadGames(); }
+    });
+  }
+
+  startEdit(j: Juego): void {
+    if (!this.editForms[j.id]) {
+      this.editForms[j.id] = this.fb.group({
+        visitante: [j.visitante, Validators.required],
+        local: [j.local, Validators.required],
+        fecha: [this.parseYYYYMMDD(j.fecha), Validators.required],
+        hora: [j.hora, [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)]],
+        etapa: [j.etapa ?? 'regular', Validators.required],
+        resultadoLocal: [j.resultado_local],
+        resultadoVisitante: [j.resultado_visitante],
+      }, { validators: [distintos] });
+    }
+  }
+
+  cancelEdit(j: Juego): void {
+    delete this.editForms[j.id];
+  }
+
+  saveEdit(j: Juego): void {
+    const fg = this.editForms[j.id];
+    if (!fg || fg.invalid) { fg?.markAllAsTouched(); return; }
+
+    const v = fg.value;
+    const patch = {
+      visitante: String(v.visitante),
+      local: String(v.local),
+      fecha: this.formatYYYYMMDD(v.fecha as Date),
+      hora: String(v.hora),
+      etapa: v.etapa as Etapa,
+      resultado_local: v.resultadoLocal === '' || v.resultadoLocal === null || v.resultadoLocal === undefined ? null : Number(v.resultadoLocal),
+      resultado_visitante: v.resultadoVisitante === '' || v.resultadoVisitante === null || v.resultadoVisitante === undefined ? null : Number(v.resultadoVisitante),
+    };
+
+    this.listLoading = true;
+    this.errorMsg = null;
+    this.okMsg = null;
+
+    this.svc.actualizarJuego(j.id, patch).subscribe({
+      next: () => {
+        this.okMsg = 'Juego actualizado';
+        this.loadGames();
+      },
+      error: (e) => {
+        this.errorMsg = e?.message || 'No se pudo actualizar el juego';
+        this.listLoading = false;
+      },
+    });
+  }
 
   onFechaTyped(e: Event) {
     const v = (e.target as HTMLInputElement).value;
@@ -89,8 +212,9 @@ export class IngresarJuego implements OnInit {
     }
     this.loading = true;
     this.errorMsg = null;
+    this.okMsg = null;
 
-    const { visitante, local, fecha, hora } = this.form.value;
+    const { visitante, local, fecha, hora, etapa } = this.form.value;
 
     try {
       const fechaStr = this.formatYYYYMMDD(fecha as Date);
@@ -100,9 +224,13 @@ export class IngresarJuego implements OnInit {
         local: String(local),
         fecha: fechaStr,
         hora: String(hora),
+        etapa: etapa as Etapa,
       }));
 
       this.form.reset();
+      this.form.patchValue({ etapa: 'regular' });
+      this.okMsg = 'Juego creado';
+      this.loadGames();
     } catch (err: any) {
       this.errorMsg = err?.message || 'No fue posible crear el juego';
     } finally {
