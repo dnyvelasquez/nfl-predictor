@@ -22,6 +22,12 @@
         @if (errorMsg()) { <div class="err">{{ errorMsg() }}</div> }
         @if (okMsg())    { <div class="ok">{{ okMsg() }}</div> }
 
+        <mat-tab-group (selectedIndexChange)="onTabChange($event)" animationDuration="0ms">
+          @for (e of etapas; track e.value) {
+            <mat-tab [label]="e.label"></mat-tab>
+          }
+        </mat-tab-group>
+
         @if (loading()) {
           <div class="loading-container">
             <mat-spinner diameter="40"></mat-spinner>

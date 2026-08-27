@@ -7,7 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Service, Participante, Equipo } from '../../services/data';
+import { MatTabsModule } from '@angular/material/tabs';
+import { Service, Participante, Equipo, Etapa, ETAPAS } from '../../services/data';
 import { forkJoin } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
 
@@ -25,7 +26,8 @@ type AsignacionRow = { id?: string; equipo_id: string; participante: string };
     MatDividerModule,
     RouterModule,
     MatMenuModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatTabsModule
   ],
   templateUrl: './asignacion.html',
   styleUrls: ['./asignacion.css'],
@@ -43,29 +45,52 @@ export class Asignacion implements OnInit {
   equipos       = signal<Equipo[]>([]);
   asignaciones  = signal<AsignacionRow[]>([]);
 
-  ngOnInit(): void { this.cargarTodo(); }
+  etapas = ETAPAS;
+  etapaActiva = signal<Etapa>('regular');
 
-  private cargarTodo() {
+  ngOnInit(): void { this.cargarBase(); }
+
+  private cargarBase() {
     this.loading.set(true);
     this.errorMsg.set(null);
     this.okMsg.set(null);
 
     forkJoin({
       participantes: this.svc.getParticipantes(),
-      equipos:       this.svc.getEquipos(), 
-      asign:         this.svc.getAsignaciones(),
+      equipos:       this.svc.getEquipos(),
     }).subscribe({
-      next: ({ participantes, equipos, asign }) => {
+      next: ({ participantes, equipos }) => {
         const ordPart = [...participantes].sort(
           (a, b) => (a.numero ?? 0) - (b.numero ?? 0) || a.nombre.localeCompare(b.nombre)
         );
         this.participantes.set(ordPart);
         this.equipos.set(equipos);
-        this.asignaciones.set(asign ?? []);
+        this.cargarAsignaciones(this.etapaActiva());
       },
+      error: (e) => {
+        this.errorMsg.set(e?.message || 'No fue posible cargar la asignación');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  private cargarAsignaciones(etapa: Etapa) {
+    this.loading.set(true);
+    this.errorMsg.set(null);
+
+    this.svc.getAsignaciones(etapa).subscribe({
+      next: (asign) => this.asignaciones.set(asign ?? []),
       error: (e) => this.errorMsg.set(e?.message || 'No fue posible cargar la asignación'),
       complete: () => this.loading.set(false)
     });
+  }
+
+  onTabChange(index: number) {
+    const etapa = this.etapas[index]?.value;
+    if (!etapa) return;
+    this.etapaActiva.set(etapa);
+    this.okMsg.set(null);
+    this.cargarAsignaciones(etapa);
   }
 
   private equipoById = computed<Record<string, Equipo>>(() => {
@@ -109,7 +134,7 @@ export class Asignacion implements OnInit {
     this.errorMsg.set(null);
     this.okMsg.set(null);
 
-    this.svc.assignEquipo(participanteNombre, division, equipoId).subscribe({
+    this.svc.assignEquipo(participanteNombre, division, equipoId, this.etapaActiva()).subscribe({
       next: () => {
         const byId = this.equipoById();
         const prev = this.asignaciones().filter(
@@ -129,14 +154,15 @@ export class Asignacion implements OnInit {
   }
 
   resetAll() {
-    const ok = confirm('¿Quitar TODAS las asignaciones?');
+    const label = this.etapas.find(e => e.value === this.etapaActiva())?.label ?? this.etapaActiva();
+    const ok = confirm(`¿Quitar TODAS las asignaciones de "${label}"?`);
     if (!ok) return;
 
     this.loading.set(true);
     this.errorMsg.set(null);
     this.okMsg.set(null);
 
-    this.svc.resetAsignaciones().subscribe({
+    this.svc.resetAsignaciones(this.etapaActiva()).subscribe({
       next: () => {
         this.asignaciones.set([]);
         this.okMsg.set('Asignaciones reiniciadas');

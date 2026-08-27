@@ -3,6 +3,12 @@
 -- salvo la política de UPDATE público sobre `equipos` para el rol `anon`, que
 -- existía en Supabase pero se descarta a propósito (decisión del usuario) para
 -- que la escritura quede siempre detrás de autenticación, igual que fifa-predictor.
+--
+-- 2026-08-26: se agregó la columna `etapa` a `asignacion` para soportar cuadros
+-- de asignación independientes por ronda de playoffs (Wild Card, Divisional,
+-- Conferencia, Super Bowl) además de la temporada regular. Este archivo define
+-- el esquema de una base nueva; sobre una base Neon ya existente hay que aplicar
+-- la migración manualmente (ver PR/commit correspondiente para el ALTER TABLE).
 
 -- ============================================================
 -- TABLAS
@@ -40,8 +46,14 @@ CREATE TABLE juegos (
 CREATE TABLE asignacion (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   equipo_id    text REFERENCES equipos(id),
-  participante text
+  participante text,
+  etapa        text NOT NULL DEFAULT 'regular'
+    CHECK (etapa IN ('regular', 'wildcard', 'divisional', 'conferencia', 'superbowl')),
+  CONSTRAINT asignacion_equipo_etapa_unique UNIQUE (equipo_id, etapa)
 );
+
+CREATE INDEX IF NOT EXISTS idx_asignacion_participante_etapa
+  ON asignacion (participante, etapa);
 
 CREATE TABLE participantes (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),

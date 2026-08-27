@@ -65,10 +65,14 @@
     margin: 8px 0; 
 }
 
-.matrix-wrapper { 
-    overflow: auto; 
-    border: 1px solid #eee; 
-    border-radius: 12px; 
+mat-tab-group {
+    margin-bottom: 12px;
+}
+
+.matrix-wrapper {
+    overflow: auto;
+    border: 1px solid #eee;
+    border-radius: 12px;
 }
 
 .grid {

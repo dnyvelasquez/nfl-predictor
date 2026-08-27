@@ -43,10 +43,21 @@ export interface Juego {
   participanteLocal? : string;
 }
 
+export type Etapa = 'regular' | 'wildcard' | 'divisional' | 'conferencia' | 'superbowl';
+
+export const ETAPAS: { value: Etapa; label: string }[] = [
+  { value: 'regular',     label: 'Temporada Regular' },
+  { value: 'wildcard',    label: 'Wild Card' },
+  { value: 'divisional',  label: 'Ronda Divisional' },
+  { value: 'conferencia', label: 'Final de Conferencia' },
+  { value: 'superbowl',   label: 'Super Bowl' },
+];
+
 export interface Asignacion {
   id?: string;
   equipo_id: string;
   participante: string;
+  etapa: Etapa;
 }
 
 @Injectable({
@@ -156,13 +167,13 @@ export class Service {
     );
   }
 
-  getEquipos(): Observable<Equipo[]> {
+  getEquipos(etapa: Etapa = 'regular'): Observable<Equipo[]> {
     return forkJoin({
       equiposRes: from(
         this.supabase.from('equipos').select('*').order('id', { ascending: true })
       ),
       asignRes: from(
-        this.supabase.from('asignacion').select('equipo_id,participante')
+        this.supabase.from('asignacion').select('equipo_id,participante').eq('etapa', etapa)
       )
     }).pipe(
       map(({ equiposRes, asignRes }: any) => {
@@ -201,12 +212,13 @@ export class Service {
     );
   }
 
-  getEquiposDe(nombre: string): Observable<Equipo[]> {
+  getEquiposDe(nombre: string, etapa: Etapa = 'regular'): Observable<Equipo[]> {
     return from(
       this.supabase
         .from('asignacion')
         .select('equipo_id, participante, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,logo)')
         .eq('participante', nombre)
+        .eq('etapa', etapa)
     ).pipe(
       map(({ data, error }: any) => {
         if (error) throw error;
@@ -586,7 +598,7 @@ export class Service {
     );
   }
 
-  assignEquipo(participanteNombre: string, division: string, equipoId: string | null) {
+  assignEquipo(participanteNombre: string, division: string, equipoId: string | null, etapa: Etapa = 'regular') {
     return this.getEquipoIdsPorDivision(division).pipe(
       switchMap((idsMismaDivision) => {
         const delParticipante$ = idsMismaDivision.length
@@ -595,6 +607,7 @@ export class Service {
                 .from('asignacion')
                 .delete()
                 .eq('participante', participanteNombre)
+                .eq('etapa', etapa)
                 .in('equipo_id', idsMismaDivision)
             )
           : of({});
@@ -611,7 +624,7 @@ export class Service {
         const insert$ = from(
           this.supabase
             .from('asignacion')
-            .insert([{ equipo_id: equipoId, participante: participanteNombre }])
+            .insert([{ equipo_id: equipoId, participante: participanteNombre, etapa }])
             .select()
         );
 
@@ -627,8 +640,8 @@ export class Service {
   }
 
 
-  resetAsignaciones() {
-    return from(this.supabase.from('asignacion').delete().neq('equipo_id', ''))
+  resetAsignaciones(etapa: Etapa = 'regular') {
+    return from(this.supabase.from('asignacion').delete().eq('etapa', etapa))
       .pipe(
         map(({ error }: any) => {
           if (error) throw error;
@@ -677,6 +690,7 @@ export class Service {
         this.supabase
           .from('asignacion')
           .select('participante, equipos!inner(pg, pe, pp, pw, pd, pc, sb)')
+          .eq('etapa', 'regular')
       ),
       parts: from(
         this.supabase
@@ -724,11 +738,12 @@ export class Service {
     );
   }
 
-  getAsignaciones() {
+  getAsignaciones(etapa: Etapa = 'regular') {
     return from(
       this.supabase
         .from('asignacion')
         .select('id,equipo_id,participante')
+        .eq('etapa', etapa)
         .order('equipo_id', { ascending: true })
     ).pipe(
       map(({ data, error }: any) => {
