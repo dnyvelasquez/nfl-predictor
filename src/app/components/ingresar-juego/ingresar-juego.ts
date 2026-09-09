@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -13,7 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, finalize } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
 import { Service, Equipo, Juego, Etapa, ETAPAS } from '../../services/data';
 
@@ -54,6 +54,7 @@ function distintos(control: AbstractControl): ValidationErrors | null {
 export class IngresarJuego implements OnInit {
   private fb = inject(FormBuilder);
   private svc = inject(Service);
+  private cdr = inject(ChangeDetectorRef);
 
   constructor(private service: Service, private router: Router) {}
 
@@ -83,8 +84,8 @@ export class IngresarJuego implements OnInit {
 
   ngOnInit(): void {
     this.svc.getEquipos().subscribe({
-      next: (eqs) => this.equipos = eqs ?? [],
-      error: (e) => this.errorMsg = e?.message || 'No fue posible cargar equipos',
+      next: (eqs) => { this.equipos = eqs ?? []; this.cdr.detectChanges(); },
+      error: (e) => { this.errorMsg = e?.message || 'No fue posible cargar equipos'; this.cdr.detectChanges(); },
     });
 
     this.svc.getSemanaActualId().subscribe(sem => {
@@ -93,6 +94,7 @@ export class IngresarJuego implements OnInit {
         this.maxWeek = lim.max;
         this.currentWeekId = sem ?? lim.min ?? null;
         if (this.currentWeekId !== null) this.loadGames();
+        else this.cdr.detectChanges();
       });
     });
   }
@@ -107,16 +109,16 @@ export class IngresarJuego implements OnInit {
     if (this.currentWeekId === null) return;
 
     this.listLoading = true;
-    this.svc.getJuegosPorSemanaId(this.currentWeekId).subscribe({
+    this.svc.getJuegosPorSemanaId(this.currentWeekId).pipe(
+      finalize(() => { this.listLoading = false; this.cdr.detectChanges(); })
+    ).subscribe({
       next: (juegos) => {
         this.juegosAgrupados = this.agruparPorFecha(juegos);
         this.editForms = {};
       },
       error: (e) => {
         this.errorMsg = e?.message || 'No fue posible cargar los juegos';
-        this.listLoading = false;
       },
-      complete: () => this.listLoading = false,
     });
   }
 
@@ -179,6 +181,7 @@ export class IngresarJuego implements OnInit {
       error: (e) => {
         this.errorMsg = e?.message || 'No se pudieron eliminar los juegos';
         this.listLoading = false;
+        this.cdr.detectChanges();
       },
     });
   }
@@ -199,6 +202,7 @@ export class IngresarJuego implements OnInit {
       error: (e) => {
         this.errorMsg = e?.message || 'No se pudo eliminar el juego';
         this.listLoading = false;
+        this.cdr.detectChanges();
       },
     });
   }
@@ -230,6 +234,7 @@ export class IngresarJuego implements OnInit {
       error: (e) => {
         this.errorMsg = e?.message || 'No se pudo actualizar el juego';
         this.listLoading = false;
+        this.cdr.detectChanges();
       },
     });
   }
@@ -275,6 +280,7 @@ export class IngresarJuego implements OnInit {
       this.errorMsg = err?.message || 'No fue posible crear el juego';
     } finally {
       this.loading = false;
+      this.cdr.detectChanges();
     }
   }
 
