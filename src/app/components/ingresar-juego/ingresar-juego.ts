@@ -84,7 +84,10 @@ export class IngresarJuego implements OnInit {
 
   ngOnInit(): void {
     this.svc.getEquipos().subscribe({
-      next: (eqs) => { this.equipos = eqs ?? []; this.cdr.detectChanges(); },
+      next: (eqs) => {
+        this.equipos = (eqs ?? []).slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
+        this.cdr.detectChanges();
+      },
       error: (e) => { this.errorMsg = e?.message || 'No fue posible cargar equipos'; this.cdr.detectChanges(); },
     });
 
