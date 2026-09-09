@@ -163,6 +163,46 @@ export class IngresarJuego implements OnInit {
     delete this.editForms[j.id];
   }
 
+  borrarTodosLosJuegos(): void {
+    const ok = confirm('¿Eliminar TODOS los juegos almacenados? Esta acción no se puede deshacer.');
+    if (!ok) return;
+
+    this.listLoading = true;
+    this.errorMsg = null;
+    this.okMsg = null;
+
+    this.svc.eliminarTodosLosJuegos().subscribe({
+      next: () => {
+        this.okMsg = 'Todos los juegos fueron eliminados';
+        this.loadGames();
+      },
+      error: (e) => {
+        this.errorMsg = e?.message || 'No se pudieron eliminar los juegos';
+        this.listLoading = false;
+      },
+    });
+  }
+
+  borrarJuego(j: Juego): void {
+    const ok = confirm(`¿Eliminar el juego ${j.visitante} @ ${j.local}? Esta acción no se puede deshacer.`);
+    if (!ok) return;
+
+    this.listLoading = true;
+    this.errorMsg = null;
+    this.okMsg = null;
+
+    this.svc.eliminarJuego(j.id).subscribe({
+      next: () => {
+        this.okMsg = 'Juego eliminado';
+        this.loadGames();
+      },
+      error: (e) => {
+        this.errorMsg = e?.message || 'No se pudo eliminar el juego';
+        this.listLoading = false;
+      },
+    });
+  }
+
   saveEdit(j: Juego): void {
     const fg = this.editForms[j.id];
     if (!fg || fg.invalid) { fg?.markAllAsTouched(); return; }

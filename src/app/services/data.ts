@@ -594,6 +594,26 @@ export class Service {
     );
   }
 
+  eliminarJuego(id: string): Observable<void> {
+    return from(
+      this.supabase.from('juegos').delete().eq('id', id)
+    ).pipe(
+      map(({ error }: any) => {
+        if (error) throw error;
+      })
+    );
+  }
+
+  eliminarTodosLosJuegos(): Observable<void> {
+    return from(
+      this.supabase.from('juegos').delete().not('id', 'is', null)
+    ).pipe(
+      map(({ error }: any) => {
+        if (error) throw error;
+      })
+    );
+  }
+
   createUserAsAdmin(email: string, password: string, fullName?: string) {
     return from(
       this.admin().createUser({

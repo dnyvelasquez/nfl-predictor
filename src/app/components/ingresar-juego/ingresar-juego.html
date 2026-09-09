@@ -97,7 +97,7 @@
           }
       </form>
 
-      <mat-divider></mat-divider>
+      <mat-divider class="section-divider"></mat-divider>
 
       <div class="week-nav">
         <button mat-icon-button (click)="prevWeek()"
@@ -110,6 +110,13 @@
           [disabled]="currentWeekId === null || maxWeek === null || currentWeekId >= maxWeek || listLoading"
           aria-label="Semana siguiente">
           <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+
+      <div class="table-actions">
+        <button mat-stroked-button color="warn" (click)="borrarTodosLosJuegos()" [disabled]="listLoading">
+          <mat-icon>delete_sweep</mat-icon>
+          Borrar todos los juegos
         </button>
       </div>
 
@@ -154,6 +161,9 @@
                   </div>
                   <div class="cell a">
                     <button mat-stroked-button (click)="startEdit(j)" [disabled]="listLoading">Editar</button>
+                    <button mat-icon-button color="warn" (click)="borrarJuego(j)" [disabled]="listLoading" aria-label="Borrar juego">
+                      <mat-icon>delete</mat-icon>
+                    </button>
                   </div>
                 </div>
               } @else {
