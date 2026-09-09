@@ -10,6 +10,16 @@ export interface RegistroEquipoParticipante {
   puntos: number;
 }
 
+export function estadoEquipoEnEtapa(item: RegistroEquipoParticipante): string {
+  if (item.equipo.etapa === 'regular') {
+    return `${item.wins}-${item.ties}-${item.losses}`;
+  }
+  if (item.wins > 0) return 'Ganó';
+  if (item.losses > 0) return 'Perdió';
+  if (item.ties > 0) return 'Empató';
+  return 'Pendiente';
+}
+
 export interface RegistroEquipoPorEtapa {
   etapa: Etapa;
   label: string;

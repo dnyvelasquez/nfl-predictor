@@ -1,5 +1,5 @@
 import { Component, OnDestroy, inject, ChangeDetectionStrategy } from '@angular/core';
-import { Service, Participante } from '../../services/data';
+import { Service, Participante, estadoEquipoEnEtapa } from '../../services/data';
 import { AsyncPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -56,6 +56,8 @@ export class TablaPuntajes implements OnDestroy {
       error: () => this.loading$.next(false)
     });
   }
+
+  readonly estadoEquipo = estadoEquipoEnEtapa;
 
   trackByParticipanteId(index: number, participante: Participante): string {
     return participante.id;

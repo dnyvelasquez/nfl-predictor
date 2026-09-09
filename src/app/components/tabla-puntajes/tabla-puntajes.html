@@ -46,7 +46,7 @@
                             <img [src]="item.equipo.logo" [alt]="item.equipo.nombre" class="equipo-logo" />
                             <div class="equipo-info-derecha">
                               <strong class="equipo-nombre">{{ item.equipo.nombre }}</strong>
-                              <span class="equipo-record">{{ item.wins }}-{{ item.ties }}-{{ item.losses }}</span>
+                              <span class="equipo-record">{{ estadoEquipo(item) }}</span>
                               <span class="equipo-puntaje">{{ item.puntos }} puntos</span>
                               <div
                                 [ngClass]="{

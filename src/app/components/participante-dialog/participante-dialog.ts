@@ -4,7 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { Participante } from '../../services/data';
+import { Participante, estadoEquipoEnEtapa } from '../../services/data';
 
 @Component({
   selector: 'app-participante-dialog',
@@ -20,6 +20,8 @@ import { Participante } from '../../services/data';
   styleUrls: ['./participante-dialog.css'],
 })
 export class ParticipanteDialog {
+  readonly estadoEquipo = estadoEquipoEnEtapa;
+
   constructor(
     public dialogRef: MatDialogRef<ParticipanteDialog>,
     @Inject(MAT_DIALOG_DATA) public data: Participante
