@@ -131,6 +131,13 @@
   transform: translateY(-2px);
 }
 
+.equipo-logo-nombre {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
 .equipo-nombre {
   font-size: 0.9rem;
   text-align: center;
@@ -138,7 +145,7 @@
 }
 
 .equipo-logo {
-  width: 80px;
+  width: 60px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
@@ -189,16 +196,21 @@
   .equipo-item {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: stretch;
     gap: 20px;
     min-width: 80px;
     padding: 16px 24px;
+  }
+
+  .equipo-logo-nombre {
+    justify-content: space-between;
   }
 
   .equipo-info-derecha {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    justify-content: space-between;
     gap: 8px;
     flex: 1;
   }
@@ -206,7 +218,7 @@
   .equipo-nombre {
     font-size: 1.1rem;
     font-weight: bold;
-    text-align: left;
+    text-align: center;
     margin: 0;
     color: #003B73;
   }
@@ -251,31 +263,26 @@
   .equipo-nombre {
     font-size: 1rem;
     font-weight: bold;
-    order: 1;
   }
 
   .equipo-logo {
     width: 80px;
-    order: 2;
   }
 
   .equipo-puntaje {
     font-size: 0.9rem;
-    order: 3;
   }
 
   .chip-afc,
   .chip-nfc {
     font-size: 0.75rem;
-    order: 4;
-  }
-
-  .equipo-record {
-    order: 4;
   }
 
   .equipo-info-derecha {
-    display: contents;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
   }
 }
 

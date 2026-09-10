@@ -145,6 +145,12 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
+.fecha-header .info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .fecha-header mat-icon {
   color: white;
 }
@@ -196,6 +202,21 @@
   width: 48px;
   height: 48px;
   color: #999;
+}
+
+@media (min-width: 769px) {
+  .equipo-logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .equipo-local {
+    flex-direction: row;
+  }
+
+  .equipo-visitante {
+    flex-direction: row-reverse;
+  }
 }
 
 @media (max-width: 768px) {

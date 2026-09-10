@@ -23,9 +23,11 @@
                     <div class="etapa-group-label">{{ grupo.label }}</div>
                     @for (item of grupo.equipos; track item.equipo.nombre) {
                         <div class="equipo-item">
-                        <img [src]="item.equipo.logo" [alt]="item.equipo.nombre" class="equipo-logo" />
-                        <div class="equipo-info-derecha">
+                        <div class="equipo-logo-nombre">
+                            <img [src]="item.equipo.logo" [alt]="item.equipo.nombre" class="equipo-logo" />
                             <strong class="equipo-nombre">{{ item.equipo.nombre }}</strong>
+                        </div>
+                        <div class="equipo-info-derecha">
                             <span class="equipo-record">{{ estadoEquipo(item) }}</span>
                             <span class="equipo-puntaje">{{ item.puntos }} puntos</span>
                             <div
