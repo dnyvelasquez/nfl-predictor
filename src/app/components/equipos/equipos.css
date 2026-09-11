@@ -65,6 +65,10 @@
   text-align: left;
 }
 
+.head-cell.equipo-header {
+  grid-column: span 2;
+}
+
 .cell {
   padding: 10px 16px;
   border-bottom: 1px solid #eee;
