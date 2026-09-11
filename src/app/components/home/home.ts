@@ -87,6 +87,7 @@ export class Home implements OnInit, OnDestroy {
     this.dialog.open(ParticipanteDialog, {
       width: 'auto',
       maxWidth: '90vw',
+      maxHeight: '90vh',
       data: participante,
       panelClass: 'participante-dialog-panel',
       disableClose: false,

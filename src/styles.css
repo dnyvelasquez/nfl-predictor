@@ -11,8 +11,10 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .participante-dialog-panel .mat-mdc-dialog-container {
   padding: 0 !important;
   border-radius: 16px !important;
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   background-color: transparent !important;
+  max-height: 90vh !important;
 }
 
 .participante-dialog-panel .mat-mdc-dialog-container .mdc-dialog__surface {
