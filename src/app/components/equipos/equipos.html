@@ -18,45 +18,40 @@
         <p>{{ error }}</p>
       </div>
     } @else {
-      <div class="table-container">
-        <div class="grid-table">
-          <div class="head-cell equipo-header">Equipo</div>
-          <div class="head-cell">División</div>
-          <div class="head-cell">Etapa</div>
-          <div class="head-cell col-izq">Puntos</div>
-          <div class="head-cell col-izq">Participante</div>
-
-          @for (e of equipos; track e.id) {
-            @for (item of e.porEtapa; track item.etapa; let first = $first) {
-              @if (first) {
-                <div class="cell logo-cell" [style.grid-row]="'span ' + e.porEtapa.length">
-                  <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo" loading="lazy">
-                </div>
-                <div class="cell equipo-cell" [style.grid-row]="'span ' + e.porEtapa.length">
-                  {{ e.nombre }}
-                </div>
-                <div class="cell division-cell" [style.grid-row]="'span ' + e.porEtapa.length">
-                  <span
-                    [ngClass]="{
-                      'chip-afc': e.division.startsWith('AFC'),
-                      'chip-nfc': e.division.startsWith('NFC')
-                    }"
-                  >
-                    {{ e.division }}
-                  </span>
+      <div class="equipos-lista">
+        @for (e of equipos; track e.id) {
+          <div class="equipo-card">
+            <div class="equipo-card-header">
+              <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo" loading="lazy">
+              <div class="equipo-nombre-division">
+                <strong class="equipo-nombre">{{ e.nombre }}</strong>
+                <span
+                  [ngClass]="{
+                    'chip-afc': e.division.startsWith('AFC'),
+                    'chip-nfc': e.division.startsWith('NFC')
+                  }"
+                >
+                  {{ e.division }}
+                </span>
+              </div>
+            </div>
+            <div class="etapas-lista">
+              @for (item of e.porEtapa; track item.etapa) {
+                <div class="etapa-row">
+                  <span class="etapa-label">{{ item.label }}</span>
+                  <span class="etapa-marca">{{ marca(item) }}</span>
+                  <span class="etapa-puntos">{{ item.puntos }} puntos</span>
+                  <span class="etapa-participante">{{ item.participante }}</span>
                 </div>
               }
-              <div class="cell etapa-cell">{{ item.label }}</div>
-              <div class="cell puntos-cell col-izq">{{ item.puntos }} puntos</div>
-              <div class="cell participante-cell col-izq">{{ item.participante }}</div>
-            }
-          } @empty {
-            <div class="empty-container">
-              <mat-icon>sports_football</mat-icon>
-              <p>No hay equipos con participantes asignados</p>
             </div>
-          }
-        </div>
+          </div>
+        } @empty {
+          <div class="empty-container">
+            <mat-icon>sports_football</mat-icon>
+            <p>No hay equipos con participantes asignados</p>
+          </div>
+        }
       </div>
     }
   </mat-card>

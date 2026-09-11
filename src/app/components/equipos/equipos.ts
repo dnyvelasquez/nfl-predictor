@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { Subject, of } from 'rxjs';
 import { takeUntil, catchError, finalize } from 'rxjs/operators';
-import { Service, Equipo, RegistroEquipoPorEtapa } from '../../services/data';
+import { Service, Equipo, RegistroEquipoPorEtapa, marcaEquipoPorEtapa } from '../../services/data';
 
 type EquipoConEtapas = Equipo & { porEtapa: RegistroEquipoPorEtapa[] };
 
@@ -27,6 +27,8 @@ type EquipoConEtapas = Equipo & { porEtapa: RegistroEquipoPorEtapa[] };
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Equipos implements OnInit, OnDestroy {
+
+  readonly marca = marcaEquipoPorEtapa;
 
   equipos: EquipoConEtapas[] = [];
   loading = true;

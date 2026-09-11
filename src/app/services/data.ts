@@ -10,21 +10,32 @@ export interface RegistroEquipoParticipante {
   puntos: number;
 }
 
-export function estadoEquipoEnEtapa(item: RegistroEquipoParticipante): string {
-  if (item.equipo.etapa === 'regular') {
-    return `${item.wins}-${item.ties}-${item.losses}`;
+export function marcaEquipoEnEtapa(etapa: Etapa, wins: number, ties: number, losses: number): string {
+  if (etapa === 'regular') {
+    return `${wins}-${ties}-${losses}`;
   }
-  if (item.wins > 0) return 'Ganó';
-  if (item.losses > 0) return 'Perdió';
-  if (item.ties > 0) return 'Empató';
+  if (wins > 0) return 'Ganó';
+  if (losses > 0) return 'Perdió';
+  if (ties > 0) return 'Empató';
   return 'Pendiente';
+}
+
+export function estadoEquipoEnEtapa(item: RegistroEquipoParticipante): string {
+  return marcaEquipoEnEtapa(item.equipo.etapa, item.wins, item.ties, item.losses);
 }
 
 export interface RegistroEquipoPorEtapa {
   etapa: Etapa;
   label: string;
   participante: string;
+  wins: number;
+  ties: number;
+  losses: number;
   puntos: number;
+}
+
+export function marcaEquipoPorEtapa(item: RegistroEquipoPorEtapa): string {
+  return marcaEquipoEnEtapa(item.etapa, item.wins, item.ties, item.losses);
 }
 
 export interface Participante {
@@ -320,8 +331,8 @@ export class Service {
             .map(et => {
               const participantes = participantesPorEquipoEtapa[`${e.id}|${et.value}`] ?? [];
               const participante = participantes.join(' / ');
-              const { puntos } = this.registroEquipoEnEtapa(e.nombre, et.value, juegos);
-              return { etapa: et.value, label: et.label, participante, puntos };
+              const { wins, ties, losses, puntos } = this.registroEquipoEnEtapa(e.nombre, et.value, juegos);
+              return { etapa: et.value, label: et.label, participante, wins, ties, losses, puntos };
             })
             .filter(g => g.participante);
 

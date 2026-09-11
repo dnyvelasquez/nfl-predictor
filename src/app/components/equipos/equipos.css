@@ -9,7 +9,7 @@
 }
 
 .equipos-card {
-  max-width: 90%;
+  max-width: 95%;
   width: 900px;
   padding: 20px;
   text-align: center;
@@ -32,92 +32,97 @@
   font-weight: bold;
 }
 
-.table-container {
-  overflow-x: auto;
-  border-radius: 12px;
+.equipos-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  padding: 8px 0;
 }
 
-.grid-table {
-  display: grid;
-  grid-template-columns: 100px 1.4fr 110px 1.2fr 130px 1.4fr;
-  align-items: stretch;
-  min-width: 720px;
+.equipo-card {
   background-color: white;
   color: #000;
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 360px;
+  text-align: left;
 }
 
-.head-cell {
-  background-color: #667eea;
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.9rem;
+.equipo-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.head-cell.col-izq {
-  justify-content: flex-start;
-  text-align: left;
-}
-
-.head-cell.equipo-header {
-  grid-column: span 2;
-}
-
-.cell {
-  padding: 10px 16px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  align-items: center;
-}
-
-.col-izq {
-  justify-content: flex-start;
-  text-align: left;
-}
-
-.logo-cell {
-  justify-content: center;
-  padding: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .equipo-logo {
-  height: 100%;
-  width: 100%;
-  max-height: 120px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  flex-shrink: 0;
 }
 
-.equipo-cell {
+.equipo-nombre-division {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.equipo-nombre {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.etapas-lista {
+  display: flex;
+  flex-direction: column;
+}
+
+.etapa-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid #eee;
+}
+
+.etapa-label {
   font-weight: 700;
   color: #003B73;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex: 1 1 100%;
 }
 
-.division-cell {
-  justify-content: center;
-}
-
-.etapa-cell {
-  font-weight: 600;
-  color: #003B73;
-  justify-content: flex-start;
-  text-align: left;
-}
-
-.participante-cell {
+.etapa-marca {
   color: #555;
-  font-weight: bold;
+  font-size: 0.85rem;
 }
 
-.puntos-cell {
+.etapa-puntos {
   font-weight: bold;
   color: #003366;
+  font-size: 0.85rem;
+  background-color: rgba(0, 51, 102, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: auto;
+}
+
+.etapa-participante {
+  color: #555;
+  font-weight: bold;
+  font-size: 0.85rem;
 }
 
 .chip-afc,
@@ -177,8 +182,29 @@
   height: 48px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .grid-table {
-    transition: none;
+@media (max-width: 600px) {
+  .equipos-card {
+    padding: 12px;
+  }
+
+  .equipo-card {
+    max-width: 100%;
+  }
+
+  .equipo-logo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .equipo-nombre {
+    font-size: 1rem;
+  }
+
+  .etapa-puntos {
+    margin-left: 0;
+  }
+
+  .etapa-participante {
+    margin-left: auto;
   }
 }
