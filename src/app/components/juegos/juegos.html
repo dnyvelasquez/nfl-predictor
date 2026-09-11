@@ -34,23 +34,6 @@
             <div class="subtable">
               @for (j of grupo.juegos; track j.id) {
                 <div class="grid-row">
-                  <div class="equipo equipo-local">
-                    <img [src]="j.logoLocal" [alt]="j.local" class="equipo-logo" loading="lazy">
-                    <div class="equipo-info">
-                      <span class="nombre">{{ j.local }}</span>
-                      @if ((j.participanteLocal || '').trim()) {
-                        <span class="participante">{{ j.participanteLocal }}</span>
-                      } @else {
-                        <span class="participante">No asignado</span>
-                      }
-                    </div>
-                    @if (j.resultado_local !== null && j.resultado_visitante !== null) {
-                      <span class="marcador">{{ j.resultado_local }}</span>
-                    }
-                  </div>
-                  <div class="vs">
-                    <span>Vs</span>
-                  </div>
                   <div class="equipo equipo-visitante">
                     <img [src]="j.logoVisitante" [alt]="j.visitante" class="equipo-logo" loading="lazy">
                     <div class="equipo-info">
@@ -63,6 +46,23 @@
                     </div>
                     @if (j.resultado_local !== null && j.resultado_visitante !== null) {
                       <span class="marcador">{{ j.resultado_visitante }}</span>
+                    }
+                  </div>
+                  <div class="vs">
+                    <span>Vs</span>
+                  </div>
+                  <div class="equipo equipo-local">
+                    <img [src]="j.logoLocal" [alt]="j.local" class="equipo-logo" loading="lazy">
+                    <div class="equipo-info">
+                      <span class="nombre">{{ j.local }}</span>
+                      @if ((j.participanteLocal || '').trim()) {
+                        <span class="participante">{{ j.participanteLocal }}</span>
+                      } @else {
+                        <span class="participante">No asignado</span>
+                      }
+                    </div>
+                    @if (j.resultado_local !== null && j.resultado_visitante !== null) {
+                      <span class="marcador">{{ j.resultado_local }}</span>
                     }
                   </div>
                   <div class="scheduled">

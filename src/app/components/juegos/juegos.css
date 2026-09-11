@@ -64,7 +64,7 @@
 .equipo-visitante {
   display: flex;
   align-items: center;
-  justify-content: end;
+  justify-content: start;
   gap: 8px;
   font-weight: bold;
 }
@@ -72,7 +72,7 @@
 .equipo-local {
   display: flex;
   align-items: center;
-  justify-content: start;
+  justify-content: end;
   gap: 8px;
   font-weight: bold;
 }
@@ -114,9 +114,9 @@
 .grid-row {
   display: grid;
   grid-template-columns:
-    3fr   /* Local */
-    1fr   /* Vs */
     3fr   /* Visitante */
+    1fr   /* Vs */
+    3fr   /* Local */
     3fr;  /* scheduled */
   align-items: center;
   gap: 12px;
@@ -210,11 +210,11 @@
     height: 56px;
   }
 
-  .equipo-local {
+  .equipo-visitante {
     flex-direction: row;
   }
 
-  .equipo-visitante {
+  .equipo-local {
     flex-direction: row-reverse;
   }
 }

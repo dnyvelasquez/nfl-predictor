@@ -154,7 +154,7 @@
                   </div>
                   <div class="cell resultado">
                     @if (j.resultado_local !== null && j.resultado_visitante !== null) {
-                      <span>{{ j.resultado_local }} - {{ j.resultado_visitante }}</span>
+                      <span>{{ j.resultado_visitante }} - {{ j.resultado_local }}</span>
                     } @else {
                       <span class="muted">Sin resultado</span>
                     }
@@ -207,10 +207,10 @@
                   </div>
                   <div class="cell resultado">
                     <mat-form-field appearance="fill" class="tight score">
-                      <input matInput type="number" placeholder="Local" formControlName="resultadoLocal" />
+                      <input matInput type="number" placeholder="Visit." formControlName="resultadoVisitante" />
                     </mat-form-field>
                     <mat-form-field appearance="fill" class="tight score">
-                      <input matInput type="number" placeholder="Visit." formControlName="resultadoVisitante" />
+                      <input matInput type="number" placeholder="Local" formControlName="resultadoLocal" />
                     </mat-form-field>
                   </div>
                   <div class="cell a">
