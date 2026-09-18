@@ -45,7 +45,7 @@
                       }
                     </div>
                     @if (j.resultado_local !== null && j.resultado_visitante !== null) {
-                      <span class="marcador">{{ j.resultado_visitante }}</span>
+                      <span class="marcador" [class.marcador-ganador]="j.resultado_visitante > j.resultado_local">{{ j.resultado_visitante }}</span>
                     }
                   </div>
                   <div class="vs">
@@ -62,7 +62,7 @@
                       }
                     </div>
                     @if (j.resultado_local !== null && j.resultado_visitante !== null) {
-                      <span class="marcador">{{ j.resultado_local }}</span>
+                      <span class="marcador" [class.marcador-ganador]="j.resultado_local > j.resultado_visitante">{{ j.resultado_local }}</span>
                     }
                   </div>
                   <div class="scheduled">
