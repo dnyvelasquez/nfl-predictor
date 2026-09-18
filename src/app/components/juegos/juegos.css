@@ -211,11 +211,11 @@
   }
 
   .equipo-visitante {
-    flex-direction: row;
+    flex-direction: row-reverse;
   }
 
   .equipo-local {
-    flex-direction: row-reverse;
+    flex-direction: row;
   }
 }
 
