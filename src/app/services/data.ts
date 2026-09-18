@@ -777,7 +777,7 @@ export class Service {
       return {
         ...j,
         logoVisitante: v?.logo || '',
-        logoLocal:     l?.logo || '',
+        logoLocal:     l?.logo_2 || l?.logo || '',
         participanteVisitante: listV.join(' / '),
         participanteLocal:     listL.join(' / '),
       } as Juego;
