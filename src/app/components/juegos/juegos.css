@@ -212,10 +212,12 @@
 
   .equipo-visitante {
     flex-direction: row-reverse;
+    justify-content: flex-end;
   }
 
   .equipo-local {
     flex-direction: row;
+    justify-content: flex-start;
   }
 }
 
