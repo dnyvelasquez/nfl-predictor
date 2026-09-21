@@ -65,6 +65,8 @@ export interface Equipo {
   participante?: string;
 }
 
+export type EstadoJuego = 'programado' | 'en_vivo' | 'final' | 'pospuesto';
+
 export interface Juego {
   id: string;
   semana: string;
@@ -76,6 +78,7 @@ export interface Juego {
   etapa: Etapa;
   resultado_local: number | null;
   resultado_visitante: number | null;
+  estado?: EstadoJuego;
   logoVisitante?: string;
   logoLocal?: string;
   participanteVisitante? : string;

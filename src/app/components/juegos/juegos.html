@@ -66,12 +66,20 @@
                     }
                   </div>
                   <div class="scheduled">
-                    @if (j.resultado_local !== null && j.resultado_visitante !== null) {
-                      <mat-icon>sports_score</mat-icon>
-                      <span>Final</span>
-                    } @else {
-                      <mat-icon>schedule</mat-icon>
-                      <span>{{ j.hora }}</span>
+                    <div class="estado-principal">
+                      @if (j.estado !== 'en_vivo' && j.resultado_local !== null && j.resultado_visitante !== null) {
+                        <mat-icon>sports_score</mat-icon>
+                        <span>Final</span>
+                      } @else {
+                        <mat-icon>schedule</mat-icon>
+                        <span>{{ j.hora }}</span>
+                      }
+                    </div>
+                    @if (j.estado === 'en_vivo') {
+                      <span class="en-vivo-badge">
+                        <mat-icon class="en-vivo-dot">fiber_manual_record</mat-icon>
+                        En vivo
+                      </span>
                     }
                   </div>
                 </div>

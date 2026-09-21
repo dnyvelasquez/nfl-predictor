@@ -45,6 +45,9 @@ export class Juegos implements OnDestroy {
   private service = inject(Service);
   private cdr = inject(ChangeDetectorRef);
 
+  private static readonly REFRESH_INTERVAL_MS = 60000;
+  private refreshTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
     this.loadInitialData();
   }
@@ -80,6 +83,7 @@ export class Juegos implements OnDestroy {
   private loadGames(): void {
     if (this.currentWeekId === null) return;
 
+    this.clearAutoRefresh();
     this.loading = true;
 
     this.service.getJuegosPorSemanaId(this.currentWeekId).pipe(
@@ -92,7 +96,47 @@ export class Juegos implements OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(grupos => {
       this.juegosAgrupados = grupos;
+      this.scheduleAutoRefresh();
     });
+  }
+
+  /** Refresca los marcadores en segundo plano, sin mostrar el spinner de carga. */
+  private refreshGamesQuietly(): void {
+    if (this.currentWeekId === null) return;
+
+    this.service.getJuegosPorSemanaId(this.currentWeekId).pipe(
+      map(juegos => this.agruparPorFecha(juegos)),
+      catchError(() => of(null)),
+      takeUntil(this.destroy$)
+    ).subscribe(grupos => {
+      if (grupos !== null) {
+        this.juegosAgrupados = grupos;
+        this.cdr.detectChanges();
+      }
+      this.scheduleAutoRefresh();
+    });
+  }
+
+  /** Mientras haya juegos en vivo en la semana visible, reconsulta periódicamente. */
+  private scheduleAutoRefresh(): void {
+    this.clearAutoRefresh();
+    if (!this.hayJuegosEnVivo()) return;
+
+    this.refreshTimeoutId = setTimeout(
+      () => this.refreshGamesQuietly(),
+      Juegos.REFRESH_INTERVAL_MS
+    );
+  }
+
+  private clearAutoRefresh(): void {
+    if (this.refreshTimeoutId !== null) {
+      clearTimeout(this.refreshTimeoutId);
+      this.refreshTimeoutId = null;
+    }
+  }
+
+  hayJuegosEnVivo(): boolean {
+    return this.juegosAgrupados.some(g => g.juegos.some(j => j.estado === 'en_vivo'));
   }
 
   private agruparPorFecha(juegos: Juego[]): GrupoFecha[] {
@@ -116,6 +160,7 @@ export class Juegos implements OnDestroy {
   prevWeek(): void {
     if (this.currentWeekId === null || this.currentWeekId <= (this.minWeek ?? 0)) return;
 
+    this.clearAutoRefresh();
     this.loading = true;
     this.service.getSemanaAnteriorId(this.currentWeekId).pipe(
       takeUntil(this.destroy$)
@@ -133,6 +178,7 @@ export class Juegos implements OnDestroy {
   nextWeek(): void {
     if (this.currentWeekId === null || this.currentWeekId >= (this.maxWeek ?? 0)) return;
 
+    this.clearAutoRefresh();
     this.loading = true;
     this.service.getSemanaSiguienteId(this.currentWeekId).pipe(
       takeUntil(this.destroy$)
@@ -164,6 +210,7 @@ export class Juegos implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clearAutoRefresh();
     this.destroy$.next();
     this.destroy$.complete();
   }
