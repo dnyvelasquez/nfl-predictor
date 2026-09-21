@@ -163,8 +163,7 @@
 }
 
 .equipo-logo {
-    width: 76px;
-    height: 46px;
+    width: 60px;
     object-fit: contain;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
@@ -299,11 +298,6 @@
     .equipo-nombre {
     font-size: 1rem;
     font-weight: bold;
-    }
-
-    .equipo-logo {
-    width: 60px;
-    height: 40px;
     }
 
     .equipo-puntaje {
