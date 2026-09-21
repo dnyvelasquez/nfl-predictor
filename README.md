@@ -34,6 +34,24 @@ npm test
 
 Ejecuta las pruebas unitarias con Karma/Jasmine.
 
+## Sincronización de datos NFL
+
+El calendario y los resultados se pueden mantener al día automáticamente desde la API pública (no oficial) de ESPN — no requiere API key.
+
+**Manual:**
+
+```bash
+DATABASE_URL="postgres://..." SEASON_YEAR=2026 node scripts/sync-nfl.mjs
+```
+
+- `DATABASE_URL`: connection string de Neon (requerido).
+- `SEASON_YEAR`: temporada a sincronizar (opcional, por defecto `2026`).
+- Requiere Node.js 18+ y la dependencia `pg` (ya incluida en `package.json`).
+
+El script actualiza `equipos.espn_id` por cada equipo y sincroniza temporada regular y playoffs en `juegos` (resultado, hora, estado), sin tocar juegos ya cargados manualmente salvo para vincularlos con su ID de ESPN.
+
+**Automática:** existe una GitHub Action programada (`.github/workflows/sync-nfl.yml`) que corre el mismo script varias veces por hora durante las ventanas en que suele haber juegos en vivo (domingo, lunes y jueves en la noche), usando el secret `DATABASE_URL` configurado en el repositorio. También se puede lanzar manualmente desde la pestaña Actions.
+
 ## Funcionalidad principal
 
 - **Equipos**: catálogo de los 32 equipos de la NFL agrupados por división; cada equipo muestra, por cada etapa en la que tiene un participante asignado, quién es ese participante y los puntos que el equipo le aportó en esa etapa.

@@ -1,0 +1,34 @@
+name: Sincronizar NFL (ESPN -> Neon)
+
+on:
+  schedule:
+    # Todas las horas están en UTC. Bogotá = UTC-5 todo el año (sin horario de verano).
+    # Domingo: juegos desde ~13:00 hasta pasada medianoche hora Bogotá.
+    - cron: "*/15 18-23 * * 0"  # Domingo 13:00-18:59 Bogotá
+    - cron: "*/15 0-4 * * 1"    # Domingo noche / Sunday Night Football (madrugada lunes UTC)
+    # Lunes: Monday Night Football (~19:00-24:00 Bogotá -> madrugada martes UTC)
+    - cron: "*/15 0-4 * * 2"
+    # Jueves: Thursday Night Football (~19:00-24:00 Bogotá -> madrugada viernes UTC)
+    - cron: "*/15 0-4 * * 5"
+  workflow_dispatch: {} # permite correrlo manualmente desde la pestaña Actions
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependencias
+        run: npm install pg
+
+      - name: Ejecutar sincronización
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SEASON_YEAR: "2026"
+        run: node scripts/sync-nfl.mjs

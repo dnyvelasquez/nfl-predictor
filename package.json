@@ -34,6 +34,7 @@
     "@angular/ssr": "^20.2.2",
     "@neondatabase/neon-js": "0.7.0-beta",
     "express": "^5.1.0",
+    "pg": "^8.23.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "^0.15.1"
