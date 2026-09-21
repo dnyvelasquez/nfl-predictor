@@ -2,15 +2,32 @@ name: Sincronizar NFL (ESPN -> Neon)
 
 on:
   schedule:
-    # Todas las horas están en UTC. Bogotá = UTC-5 todo el año (sin horario de verano).
-    # Domingo: juegos desde ~13:00 hasta pasada medianoche hora Bogotá.
-    - cron: "*/15 18-23 * * 0"  # Domingo 13:00-18:59 Bogotá
-    - cron: "*/15 0-4 * * 1"    # Domingo noche / Sunday Night Football (madrugada lunes UTC)
-    # Lunes: Monday Night Football (~19:00-24:00 Bogotá -> madrugada martes UTC)
-    - cron: "*/15 0-4 * * 2"
-    # Jueves: Thursday Night Football (~19:00-24:00 Bogotá -> madrugada viernes UTC)
-    - cron: "*/15 0-4 * * 5"
-  workflow_dispatch: {} # permite correrlo manualmente desde la pestaña Actions
+    # Modo rápido: cada 5 minutos, TODOS los días, todo el día.
+    # 5 min es el mínimo que GitHub permite para cron schedules.
+    # No hay que adivinar horarios: el propio script consulta la tabla
+    # `juegos` para ver si hay algo cerca de "hoy" antes de llamar a ESPN.
+    # Si no hay nada, termina en segundos sin gastar de más. Esto cubre
+    # jueves, sábados ocasionales, domingos con partido internacional
+    # temprano y Monday Night Football sin necesidad de ventanas manuales.
+    - cron: "*/5 * * * *"
+
+    # Modo completo: una vez por semana, martes 01:00 hora Bogotá
+    # (06:00 UTC) -> ya pasó el Monday Night Football (termina ~23:00-23:30
+    # Bogotá). Refresca equipos.espn_id y recorre las 22 semanas completas,
+    # para levantar cambios de calendario, aplazamientos o brackets de
+    # playoffs recién definidos.
+    - cron: "0 6 * * 2"
+
+  workflow_dispatch: # permite correrlo manualmente desde la pestaña Actions
+    inputs:
+      mode:
+        description: "Modo de sincronización"
+        required: true
+        default: "quick"
+        type: choice
+        options:
+          - quick
+          - full
 
 jobs:
   sync:
@@ -27,8 +44,24 @@ jobs:
       - name: Instalar dependencias
         run: npm install pg
 
+      - name: Determinar modo
+        id: modo
+        shell: bash
+        run: |
+          # Si se disparó manualmente, usa el input elegido.
+          # Si se disparó por schedule, usa "full" solo en el cron de las
+          # 06:00 UTC (martes); cualquier otro horario programado es "quick".
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ github.event.inputs.mode }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 6 * * 2" ]; then
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=quick" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Ejecutar sincronización
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SEASON_YEAR: "2026"
+          MODE: ${{ steps.modo.outputs.mode }}
         run: node scripts/sync-nfl.mjs

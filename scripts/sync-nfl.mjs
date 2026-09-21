@@ -15,8 +15,25 @@
 //          que coincida en semana/etapa/local/visitante -> le asigna el id.
 //        - Si tampoco existe -> inserta una fila nueva.
 //
+// Modos (variable de entorno MODE):
+//   full  (default) -> recorre las 22 semanas (regular + playoffs) y también
+//                       refresca equipos.espn_id. Pensado para correr 1 vez
+//                       por semana (calendario completo, cambios de horario,
+//                       aplazamientos, brackets de playoffs recién definidos).
+//   quick             -> NO barre las 22 semanas. Primero pregunta a la propia
+//                       base de datos qué semana(s)/etapa(s) tienen juegos
+//                       cerca de "hoy" (día antes / mismo día / día después,
+//                       en hora Bogotá) y solo sincroniza esas. Si no hay
+//                       ningún juego cerca, termina de inmediato sin llamar a
+//                       ESPN. Pensado para correr muy seguido (cada 5 min,
+//                       todos los días) sin gastar de más: cubre jueves,
+//                       sábados ocasionales, domingos con partido
+//                       internacional temprano y Monday Night Football sin
+//                       tener que adivinar ventanas horarias.
+//
 // Uso:
-//   DATABASE_URL="postgres://..." SEASON_YEAR=2026 node sync-nfl.mjs
+//   DATABASE_URL="postgres://..." SEASON_YEAR=2026 MODE=full node sync-nfl.mjs
+//   DATABASE_URL="postgres://..." SEASON_YEAR=2026 MODE=quick node sync-nfl.mjs
 //
 // Dependencias: solo "pg" (npm i pg). Node >= 18 (usa fetch nativo).
 
@@ -26,6 +43,7 @@ const { Client } = pg;
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const SEASON_YEAR = process.env.SEASON_YEAR || "2026";
+const MODE = (process.env.MODE || "full").toLowerCase();
 
 if (!DATABASE_URL) {
   console.error("Falta la variable de entorno DATABASE_URL (connection string de Neon).");
@@ -43,6 +61,32 @@ const POSTSEASON_WEEK_MAP = {
   3: { etapa: "conferencia", semana: 21 },
   5: { etapa: "superbowl", semana: 22 },
 };
+
+// Inverso de POSTSEASON_WEEK_MAP: dada una etapa de playoffs, ¿qué
+// seasontype/week usa ESPN?
+const ETAPA_TO_ESPN_WEEK = Object.fromEntries(
+  Object.entries(POSTSEASON_WEEK_MAP).map(([espnWeek, info]) => [
+    info.etapa,
+    { seasontype: 3, week: Number(espnWeek) },
+  ])
+);
+
+// Dada una fila (semana, etapa) de nuestra tabla `juegos`, devuelve los
+// parámetros de ESPN (seasontype/week) para volver a consultar esa semana.
+function toEspnWeekParams(semana, etapa) {
+  if (etapa === "regular") {
+    return { seasontype: 2, week: Number(semana) };
+  }
+  return ETAPA_TO_ESPN_WEEK[etapa] || null;
+}
+
+// "Hoy" en hora de Bogotá, como objeto Date en UTC (medianoche Bogotá).
+function bogotaTodayAsUtcMidnight() {
+  const now = new Date();
+  const bogotaMs = now.getTime() - 5 * 60 * 60 * 1000;
+  const bogota = new Date(bogotaMs);
+  return new Date(Date.UTC(bogota.getUTCFullYear(), bogota.getUTCMonth(), bogota.getUTCDate()));
+}
 
 async function fetchJson(url) {
   const res = await fetch(url, {
@@ -205,31 +249,90 @@ async function syncWeek(client, { seasontype, week, semana, etapa, nextIdRef }) 
   );
 }
 
+// Busca en nuestra propia tabla `juegos` qué combinaciones (semana, etapa)
+// tienen al menos un juego programado en la ventana [hoy-1, hoy+2] (hora
+// Bogotá). Esa ventana es generosa a propósito: cubre un juego de jueves
+// que arranca "hoy" visto desde el jueves mismo, uno que ya se jugó ayer
+// (por si terminó tarde y quedó con estado en_vivo pendiente de cerrar), y
+// cualquier cosa programada para mañana o pasado (para no perder el primer
+// tick del día del partido).
+async function findWeeksNearToday(client) {
+  const utcMidnight = bogotaTodayAsUtcMidnight();
+  const fmt = (d) => {
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(d.getUTCDate()).padStart(2, "0");
+    return `${yyyy}/${mm}/${dd}`;
+  };
+
+  const desde = fmt(new Date(utcMidnight.getTime() - 1 * 24 * 60 * 60 * 1000));
+  const hasta = fmt(new Date(utcMidnight.getTime() + 2 * 24 * 60 * 60 * 1000));
+
+  // `fecha` se guarda como texto "YYYY/MM/DD", que ordena igual que una
+  // fecha real siempre que el formato sea consistente (lo es).
+  const { rows } = await client.query(
+    `SELECT DISTINCT semana, etapa
+       FROM juegos
+      WHERE fecha IS NOT NULL
+        AND fecha BETWEEN $1 AND $2
+      ORDER BY semana, etapa`,
+    [desde, hasta]
+  );
+  return rows;
+}
+
+async function runQuick(client) {
+  const nextIdRef = { value: await getNextId(client) };
+  const semanas = await findWeeksNearToday(client);
+
+  if (semanas.length === 0) {
+    console.log("Modo rápido: no hay juegos cerca de hoy en la base de datos, no se llama a ESPN.");
+    return;
+  }
+
+  console.log(`Modo rápido: ${semanas.length} semana(s)/etapa(s) cerca de hoy -> sincronizando...`);
+  for (const { semana, etapa } of semanas) {
+    const params = toEspnWeekParams(semana, etapa);
+    if (!params) {
+      console.warn(`  sin mapeo ESPN para semana=${semana} etapa=${etapa}, se omite`);
+      continue;
+    }
+    await syncWeek(client, { ...params, semana: Number(semana), etapa, nextIdRef });
+  }
+}
+
+async function runFull(client) {
+  await syncTeams(client);
+
+  const nextIdRef = { value: await getNextId(client) };
+
+  console.log("Sincronizando temporada regular (semanas 1-18)...");
+  for (let week = 1; week <= 18; week++) {
+    await syncWeek(client, { seasontype: 2, week, semana: week, etapa: "regular", nextIdRef });
+  }
+
+  console.log("Sincronizando playoffs...");
+  for (const [espnWeek, info] of Object.entries(POSTSEASON_WEEK_MAP)) {
+    await syncWeek(client, {
+      seasontype: 3,
+      week: Number(espnWeek),
+      semana: info.semana,
+      etapa: info.etapa,
+      nextIdRef,
+    });
+  }
+}
+
 async function main() {
   const client = new Client({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
   await client.connect();
 
   try {
-    await syncTeams(client);
-
-    const nextIdRef = { value: await getNextId(client) };
-
-    console.log("Sincronizando temporada regular (semanas 1-18)...");
-    for (let week = 1; week <= 18; week++) {
-      await syncWeek(client, { seasontype: 2, week, semana: week, etapa: "regular", nextIdRef });
+    if (MODE === "quick") {
+      await runQuick(client);
+    } else {
+      await runFull(client);
     }
-
-    console.log("Sincronizando playoffs...");
-    for (const [espnWeek, info] of Object.entries(POSTSEASON_WEEK_MAP)) {
-      await syncWeek(client, {
-        seasontype: 3,
-        week: Number(espnWeek),
-        semana: info.semana,
-        etapa: info.etapa,
-        nextIdRef,
-      });
-    }
-
     console.log("Sincronización completa.");
   } finally {
     await client.end();

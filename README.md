@@ -38,19 +38,29 @@ Ejecuta las pruebas unitarias con Karma/Jasmine.
 
 El calendario y los resultados se pueden mantener al día automáticamente desde la API pública (no oficial) de ESPN — no requiere API key.
 
-**Manual:**
+El script `scripts/sync-nfl.mjs` tiene dos modos, controlados por la variable `MODE`:
 
-```bash
-DATABASE_URL="postgres://..." SEASON_YEAR=2026 node scripts/sync-nfl.mjs
+- **`full`** (por defecto): recorre las 18 semanas de temporada regular y los playoffs (wildcard, divisional, conferencia, superbowl), y además actualiza `equipos.espn_id` de los 32 equipos. Pensado para correr aproximadamente una vez por semana.
+- **`quick`**: no recorre las 22 semanas — primero revisa la propia base de datos para ver si hay juegos programados entre ayer y pasado mañana (hora Bogotá); si no hay ninguno, termina sin llamar a ESPN. Si encuentra alguno, sincroniza solo esas semanas/etapas. Pensado para correr muy seguido (cada 5 minutos) sin gastar de más.
+
+**Manual (PowerShell, ya que el desarrollo es en Windows):**
+
+```powershell
+$env:DATABASE_URL="postgres://..."; $env:SEASON_YEAR="2026"; $env:MODE="full"; node scripts/sync-nfl.mjs
+```
+
+```powershell
+$env:DATABASE_URL="postgres://..."; $env:MODE="quick"; node scripts/sync-nfl.mjs
 ```
 
 - `DATABASE_URL`: connection string de Neon (requerido).
 - `SEASON_YEAR`: temporada a sincronizar (opcional, por defecto `2026`).
+- `MODE`: `full` o `quick` (opcional, por defecto `full`).
 - Requiere Node.js 18+ y la dependencia `pg` (ya incluida en `package.json`).
 
-El script actualiza `equipos.espn_id` por cada equipo y sincroniza temporada regular y playoffs en `juegos` (resultado, hora, estado), sin tocar juegos ya cargados manualmente salvo para vincularlos con su ID de ESPN.
+En ambos modos, por cada juego: si ya existe una fila con ese ID de evento de ESPN la actualiza; si hay un juego cargado manualmente que coincide en semana/etapa/local/visitante lo vincula (en vez de duplicarlo); si no existe ninguno, lo inserta.
 
-**Automática:** existe una GitHub Action programada (`.github/workflows/sync-nfl.yml`) que corre el mismo script varias veces por hora durante las ventanas en que suele haber juegos en vivo (domingo, lunes y jueves en la noche), usando el secret `DATABASE_URL` configurado en el repositorio. También se puede lanzar manualmente desde la pestaña Actions.
+**Automática:** existe una GitHub Action programada (`.github/workflows/sync-nfl.yml`, usa minutos ilimitados de Actions por ser repo público) con dos horarios: cada 5 minutos, todos los días, en modo `quick` (el mínimo que permite GitHub — cubre juegos de jueves, sábado y domingo temprano sin necesidad de ventanas horarias fijas), y una vez por semana (martes 06:00 UTC, ya terminado el Monday Night Football) en modo `full`. Usa el secret `DATABASE_URL` configurado en el repositorio. También se puede lanzar manualmente desde la pestaña Actions, eligiendo `quick` o `full`.
 
 ## Funcionalidad principal
 
