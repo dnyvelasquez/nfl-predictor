@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, map, of, switchMap, forkJoin, catchError } from 'rxjs';
-import { supabase } from '../core/supabase.client';
+import { SupabaseClientService } from './core/supabase-client';
+import { Etapa, ETAPAS, registroEquipoEnEtapa, marcaEquipoEnEtapa, estadoEquipoEnEtapa, marcaEquipoPorEtapa } from './core/etapas';
+
+export type { Etapa };
+export { ETAPAS, marcaEquipoEnEtapa, estadoEquipoEnEtapa, marcaEquipoPorEtapa };
 
 export interface RegistroEquipoParticipante {
   equipo: Equipo & { etapa: Etapa };
@@ -8,20 +12,6 @@ export interface RegistroEquipoParticipante {
   ties: number;
   losses: number;
   puntos: number;
-}
-
-export function marcaEquipoEnEtapa(etapa: Etapa, wins: number, ties: number, losses: number): string {
-  if (etapa === 'regular') {
-    return `${wins}-${ties}-${losses}`;
-  }
-  if (wins > 0) return 'Ganó';
-  if (losses > 0) return 'Perdió';
-  if (ties > 0) return 'Empató';
-  return 'Pendiente';
-}
-
-export function estadoEquipoEnEtapa(item: RegistroEquipoParticipante): string {
-  return marcaEquipoEnEtapa(item.equipo.etapa, item.wins, item.ties, item.losses);
 }
 
 export interface RegistroEquipoPorEtapa {
@@ -32,10 +22,6 @@ export interface RegistroEquipoPorEtapa {
   ties: number;
   losses: number;
   puntos: number;
-}
-
-export function marcaEquipoPorEtapa(item: RegistroEquipoPorEtapa): string {
-  return marcaEquipoEnEtapa(item.etapa, item.wins, item.ties, item.losses);
 }
 
 export interface Participante {
@@ -87,16 +73,6 @@ export interface Juego {
   participanteLocal? : string;
 }
 
-export type Etapa = 'regular' | 'wildcard' | 'divisional' | 'conferencia' | 'superbowl';
-
-export const ETAPAS: { value: Etapa; label: string }[] = [
-  { value: 'regular',     label: 'Temporada Regular' },
-  { value: 'wildcard',    label: 'Wild Card' },
-  { value: 'divisional',  label: 'Ronda Divisional' },
-  { value: 'conferencia', label: 'Final de Conferencia' },
-  { value: 'superbowl',   label: 'Super Bowl' },
-];
-
 export interface Asignacion {
   id?: string;
   equipo_id: string;
@@ -107,14 +83,18 @@ export interface Asignacion {
 @Injectable({
   providedIn: 'root',
 })
-export class Service { 
+export class Service {
 
-  private supabase = supabase;
+  constructor(private supabaseClient: SupabaseClientService) {}
+
+  private get supabase() {
+    return this.supabaseClient.getClient();
+  }
 
   private admin() {
-    return this.supabase.auth.getBetterAuthInstance().admin;
+    return this.supabaseClient.auth().getBetterAuthInstance().admin;
   }
-  
+
   getParticipantes(): Observable<Participante[]> {
     return from(
       this.supabase
@@ -147,30 +127,6 @@ export class Service {
     );
   }
 
-  private static readonly PUNTOS_POR_ETAPA: Record<Etapa, number> = {
-    regular: 10, wildcard: 20, divisional: 30, conferencia: 40, superbowl: 50,
-  };
-
-  private registroEquipoEnEtapa(
-    nombreEquipo: string, etapa: Etapa, juegos: Juego[]
-  ): { wins: number; ties: number; losses: number; puntos: number } {
-    let wins = 0, ties = 0, losses = 0;
-    for (const j of juegos) {
-      if (j.etapa !== etapa) continue;
-      let propio: number | null, rival: number | null;
-      if (j.local === nombreEquipo) { propio = j.resultado_local; rival = j.resultado_visitante; }
-      else if (j.visitante === nombreEquipo) { propio = j.resultado_visitante; rival = j.resultado_local; }
-      else continue;
-      if (propio === null || rival === null) continue;
-      if (propio > rival) wins++;
-      else if (propio === rival) ties++;
-      else losses++;
-    }
-    const valorWin = Service.PUNTOS_POR_ETAPA[etapa];
-    const puntos = wins * valorWin + ties * (valorWin / 2);
-    return { wins, ties, losses, puntos };
-  }
-
   getParticipantesConPuntaje(): Observable<(Participante & {
   })[]> {
     return forkJoin({
@@ -188,7 +144,7 @@ export class Service {
                     label: e.label,
                     equipos: equiposTodasEtapas
                       .filter(eq => eq.etapa === e.value)
-                      .map(equipo => ({ equipo, ...this.registroEquipoEnEtapa(equipo.nombre, e.value, juegos) })),
+                      .map(equipo => ({ equipo, ...registroEquipoEnEtapa(equipo.nombre, e.value, juegos) })),
                   }))
                   .filter(g => g.equipos.length > 0);
                 const puntaje = equiposPorEtapa.reduce(
@@ -384,7 +340,7 @@ export class Service {
             .map(et => {
               const participantes = participantesPorEquipoEtapa[`${e.id}|${et.value}`] ?? [];
               const participante = participantes.join(' / ');
-              const { wins, ties, losses, puntos } = this.registroEquipoEnEtapa(e.nombre, et.value, juegos);
+              const { wins, ties, losses, puntos } = registroEquipoEnEtapa(e.nombre, et.value, juegos);
               return { etapa: et.value, label: et.label, participante, wins, ties, losses, puntos };
             })
             .filter(g => g.participante);
