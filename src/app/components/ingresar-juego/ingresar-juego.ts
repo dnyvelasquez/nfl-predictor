@@ -15,7 +15,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { firstValueFrom, finalize } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
-import { Service, Juego, Etapa, ETAPAS } from '../../services/data';
+import { Etapa, ETAPAS } from '../../services/core/etapas';
+import { JuegosService, Juego } from '../../services/juegos';
 import { EquiposService, Equipo } from '../../services/equipos';
 import { AuthService } from '../../services/auth/auth';
 
@@ -55,7 +56,7 @@ function distintos(control: AbstractControl): ValidationErrors | null {
 })
 export class IngresarJuego implements OnInit {
   private fb = inject(FormBuilder);
-  private svc = inject(Service);
+  private svc = inject(JuegosService);
   private equiposService = inject(EquiposService);
   private cdr = inject(ChangeDetectorRef);
 

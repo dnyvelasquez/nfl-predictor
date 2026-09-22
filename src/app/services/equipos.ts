@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, from, map, forkJoin } from 'rxjs';
 import { SupabaseClientService } from './core/supabase-client';
 import { Etapa, ETAPAS, registroEquipoEnEtapa } from './core/etapas';
+import { JuegosService } from './juegos';
 
 export interface Equipo {
   id: string;
@@ -35,7 +36,10 @@ export interface RegistroEquipoPorEtapa {
 })
 export class EquiposService {
 
-  constructor(private supabaseClient: SupabaseClientService) {}
+  constructor(
+    private supabaseClient: SupabaseClientService,
+    private juegosService: JuegosService,
+  ) {}
 
   getEquipos(etapa: Etapa = 'regular'): Observable<Equipo[]> {
     return forkJoin({
@@ -94,21 +98,7 @@ export class EquiposService {
       asignRes: from(
         this.supabaseClient.from('asignacion').select('equipo_id,participante,etapa')
       ),
-      // TODO(paso Juegos): esta consulta duplica temporalmente lo que hará
-      // JuegosService.getJuegosConResultado() — inyectar ese service aquí
-      // cuando exista y quitar esta copia.
-      juegos: from(
-        this.supabaseClient
-          .from('juegos')
-          .select('*')
-          .not('resultado_local', 'is', null)
-          .not('resultado_visitante', 'is', null)
-      ).pipe(
-        map(({ data, error }: any) => {
-          if (error) throw error;
-          return data ?? [];
-        })
-      ),
+      juegos: this.juegosService.getJuegosConResultado(),
     }).pipe(
       map(({ equiposRes, asignRes, juegos }: any) => {
         if (equiposRes.error) throw equiposRes.error;

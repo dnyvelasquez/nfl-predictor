@@ -1,5 +1,6 @@
 import { Component, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
-import { Service, Juego, Etapa, ETAPAS } from '../../services/data';
+import { Etapa, ETAPAS } from '../../services/core/etapas';
+import { JuegosService, Juego } from '../../services/juegos';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatDividerModule } from '@angular/material/divider';
@@ -42,7 +43,7 @@ export class Juegos implements OnDestroy {
   loading = true;
 
   private destroy$ = new Subject<void>();
-  private service = inject(Service);
+  private service = inject(JuegosService);
   private cdr = inject(ChangeDetectorRef);
 
   private static readonly REFRESH_INTERVAL_MS = 60000;
