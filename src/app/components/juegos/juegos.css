@@ -147,6 +147,12 @@
   animation: en-vivo-pulse 1.4s ease-in-out infinite;
 }
 
+.periodo-label {
+  color: #555;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 @keyframes en-vivo-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.25; }

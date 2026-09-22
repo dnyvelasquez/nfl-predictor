@@ -121,6 +121,21 @@ function mapEstado(statusType) {
   return "programado";
 }
 
+// Etiqueta de la fase del juego (solo tiene sentido mientras estado='en_vivo').
+// Usa el mismo objeto `status` de ESPN que ya se descarga por cada sync, sin
+// llamadas adicionales: status.type.name indica medio tiempo explícitamente,
+// y status.period es el número de cuarto (5+ = tiempo extra).
+const CUARTOS = { 1: "1er cuarto", 2: "2do cuarto", 3: "3er cuarto", 4: "4to cuarto" };
+
+function mapPeriodo(status, estado) {
+  if (estado !== "en_vivo") return null;
+  if ((status?.type?.name || "").includes("HALFTIME")) return "Medio tiempo";
+  const period = status?.period;
+  if (!period) return null;
+  if (period >= 5) return "Tiempo extra";
+  return CUARTOS[period] || null;
+}
+
 async function syncTeams(client) {
   console.log("Sincronizando equipos...");
   const data = await fetchJson(`${ESPN_BASE}/teams?limit=32`);
@@ -155,7 +170,7 @@ async function getNextId(client) {
   return Number(rows[0].max_id);
 }
 
-async function upsertGame(client, { espnEventId, semana, etapa, visitante, local, fecha, hora, resultadoLocal, resultadoVisitante, estado, nextIdRef }) {
+async function upsertGame(client, { espnEventId, semana, etapa, visitante, local, fecha, hora, resultadoLocal, resultadoVisitante, estado, periodo, nextIdRef }) {
   // 1) ¿Ya existe por espn_event_id?
   const existing = await client.query(
     `SELECT id FROM juegos WHERE espn_event_id = $1`,
@@ -165,9 +180,9 @@ async function upsertGame(client, { espnEventId, semana, etapa, visitante, local
     await client.query(
       `UPDATE juegos
          SET fecha = $1, hora = $2, resultado_local = $3, resultado_visitante = $4,
-             estado = $5, actualizado_en = now()
-       WHERE id = $6`,
-      [fecha, hora, resultadoLocal, resultadoVisitante, estado, existing.rows[0].id]
+             estado = $5, periodo = $6, actualizado_en = now()
+       WHERE id = $7`,
+      [fecha, hora, resultadoLocal, resultadoVisitante, estado, periodo, existing.rows[0].id]
     );
     return "actualizado";
   }
@@ -185,9 +200,9 @@ async function upsertGame(client, { espnEventId, semana, etapa, visitante, local
       `UPDATE juegos
          SET espn_event_id = $1, fecha = $2, hora = $3,
              resultado_local = $4, resultado_visitante = $5,
-             estado = $6, actualizado_en = now()
-       WHERE id = $7`,
-      [espnEventId, fecha, hora, resultadoLocal, resultadoVisitante, estado, manual.rows[0].id]
+             estado = $6, periodo = $7, actualizado_en = now()
+       WHERE id = $8`,
+      [espnEventId, fecha, hora, resultadoLocal, resultadoVisitante, estado, periodo, manual.rows[0].id]
     );
     return "vinculado";
   }
@@ -197,9 +212,9 @@ async function upsertGame(client, { espnEventId, semana, etapa, visitante, local
   await client.query(
     `INSERT INTO juegos (id, semana, visitante, local, fecha, hora, etapa,
                           resultado_local, resultado_visitante,
-                          espn_event_id, estado, actualizado_en)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, now())`,
-    [nextIdRef.value, semana, visitante, local, fecha, hora, etapa, resultadoLocal, resultadoVisitante, espnEventId, estado]
+                          espn_event_id, estado, periodo, actualizado_en)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, now())`,
+    [nextIdRef.value, semana, visitante, local, fecha, hora, etapa, resultadoLocal, resultadoVisitante, espnEventId, estado, periodo]
   );
   return "insertado";
 }
@@ -221,6 +236,7 @@ async function syncWeek(client, { seasontype, week, semana, etapa, nextIdRef }) 
 
     const { fecha, hora } = toBogotaDateTime(competition.date);
     const estado = mapEstado(competition.status?.type);
+    const periodo = mapPeriodo(competition.status, estado);
 
     const resultadoLocal =
       estado === "programado" ? null : Number.parseInt(home.score, 10) || 0;
@@ -237,6 +253,7 @@ async function syncWeek(client, { seasontype, week, semana, etapa, nextIdRef }) 
       hora,
       resultadoLocal,
       resultadoVisitante,
+      periodo,
       estado,
       nextIdRef,
     });

@@ -79,6 +79,7 @@ export interface Juego {
   resultado_local: number | null;
   resultado_visitante: number | null;
   estado?: EstadoJuego;
+  periodo?: string | null;
   logoVisitante?: string;
   logoLocal?: string;
   participanteVisitante? : string;
