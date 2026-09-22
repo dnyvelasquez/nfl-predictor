@@ -11,7 +11,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ParticipanteDialog } from '../participante-dialog/participante-dialog';
-import { Service, Participante } from '../../services/data';
+import { ParticipantesService, Participante } from '../../services/participantes';
 
 @Component({
   selector: 'app-home',
@@ -46,7 +46,7 @@ export class Home implements OnInit, OnDestroy {
   participantes$: Observable<Participante[]>;
 
   private dialog = inject(MatDialog);
-  private service = inject(Service);
+  private service = inject(ParticipantesService);
 
   constructor() {
     this.participantes$ = this.refreshTrigger$.pipe(

@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Service } from '../../services/data';
+import { ParticipantesService } from '../../services/participantes';
 import { AuthService } from '../../services/auth/auth';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -41,7 +41,7 @@ type Row = { id: string; nombre: string; numero: number };
 export class Participantes implements OnInit {
 
   private fb = inject(FormBuilder);
-  private svc = inject(Service);
+  private svc = inject(ParticipantesService);
   private authService = inject(AuthService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);

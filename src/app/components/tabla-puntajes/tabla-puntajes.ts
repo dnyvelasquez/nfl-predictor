@@ -1,5 +1,6 @@
 import { Component, OnDestroy, inject, ChangeDetectionStrategy } from '@angular/core';
-import { Service, Participante, estadoEquipoEnEtapa } from '../../services/data';
+import { ParticipantesService, Participante } from '../../services/participantes';
+import { estadoEquipoEnEtapa } from '../../services/core/etapas';
 import { AsyncPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -35,7 +36,7 @@ export class TablaPuntajes implements OnDestroy {
   error$ = new Subject<string | null>();
   private destroy$ = new Subject<void>();
 
-  private service = inject(Service);
+  private service = inject(ParticipantesService);
 
   constructor() {
     this.loading$.next(true);
