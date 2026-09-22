@@ -30,21 +30,17 @@
           }
         </mat-form-field>
 
-        <mat-form-field appearance="fill" class="n">
-          <mat-label>Número</mat-label>
-          <input matInput type="number" formControlName="numero" placeholder="0" />
-          @if (addForm.get('numero')?.touched && addForm.get('numero')?.hasError('required')) {
-            <mat-error>El número es requerido</mat-error>
-          }
-          @if (addForm.get('numero')?.touched && addForm.get('numero')?.hasError('min')) {
-            <mat-error>No puede ser negativo</mat-error>
-          }
-        </mat-form-field>
-
         <button mat-raised-button class="agregar" type="submit" [disabled]="addForm.invalid || loading">
           Agregar
         </button>
       </form>
+
+      <div class="sorteo">
+        <button mat-raised-button color="accent" (click)="sortearNumeros()" [disabled]="loading || participantes.length === 0">
+          <mat-icon>casino</mat-icon>
+          Sortear números
+        </button>
+      </div>
 
       @if (loading) {
         <div class="loading-container">
@@ -84,9 +80,7 @@
             } @else {
               <div class="row" [formGroup]="editForms[p.id]">
                 <div class="cell n">
-                  <mat-form-field appearance="fill" class="tight">
-                    <input matInput type="number" formControlName="numero" />
-                  </mat-form-field>
+                  <span>{{ p.numero }}</span>
                 </div>
 
                 <div class="cell w">

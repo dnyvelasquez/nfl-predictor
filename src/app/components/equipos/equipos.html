@@ -24,7 +24,7 @@
             <div class="equipo-card-header">
               <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo" loading="lazy">
               <div class="equipo-nombre-division">
-                <strong class="equipo-nombre">{{ e.nombre }}</strong>
+                <strong class="equipo-nombre">{{ e.ciudad }} {{ e.nombre }}</strong>
                 <span
                   [ngClass]="{
                     'chip-afc': e.division.startsWith('AFC'),

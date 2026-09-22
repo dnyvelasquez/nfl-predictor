@@ -66,8 +66,8 @@ En ambos modos, por cada juego: si ya existe una fila con ese ID de evento de ES
 
 ## Funcionalidad principal
 
-- **Equipos**: catálogo de los 32 equipos de la NFL agrupados por división; cada equipo muestra, por cada etapa en la que tiene un participante asignado, quién es ese participante y los puntos que el equipo le aportó en esa etapa.
-- **Participantes**: personas inscritas en la quiniela.
+- **Equipos**: catálogo de los 32 equipos de la NFL agrupados por división, mostrando la ciudad antes del nombre de cada uno (ej. "Buffalo Bills"); cada equipo muestra, por cada etapa en la que tiene un participante asignado, quién es ese participante y los puntos que el equipo le aportó en esa etapa.
+- **Participantes** (admin): personas inscritas en la quiniela. El número de cada participante (usado como orden de selección de equipos) ya no se ingresa manualmente — se asigna con el botón "Sortear números", que reparte de una sola vez un número aleatorio y sin repetir entre 1 y N a todos los participantes.
 - **Asignación** (admin): cada participante recibe equipos por división siguiendo un orden de selección basado en puntaje (ver reglamento completo en la app). Hay un cuadro de asignación independiente por etapa del campeonato — Temporada Regular, Wild Card, Ronda Divisional, Final de Conferencia y Super Bowl — para que un mismo equipo pueda quedar con un participante distinto en cada ronda.
 - **Ingresar Juego** (admin): programa el calendario semanal (equipo local/visitante, fecha, hora, etapa del campeonato), permite editar un juego ya creado y cargar su resultado final — el resultado es lo que alimenta el puntaje de cada participante. También permite borrar un juego individual o vaciar por completo el calendario almacenado.
 - **Nuevo Usuario / Borrar Usuario** (admin): gestión de las cuentas que pueden entrar al panel de administración.

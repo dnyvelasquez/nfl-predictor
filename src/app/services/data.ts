@@ -52,6 +52,7 @@ export interface Participante {
 export interface Equipo {
   id: string;
   nombre: string;
+  ciudad: string;
   puntaje: number;
   pg: number;
   pe: number;
@@ -217,14 +218,23 @@ export class Service {
     );
   }
 
-  createParticipante(nombre: string, numero: number) {
+  createParticipante(nombre: string) {
     return from(
-      this.supabase
-        .from('participantes')
-        .insert([{ nombre, numero }])
-        .select('id, nombre, numero')
-        .single()
+      this.supabase.from('participantes').select('numero')
     ).pipe(
+      switchMap(({ data, error }: any) => {
+        if (error) throw error;
+        const maxNumero = (data ?? []).reduce(
+          (max: number, r: any) => Math.max(max, Number(r.numero) || 0), 0
+        );
+        return from(
+          this.supabase
+            .from('participantes')
+            .insert([{ nombre, numero: maxNumero + 1 }])
+            .select('id, nombre, numero')
+            .single()
+        );
+      }),
       map(({ data, error }: any) => {
         if (error) throw error;
         return data;
@@ -245,6 +255,41 @@ export class Service {
         if (error) throw error;
         return data;
       })
+    );
+  }
+
+  asignarNumerosAleatorios(): Observable<{ id: string; nombre: string; numero: number }[]> {
+    return this.getParticipantes().pipe(
+      switchMap((participantes) => {
+        if (participantes.length === 0) return of([]);
+
+        const numeros = participantes.map((_, i) => i + 1);
+        for (let i = numeros.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [numeros[i], numeros[j]] = [numeros[j], numeros[i]];
+        }
+
+        return forkJoin(
+          participantes.map((p, i) =>
+            from(
+              this.supabase
+                .from('participantes')
+                .update({ numero: numeros[i] })
+                .eq('id', p.id)
+                .select('id, nombre, numero')
+                .single()
+            )
+          )
+        );
+      }),
+      map((results: any[]) =>
+        results
+          .map(({ data, error }: any) => {
+            if (error) throw error;
+            return data;
+          })
+          .sort((a, b) => a.numero - b.numero)
+      )
     );
   }
 
@@ -291,6 +336,7 @@ export class Service {
         return (equiposRes.data ?? []).map((e: any) => ({
           id: e.id,
           nombre: e.nombre,
+          ciudad: e.ciudad,
           puntaje: e.puntaje,
           division:e.division,
           logo: e.logo,
@@ -310,7 +356,10 @@ export class Service {
   getEquiposConPuntajePorEtapa(): Observable<(Equipo & { porEtapa: RegistroEquipoPorEtapa[] })[]> {
     return forkJoin({
       equiposRes: from(
-        this.supabase.from('equipos').select('*').order('id', { ascending: true })
+        this.supabase
+          .from('equipos')
+          .select('id,nombre,ciudad,division,logo,pg,pe,pp,pw,pd,pc,sb')
+          .order('id', { ascending: true })
       ),
       asignRes: from(
         this.supabase.from('asignacion').select('equipo_id,participante,etapa')
@@ -343,6 +392,7 @@ export class Service {
           return {
             id: e.id,
             nombre: e.nombre,
+            ciudad: e.ciudad,
             puntaje: e.puntaje,
             division: e.division,
             logo: e.logo,

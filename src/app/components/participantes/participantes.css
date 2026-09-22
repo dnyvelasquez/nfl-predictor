@@ -80,12 +80,24 @@
     align-items: center;
 }
 
-.add { 
-    margin-bottom: 16px; 
+.add {
+    margin-bottom: 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
+}
+
+.sorteo {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+}
+
+.sorteo button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .thead { 

@@ -52,7 +52,6 @@ export class Participantes implements OnInit {
 
   addForm = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
-    numero: [null as number | null, [Validators.required, Validators.min(0)]],
   });
 
   editForms: Record<string, FormGroup> = {};
@@ -76,10 +75,10 @@ export class Participantes implements OnInit {
       this.addForm.markAllAsTouched();
       return;
     }
-    const { nombre, numero } = this.addForm.value;
+    const { nombre } = this.addForm.value;
     this.loading = true; this.errorMsg = this.okMsg = null;
 
-    this.svc.createParticipante(String(nombre), Number(numero)).pipe(
+    this.svc.createParticipante(String(nombre)).pipe(
       finalize(() => { this.loading = false; this.cdr.detectChanges(); })
     ).subscribe({
       next: (row: Row) => {
@@ -96,7 +95,6 @@ export class Participantes implements OnInit {
     if (!this.editForms[p.id]) {
       this.editForms[p.id] = this.fb.group({
         nombre: [p.nombre, [Validators.required, Validators.minLength(2)]],
-        numero: [p.numero, [Validators.required, Validators.min(0)]],
       });
     }
   }
@@ -111,10 +109,9 @@ export class Participantes implements OnInit {
 
     const patch = {
       nombre: String(fg.value.nombre),
-      numero: Number(fg.value.numero),
     };
 
-    if (patch.nombre === p.nombre && patch.numero === p.numero) {
+    if (patch.nombre === p.nombre) {
       this.cancelEdit(p);
       return;
     }
@@ -131,6 +128,25 @@ export class Participantes implements OnInit {
         this.cancelEdit(p);
       },
       error: (e) => this.errorMsg = e?.message || 'No se pudo actualizar',
+    });
+  }
+
+  sortearNumeros(): void {
+    if (this.loading || this.participantes.length === 0) return;
+
+    const ok = confirm('¿Asignar un número aleatorio a cada participante? Esto reemplazará los números actuales.');
+    if (!ok) return;
+
+    this.loading = true; this.errorMsg = this.okMsg = null;
+    this.svc.asignarNumerosAleatorios().pipe(
+      finalize(() => { this.loading = false; this.cdr.detectChanges(); })
+    ).subscribe({
+      next: (rows: Row[]) => {
+        this.okMsg = 'Números asignados aleatoriamente';
+        this.participantes = rows;
+        this.editForms = {};
+      },
+      error: (e) => this.errorMsg = e?.message || 'No se pudieron asignar los números',
     });
   }
 
