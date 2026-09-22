@@ -38,6 +38,7 @@
 // Dependencias: solo "pg" (npm i pg). Node >= 18 (usa fetch nativo).
 
 import pg from "pg";
+import fs from "node:fs";
 
 const { Client } = pg;
 
@@ -86,6 +87,14 @@ function bogotaTodayAsUtcMidnight() {
   const bogotaMs = now.getTime() - 5 * 60 * 60 * 1000;
   const bogota = new Date(bogotaMs);
   return new Date(Date.UTC(bogota.getUTCFullYear(), bogota.getUTCMonth(), bogota.getUTCDate()));
+}
+
+// Escribe un output para el step de GitHub Actions que llama a este script
+// (no-op fuera de Actions, donde GITHUB_OUTPUT no existe).
+function writeGithubOutput(name, value) {
+  const file = process.env.GITHUB_OUTPUT;
+  if (!file) return;
+  fs.appendFileSync(file, `${name}=${value}\n`);
 }
 
 async function fetchJson(url) {
@@ -304,6 +313,7 @@ async function runQuick(client) {
 
   if (semanas.length === 0) {
     console.log("Modo rápido: no hay juegos cerca de hoy en la base de datos, no se llama a ESPN.");
+    writeGithubOutput("reencadenar", "false");
     return;
   }
 
@@ -316,6 +326,10 @@ async function runQuick(client) {
     }
     await syncWeek(client, { ...params, semana: Number(semana), etapa, nextIdRef });
   }
+
+  // Mientras siga habiendo algo cerca de "hoy", vale la pena que el workflow
+  // se vuelva a disparar solo en vez de esperar al próximo cron.
+  writeGithubOutput("reencadenar", "true");
 }
 
 async function runFull(client) {

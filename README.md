@@ -62,7 +62,7 @@ En ambos modos, por cada juego: si ya existe una fila con ese ID de evento de ES
 
 **Automática:** existe una GitHub Action programada (`.github/workflows/sync-nfl.yml`, usa minutos ilimitados de Actions por ser repo público) con dos horarios: cada 5 minutos, todos los días, en modo `quick` (el mínimo que permite GitHub — cubre juegos de jueves, sábado y domingo temprano sin necesidad de ventanas horarias fijas), y una vez por semana (martes 06:00 UTC, ya terminado el Monday Night Football) en modo `full`. Usa el secret `DATABASE_URL` configurado en el repositorio. También se puede lanzar manualmente desde la pestaña Actions, eligiendo `quick` o `full`.
 
-⚠️ GitHub no garantiza que ese cron de "cada 5 minutos" se dispare realmente cada 5 minutos — se ha visto en producción que puede demorarse varias horas entre corridas. Para compensarlo, cada corrida en modo `quick` reintenta la sincronización internamente cada 4 minutos durante ~55 minutos, en vez de correr una sola vez y salir.
+⚠️ GitHub no garantiza que ese cron de "cada 5 minutos" se dispare realmente cada 5 minutos — se ha visto en producción que puede demorarse varias horas entre corridas. Para compensarlo, cada corrida en modo `quick` se reencadena a sí misma cada ~4 minutos (llamando a la API de GitHub para disparar la siguiente corrida) mientras siga habiendo algún juego cerca de "hoy" — así deja de depender del cron una vez arranca, y se detiene sola cuando ya no hay nada que sincronizar.
 
 ## Funcionalidad principal
 

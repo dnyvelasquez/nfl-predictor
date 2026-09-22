@@ -28,13 +28,19 @@ on:
         options:
           - quick
           - full
+      intento:
+        description: "Uso interno: contador de auto-reencadenado, no llenar manualmente"
+        required: false
+        default: "0"
 
 # GitHub NO garantiza que un cron "*/5 * * * *" dispare cada 5 minutos en la
-# práctica: puede demorarse horas bajo carga (visto en producción: solo 2
-# corridas en ~7 horas). Para no depender de esa cadencia, cada corrida en
-# modo quick reintenta en bucle internamente (ver abajo). Este "concurrency"
-# evita que dos corridas del bucle se pisen si GitHub sí llega a disparar
-# más seguido de lo esperado.
+# práctica: puede demorarse horas bajo carga (visto en producción: huecos de
+# hasta 3 horas, y corridas que dejan de dispararse solas después de un rato).
+# En vez de depender de esa cadencia, cada corrida en modo quick se
+# reencadena a sí misma (ver "Reencadenar" abajo) llamando a la API de
+# GitHub, y sigue así mientras siga habiendo un juego cerca de hoy, sin
+# importar si el cron vuelve a disparar o no. Este "concurrency" evita que
+# una corrida encadenada se solape con una que el cron sí llegue a disparar.
 concurrency:
   group: sync-nfl
   cancel-in-progress: false
@@ -42,7 +48,10 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 65
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write # necesario para que el paso "Reencadenar" dispare la siguiente corrida
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -78,23 +87,52 @@ jobs:
           MODE: full
         run: node scripts/sync-nfl.mjs
 
-      - name: Ejecutar sincronización en bucle (quick)
+      - name: Ejecutar sincronización (quick)
         if: steps.modo.outputs.mode == 'quick'
+        id: sync
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SEASON_YEAR: "2026"
           MODE: quick
+        run: node scripts/sync-nfl.mjs
+
+      - name: Reencadenar si todavía hay un juego cerca de hoy
+        if: steps.modo.outputs.mode == 'quick'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          # GitHub puede tardar mucho más de 5 minutos en volver a disparar
-          # este workflow, así que en vez de confiar en eso, cada corrida se
-          # queda repitiendo la sincronización cada 4 minutos durante ~55
-          # minutos. Así, mientras GitHub dispare el workflow al menos una
-          # vez por hora, los marcadores en vivo se siguen refrescando cada
-          # pocos minutos en vez de una sola vez.
-          end=$((SECONDS + 55 * 60))
-          while true; do
-            node scripts/sync-nfl.mjs || true
-            [ "$SECONDS" -ge "$end" ] && break
-            sleep 240
-          done
+          # sync-nfl.mjs deja reencadenar=true en $GITHUB_OUTPUT cuando
+          # encontró algún juego cerca de "hoy" (mismo chequeo que decide si
+          # vale la pena llamar a ESPN). Si es así, esta corrida se dispara a
+          # sí misma de nuevo dentro de 4 minutos vía la API de GitHub, en vez
+          # de depender de que el cron programado vuelva a disparar solo.
+          # Cuando ya no hay ningún juego cerca (p.ej. terminó y el próximo
+          # está a varios días), la cadena se corta sola acá.
+          reencadenar="${{ steps.sync.outputs.reencadenar }}"
+          if [ "$reencadenar" != "true" ]; then
+            echo "No hay juegos cerca de hoy, no se reencadena."
+            exit 0
+          fi
+
+          # Tope de seguridad: por si un bug dejara reencadenar=true para
+          # siempre, esto corta la cadena después de ~200 corridas
+          # (~16-17 horas seguidas), muy por encima de la duración de
+          # cualquier partido real.
+          intento_actual="${{ github.event.inputs.intento || '0' }}"
+          intento_siguiente=$((intento_actual + 1))
+          limite=200
+          if [ "$intento_siguiente" -gt "$limite" ]; then
+            echo "Tope de seguridad de $limite reencadenamientos alcanzado, no se sigue."
+            exit 0
+          fi
+
+          sleep 240
+
+          curl -sf -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/sync-nfl.yml/dispatches" \
+            -d "{\"ref\":\"main\",\"inputs\":{\"mode\":\"quick\",\"intento\":\"$intento_siguiente\"}}"
+
+          echo "Reencadenado (intento $intento_siguiente)."
