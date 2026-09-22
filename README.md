@@ -64,6 +64,16 @@ En ambos modos, por cada juego: si ya existe una fila con ese ID de evento de ES
 
 ⚠️ GitHub no garantiza que ese cron de "cada 5 minutos" se dispare realmente cada 5 minutos — se ha visto en producción que puede demorarse varias horas entre corridas. Para compensarlo, cada corrida en modo `quick` se reencadena a sí misma cada ~4 minutos (llamando a la API de GitHub para disparar la siguiente corrida) mientras siga habiendo algún juego cerca de "hoy" — así deja de depender del cron una vez arranca, y se detiene sola cuando ya no hay nada que sincronizar.
 
+### Ranking de equipos
+
+El script `scripts/sync-ranking.mjs` calcula el ranking de los 32 equipos de la temporada que acaba de terminar (1 = campeón del Super Bowl, 32 = peor récord de temporada regular, el inverso del orden del Draft de la NFL) y lo guarda en `equipos.ranking` — se usa para comprobar a mano que la asignación de equipos hecha en el panel de administración siguió el reglamento. Corre una vez al año, apenas termina el Super Bowl:
+
+```powershell
+$env:DATABASE_URL="postgres://..."; $env:SEASON_YEAR="2026"; node scripts/sync-ranking.mjs
+```
+
+También tiene una GitHub Action (`.github/workflows/sync-ranking.yml`) que corre todos los días entre el 1 y el 20 de febrero — el script mismo revisa si el Super Bowl de la temporada ya tiene resultado antes de llamar a ESPN, así que las corridas de los días previos no gastan nada. Ver [CLAUDE.md](CLAUDE.md) para el detalle de cómo se calcula.
+
 ## Funcionalidad principal
 
 - **Equipos**: catálogo de los 32 equipos de la NFL agrupados por división, mostrando la ciudad antes del nombre de cada uno (ej. "Buffalo Bills"); cada equipo muestra, por cada etapa en la que tiene un participante asignado, quién es ese participante y los puntos que el equipo le aportó en esa etapa.

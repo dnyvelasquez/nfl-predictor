@@ -1,0 +1,35 @@
+name: Calcular ranking de equipos (ESPN -> Neon)
+
+on:
+  schedule:
+    # Corre una vez al día durante la ventana en la que cae el Super Bowl
+    # (2do domingo de febrero, con margen). El propio script revisa la
+    # tabla `juegos` de esta base de datos y termina de inmediato sin
+    # llamar a ESPN si el juego de etapa='superbowl' todavía no tiene
+    # resultado cargado, así que no hay problema en que corra varios días
+    # antes de que el Super Bowl se juegue.
+    - cron: "0 12 1-20 2 *"
+
+  workflow_dispatch: # permite correrlo manualmente desde la pestaña Actions
+
+jobs:
+  ranking:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependencias
+        run: npm install pg
+
+      - name: Calcular ranking
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SEASON_YEAR: "2026"
+        run: node scripts/sync-ranking.mjs
