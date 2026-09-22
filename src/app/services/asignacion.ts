@@ -1,11 +1,7 @@
 import { Injectable } from '@angular/core';
 import { from, map, of, switchMap } from 'rxjs';
 import { SupabaseClientService } from './core/supabase-client';
-import { Etapa, ETAPAS } from './core/etapas';
-import { Participante } from './participantes';
-
-export type { Etapa, Participante };
-export { ETAPAS };
+import { Etapa } from './core/etapas';
 
 export interface Asignacion {
   id?: string;
@@ -17,20 +13,16 @@ export interface Asignacion {
 @Injectable({
   providedIn: 'root',
 })
-export class Service {
+export class AsignacionService {
 
   constructor(private supabaseClient: SupabaseClientService) {}
-
-  private get supabase() {
-    return this.supabaseClient.getClient();
-  }
 
   assignEquipo(participanteNombre: string, division: string, equipoId: string | null, etapa: Etapa = 'regular') {
     return this.getEquipoIdsPorDivision(division).pipe(
       switchMap((idsMismaDivision) => {
         const delParticipante$ = idsMismaDivision.length
           ? from(
-              this.supabase
+              this.supabaseClient
                 .from('asignacion')
                 .delete()
                 .eq('participante', participanteNombre)
@@ -49,7 +41,7 @@ export class Service {
         }
 
         const insert$ = from(
-          this.supabase
+          this.supabaseClient
             .from('asignacion')
             .insert([{ equipo_id: equipoId, participante: participanteNombre, etapa }])
             .select()
@@ -66,9 +58,8 @@ export class Service {
     );
   }
 
-
   resetAsignaciones(etapa: Etapa = 'regular') {
-    return from(this.supabase.from('asignacion').delete().eq('etapa', etapa))
+    return from(this.supabaseClient.from('asignacion').delete().eq('etapa', etapa))
       .pipe(
         map(({ error }: any) => {
           if (error) throw error;
@@ -79,7 +70,7 @@ export class Service {
 
   private getEquipoIdsPorDivision(division: string) {
     return from(
-      this.supabase.from('equipos').select('id').eq('division', division)
+      this.supabaseClient.from('equipos').select('id').eq('division', division)
     ).pipe(
       map(({ data, error }: any) => {
         if (error) throw error;
@@ -90,7 +81,7 @@ export class Service {
 
   getAsignaciones(etapa: Etapa = 'regular') {
     return from(
-      this.supabase
+      this.supabaseClient
         .from('asignacion')
         .select('id,equipo_id,participante')
         .eq('etapa', etapa)

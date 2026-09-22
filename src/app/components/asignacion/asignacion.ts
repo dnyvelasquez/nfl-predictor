@@ -8,7 +8,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Service, Etapa, ETAPAS } from '../../services/data';
+import { Etapa, ETAPAS } from '../../services/core/etapas';
+import { AsignacionService } from '../../services/asignacion';
 import { EquiposService, Equipo } from '../../services/equipos';
 import { ParticipantesService, Participante } from '../../services/participantes';
 import { AuthService } from '../../services/auth/auth';
@@ -37,7 +38,7 @@ type AsignacionRow = { id?: string; equipo_id: string; participante: string };
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Asignacion implements OnInit {
-  private svc = inject(Service);
+  private svc = inject(AsignacionService);
   private equiposService = inject(EquiposService);
   private participantesService = inject(ParticipantesService);
   private authService = inject(AuthService);
