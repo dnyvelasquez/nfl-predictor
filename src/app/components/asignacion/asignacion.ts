@@ -8,7 +8,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Service, Participante, Equipo, Etapa, ETAPAS } from '../../services/data';
+import { Service, Participante, Etapa, ETAPAS } from '../../services/data';
+import { EquiposService, Equipo } from '../../services/equipos';
 import { AuthService } from '../../services/auth/auth';
 import { forkJoin } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
@@ -36,6 +37,7 @@ type AsignacionRow = { id?: string; equipo_id: string; participante: string };
 })
 export class Asignacion implements OnInit {
   private svc = inject(Service);
+  private equiposService = inject(EquiposService);
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -59,7 +61,7 @@ export class Asignacion implements OnInit {
 
     forkJoin({
       participantes: this.svc.getParticipantes(),
-      equipos:       this.svc.getEquipos(),
+      equipos:       this.equiposService.getEquipos(),
     }).subscribe({
       next: ({ participantes, equipos }) => {
         const ordPart = [...participantes].sort(

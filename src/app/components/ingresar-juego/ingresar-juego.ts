@@ -15,7 +15,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { firstValueFrom, finalize } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
-import { Service, Equipo, Juego, Etapa, ETAPAS } from '../../services/data';
+import { Service, Juego, Etapa, ETAPAS } from '../../services/data';
+import { EquiposService, Equipo } from '../../services/equipos';
 import { AuthService } from '../../services/auth/auth';
 
 interface GrupoFecha {
@@ -55,6 +56,7 @@ function distintos(control: AbstractControl): ValidationErrors | null {
 export class IngresarJuego implements OnInit {
   private fb = inject(FormBuilder);
   private svc = inject(Service);
+  private equiposService = inject(EquiposService);
   private cdr = inject(ChangeDetectorRef);
 
   constructor(private authService: AuthService, private router: Router) {}
@@ -84,7 +86,7 @@ export class IngresarJuego implements OnInit {
   }, { validators: [distintos] });
 
   ngOnInit(): void {
-    this.svc.getEquipos().subscribe({
+    this.equiposService.getEquipos().subscribe({
       next: (eqs) => {
         this.equipos = (eqs ?? []).slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
         this.cdr.detectChanges();

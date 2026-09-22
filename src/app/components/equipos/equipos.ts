@@ -7,7 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { Subject, of } from 'rxjs';
 import { takeUntil, catchError, finalize } from 'rxjs/operators';
-import { Service, Equipo, RegistroEquipoPorEtapa, marcaEquipoPorEtapa } from '../../services/data';
+import { EquiposService, Equipo, RegistroEquipoPorEtapa } from '../../services/equipos';
+import { marcaEquipoPorEtapa } from '../../services/core/etapas';
 
 type EquipoConEtapas = Equipo & { porEtapa: RegistroEquipoPorEtapa[] };
 
@@ -35,7 +36,7 @@ export class Equipos implements OnInit, OnDestroy {
   error: string | null = null;
 
   private destroy$ = new Subject<void>();
-  private service = inject(Service);
+  private service = inject(EquiposService);
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
