@@ -160,6 +160,28 @@ export class Asignacion implements OnInit {
     });
   }
 
+  autoAsignarTemporadaRegular() {
+    const ok = confirm(
+      '¿Auto-asignar la temporada regular por ranking? Esto reemplaza por completo la asignación actual de "Temporada Regular".'
+    );
+    if (!ok) return;
+
+    this.loading.set(true);
+    this.errorMsg.set(null);
+    this.okMsg.set(null);
+
+    this.svc.autoAsignarTemporadaRegular().subscribe({
+      next: ({ asignados }) => {
+        this.okMsg.set(`Asignación por ranking completa (${asignados} equipos)`);
+        this.cargarAsignaciones('regular');
+      },
+      error: (e) => {
+        this.errorMsg.set(e?.message || 'No se pudo auto-asignar');
+        this.loading.set(false);
+      },
+    });
+  }
+
   resetAll() {
     const label = this.etapas.find(e => e.value === this.etapaActiva())?.label ?? this.etapaActiva();
     const ok = confirm(`¿Quitar TODAS las asignaciones de "${label}"?`);

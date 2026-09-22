@@ -11,6 +11,11 @@
         <button class="left" mat-icon-button routerLink="/admin" aria-label="Volver">
             <mat-icon>arrow_back</mat-icon>
         </button>
+        @if (etapaActiva() === 'regular') {
+            <button mat-stroked-button class="auto-asignar" (click)="autoAsignarTemporadaRegular()">
+                <mat-icon>auto_fix_high</mat-icon>&nbsp;Auto-asignar
+            </button>
+        }
         <button mat-stroked-button class="reset" (click)="resetAll()">
             <mat-icon>restart_alt</mat-icon>&nbsp;Reset
         </button>
