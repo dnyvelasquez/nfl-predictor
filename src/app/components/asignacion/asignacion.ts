@@ -9,6 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { Service, Participante, Equipo, Etapa, ETAPAS } from '../../services/data';
+import { AuthService } from '../../services/auth/auth';
 import { forkJoin } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
 
@@ -35,6 +36,7 @@ type AsignacionRow = { id?: string; equipo_id: string; participante: string };
 })
 export class Asignacion implements OnInit {
   private svc = inject(Service);
+  private authService = inject(AuthService);
   private router = inject(Router);
 
   loading = signal(true);
@@ -173,7 +175,7 @@ export class Asignacion implements OnInit {
   }
 
   logout(): void {
-    this.svc.logout();
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 }

@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { Service } from '../../services/data';
+import { AuthService } from '../../services/auth/auth';
 import { Router, RouterModule } from '@angular/router';
 
 @Component({
@@ -29,10 +29,10 @@ import { Router, RouterModule } from '@angular/router';
 })
 export class BorrarUsuario implements OnInit {
 
-  private svc = inject(Service);
+  private svc = inject(AuthService);
   private fb = inject(FormBuilder);
 
-  constructor(private service: Service, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
 
   loading = false;
@@ -95,7 +95,7 @@ export class BorrarUsuario implements OnInit {
 
   
   logout(): void {
-    this.service.logout();
+    this.authService.logout();
     this.router.navigate(['/login']);
   }  
 

@@ -8,7 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule, FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors  } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { Service } from '../../services/data';
+import { AuthService } from '../../services/auth/auth';
 
 function samePass(ctrl: AbstractControl): ValidationErrors | null {
   const p1 = ctrl.get('password')?.value;
@@ -38,7 +38,7 @@ function samePass(ctrl: AbstractControl): ValidationErrors | null {
 export class NuevoUsuario {
 
   private fb = inject(FormBuilder);
-  private service = inject(Service); 
+  private authService = inject(AuthService);
   private router = inject(Router);
 
   loading = false;
@@ -62,7 +62,7 @@ export class NuevoUsuario {
 
     const { email, password } = this.form.value;
 
-    this.service.createUserAsAdmin(String(email), String(password))
+    this.authService.createUserAsAdmin(String(email), String(password))
       .subscribe({
         next: (res: any) => {
           if (res?.error) { 
@@ -78,7 +78,7 @@ export class NuevoUsuario {
 
 
   logout(): void {
-    this.service.logout();
+    this.authService.logout();
     this.router.navigate(['/login']);
   }  
 

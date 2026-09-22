@@ -16,6 +16,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { firstValueFrom, finalize } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
 import { Service, Equipo, Juego, Etapa, ETAPAS } from '../../services/data';
+import { AuthService } from '../../services/auth/auth';
 
 interface GrupoFecha {
   fecha: string;
@@ -56,7 +57,7 @@ export class IngresarJuego implements OnInit {
   private svc = inject(Service);
   private cdr = inject(ChangeDetectorRef);
 
-  constructor(private service: Service, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
 
   equipos: Equipo[] = [];
@@ -306,7 +307,7 @@ export class IngresarJuego implements OnInit {
   }
     
   logout(): void {
-    this.service.logout();
+    this.authService.logout();
     this.router.navigate(['/login']);
   }  
 

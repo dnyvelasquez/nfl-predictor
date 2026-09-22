@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Service } from '../../services/data';
+import { AuthService } from '../../services/auth/auth';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -34,7 +34,7 @@ export class Login {
 
   constructor(
     private fb: FormBuilder,
-    private service: Service, 
+    private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
   ) {
@@ -54,7 +54,7 @@ export class Login {
 
     const { email, password } = this.form.value;
 
-    this.service.login(email, password).subscribe({
+    this.authService.login(email, password).subscribe({
       next: async (res) => {
         const user = res?.data ?? null;
         if (!user) { this.errorMsg = 'Credenciales incorrectas'; return; }

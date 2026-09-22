@@ -10,6 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Service } from '../../services/data';
+import { AuthService } from '../../services/auth/auth';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
@@ -41,6 +42,7 @@ export class Participantes implements OnInit {
 
   private fb = inject(FormBuilder);
   private svc = inject(Service);
+  private authService = inject(AuthService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
@@ -170,7 +172,7 @@ export class Participantes implements OnInit {
 
 
   logout(): void {
-    this.svc.logout();
+    this.authService.logout();
     this.router.navigate(['/login']);
   }  
 

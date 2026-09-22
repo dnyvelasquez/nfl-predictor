@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { Service } from '../../services/data';
+import { AuthService } from '../../services/auth/auth';
 
 @Injectable({
   providedIn: 'root'
@@ -33,10 +33,10 @@ import { Service } from '../../services/data';
 
 export class Admin {
 
-  constructor(private service: Service, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   logout(): void {
-    this.service.logout();
+    this.authService.logout();
     this.router.navigate(['/login']);
   }  
 
