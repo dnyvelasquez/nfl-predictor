@@ -43,7 +43,7 @@ export function registroEquipoEnEtapa(
 
 export function marcaEquipoEnEtapa(etapa: Etapa, wins: number, ties: number, losses: number): string {
   if (etapa === 'regular') {
-    return `${wins}-${ties}-${losses}`;
+    return `${wins}-${losses}-${ties}`;
   }
   if (wins > 0) return 'Ganó';
   if (losses > 0) return 'Perdió';

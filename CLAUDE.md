@@ -56,7 +56,7 @@ There is no more manual score entry. The old "Puntajes" admin page/route and `Se
 
 `EquiposService.getEquiposConPuntajePorEtapa()` (backs the `equipos` page) reuses the same `registroEquipoEnEtapa()` helper from the opposite direction — per team instead of per participant — returning each team with a `porEtapa: RegistroEquipoPorEtapa[]` (etapa, label, participant, points), skipping etapas the team has no assignment in.
 
-`Participante.equiposPorEtapa` (`{ etapa, label, equipos: RegistroEquipoParticipante[] }[]`, empty groups skipped) carries the computed `{ equipo, wins, ties, losses, puntos }` per pick straight from this calculation — `tabla-puntajes.html` and `participante-dialog.html` render it identically (both show a `wins-ties-losses` record plus `puntos` per team, grouped under an etapa heading); keep them in sync if this shape changes again, since they're two independent templates over the same data, not a shared component.
+`Participante.equiposPorEtapa` (`{ etapa, label, equipos: RegistroEquipoParticipante[] }[]`, empty groups skipped) carries the computed `{ equipo, wins, ties, losses, puntos }` per pick straight from this calculation — `tabla-puntajes.html` and `participante-dialog.html` render it identically (both show a `wins-losses-ties` record plus `puntos` per team, grouped under an etapa heading); keep them in sync if this shape changes again, since they're two independent templates over the same data, not a shared component.
 
 ### Asignación por etapa (playoffs)
 
