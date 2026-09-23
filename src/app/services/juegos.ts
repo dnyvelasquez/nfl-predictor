@@ -117,7 +117,7 @@ export class JuegosService {
               .order('hora', { ascending: true })
           ).pipe(map((res: any) => res.data || [])),
           equipos: from(
-            this.supabaseClient.from('equipos').select('*')
+            this.supabaseClient.from('equipos').select('id,nombre,left_mascot,right_mascot')
           ).pipe(map((res: any) => res.data || [])),
           asign: from(
             this.supabaseClient.from('asignacion').select('equipo_id,participante,etapa')
@@ -290,7 +290,7 @@ export class JuegosService {
           .order('fecha', { ascending: true })
           .order('hora', { ascending: true })
       ).pipe(map((res: any) => res.data || [])),
-      equipos: from(this.supabaseClient.from('equipos').select('*'))
+      equipos: from(this.supabaseClient.from('equipos').select('id,nombre,left_mascot,right_mascot'))
                 .pipe(map((res: any) => res.data || [])),
       asign: from(this.supabaseClient.from('asignacion').select('equipo_id,participante,etapa'))
               .pipe(map((res: any) => res.data || []))
@@ -322,8 +322,8 @@ export class JuegosService {
 
       return {
         ...j,
-        logoVisitante: v?.logo || '',
-        logoLocal:     l?.logo_2 || l?.logo || '',
+        logoVisitante: v?.left_mascot || '',
+        logoLocal:     l?.right_mascot || l?.left_mascot || '',
         participanteVisitante: listV.join(' / '),
         participanteLocal:     listL.join(' / '),
       } as Juego;

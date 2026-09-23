@@ -22,7 +22,7 @@
         @for (e of equipos; track e.id) {
           <div class="equipo-card">
             <div class="equipo-card-header">
-              <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo" loading="lazy">
+              <img [src]="e.left_mascot" [alt]="e.nombre" class="equipo-logo" loading="lazy">
               <div class="equipo-nombre-division">
                 <strong class="equipo-nombre">{{ e.ciudad }} {{ e.nombre }}</strong>
                 <span

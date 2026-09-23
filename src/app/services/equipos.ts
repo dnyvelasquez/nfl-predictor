@@ -17,7 +17,7 @@ export interface Equipo {
   pc: number;
   sb: number;
   division: string;
-  logo: string;
+  left_mascot: string;
   participante?: string;
 }
 
@@ -44,7 +44,10 @@ export class EquiposService {
   getEquipos(etapa: Etapa = 'regular'): Observable<Equipo[]> {
     return forkJoin({
       equiposRes: from(
-        this.supabaseClient.from('equipos').select('*').order('id', { ascending: true })
+        this.supabaseClient
+          .from('equipos')
+          .select('id,nombre,ciudad,division,left_mascot,pg,pe,pp,pw,pd,pc,sb')
+          .order('id', { ascending: true })
       ),
       asignRes: from(
         this.supabaseClient.from('asignacion').select('equipo_id,participante').eq('etapa', etapa)
@@ -73,7 +76,7 @@ export class EquiposService {
           ciudad: e.ciudad,
           puntaje: e.puntaje,
           division:e.division,
-          logo: e.logo,
+          left_mascot: e.left_mascot,
           pg: e.pg,
           pe: e.pe,
           pp: e.pp,
@@ -92,7 +95,7 @@ export class EquiposService {
       equiposRes: from(
         this.supabaseClient
           .from('equipos')
-          .select('id,nombre,ciudad,division,logo,pg,pe,pp,pw,pd,pc,sb')
+          .select('id,nombre,ciudad,division,left_mascot,pg,pe,pp,pw,pd,pc,sb')
           .order('id', { ascending: true })
       ),
       asignRes: from(
@@ -129,7 +132,7 @@ export class EquiposService {
             ciudad: e.ciudad,
             puntaje: e.puntaje,
             division: e.division,
-            logo: e.logo,
+            left_mascot: e.left_mascot,
             pg: e.pg,
             pe: e.pe,
             pp: e.pp,
@@ -148,7 +151,7 @@ export class EquiposService {
     return from(
       this.supabaseClient
         .from('asignacion')
-        .select('equipo_id, participante, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,logo)')
+        .select('equipo_id, participante, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,left_mascot)')
         .eq('participante', nombre)
         .eq('etapa', etapa)
     ).pipe(
@@ -158,7 +161,7 @@ export class EquiposService {
           id: row.equipos.id,
           nombre: row.equipos.nombre,
           division: row.equipos.division,
-          logo: row.equipos.logo,
+          left_mascot: row.equipos.left_mascot,
           pg: row.equipos.pg,
           pe: row.equipos.pe,
           pp: row.equipos.pp,
@@ -176,7 +179,7 @@ export class EquiposService {
     return from(
       this.supabaseClient
         .from('asignacion')
-        .select('equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,logo)')
+        .select('equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,left_mascot)')
         .eq('participante', nombre)
     ).pipe(
       map(({ data, error }: any) => {
@@ -185,7 +188,7 @@ export class EquiposService {
           id: row.equipos.id,
           nombre: row.equipos.nombre,
           division: row.equipos.division,
-          logo: row.equipos.logo,
+          left_mascot: row.equipos.left_mascot,
           pg: row.equipos.pg,
           pe: row.equipos.pe,
           pp: row.equipos.pp,

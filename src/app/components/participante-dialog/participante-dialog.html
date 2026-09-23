@@ -24,7 +24,7 @@
                     @for (item of grupo.equipos; track item.equipo.nombre) {
                         <div class="equipo-item">
                         <div class="equipo-logo-nombre">
-                            <img [src]="item.equipo.logo" [alt]="item.equipo.nombre" class="equipo-logo" />
+                            <img [src]="item.equipo.left_mascot" [alt]="item.equipo.nombre" class="equipo-logo" />
                             <strong class="equipo-nombre">{{ item.equipo.nombre }}</strong>
                         </div>
                         <div class="equipo-info-derecha">
