@@ -14,6 +14,11 @@
 //        - Si no, busca una fila cargada manualmente sin espn_event_id
 //          que coincida en semana/etapa/local/visitante -> le asigna el id.
 //        - Si tampoco existe -> inserta una fila nueva.
+//   4. Guarda en equipos.posicion_division (1-4) el orden de cada equipo
+//      dentro de su división y en equipos.seed_conferencia (1-16) su puesto
+//      en la conferencia (1-4 = líderes de división, 5-7 = wild card),
+//      según los standings de ESPN, que ya vienen con los criterios de
+//      desempate oficiales de la NFL aplicados.
 //
 // Modos (variable de entorno MODE):
 //   full  (default) -> recorre las 22 semanas (regular + playoffs) y también
@@ -52,6 +57,9 @@ if (!DATABASE_URL) {
 }
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/football/nfl";
+// Los standings viven en /apis/v2 (no /apis/site/v2). level=3 agrupa por
+// liga -> conferencia -> división; `season` sí se respeta aquí.
+const ESPN_STANDINGS_URL = "https://site.api.espn.com/apis/v2/sports/football/nfl/standings";
 
 // seasontype de ESPN: 1=pretemporada, 2=regular, 3=playoffs
 // En playoffs, la "week" de ESPN se traduce así:
@@ -172,6 +180,52 @@ async function syncTeams(client) {
   if (sinMatch.length) {
     console.warn(`  sin match en 'equipos' (revisar nombre manualmente): ${sinMatch.join(", ")}`);
   }
+}
+
+// Recorre el árbol liga -> conferencia -> división de ESPN y devuelve, por
+// cada división, sus entries en el orden en que ESPN las entrega (ya
+// desempatadas). Ojo: no usar playoffSeed para ordenar la división — ese es
+// el sembrado de conferencia, que usa las reglas de desempate de wild card y
+// puede diferir del orden interno de la división. playoffSeed se guarda
+// aparte, en seed_conferencia.
+function collectDivisionStandings(group, out = []) {
+  if (group?.standings?.entries?.length) {
+    out.push({ division: group.name, entries: group.standings.entries });
+  }
+  for (const child of group?.children || []) {
+    collectDivisionStandings(child, out);
+  }
+  return out;
+}
+
+async function syncStandings(client) {
+  const data = await fetchJson(`${ESPN_STANDINGS_URL}?season=${SEASON_YEAR}&seasontype=2&level=3`);
+  const divisiones = collectDivisionStandings(data);
+
+  const valores = [];
+  for (const { entries } of divisiones) {
+    entries.forEach((e, i) => {
+      const seed = Number(e.stats?.find((st) => st.name === "playoffSeed")?.value);
+      valores.push([String(e.team.id), i + 1, seed >= 1 && seed <= 16 ? seed : null]);
+    });
+  }
+
+  if (valores.length !== 32) {
+    console.warn(`  standings: se esperaban 32 equipos y ESPN devolvió ${valores.length}, no se actualizan posiciones`);
+    return;
+  }
+
+  const placeholders = valores
+    .map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}::smallint, $${i * 3 + 3}::smallint)`)
+    .join(", ");
+  const { rowCount } = await client.query(
+    `UPDATE equipos e
+        SET posicion_division = v.posicion, seed_conferencia = v.seed
+       FROM (VALUES ${placeholders}) AS v(espn_id, posicion, seed)
+      WHERE e.espn_id = v.espn_id`,
+    valores.flat()
+  );
+  console.log(`  standings: posicion_division/seed_conferencia actualizados en ${rowCount}/32 equipos (${divisiones.length} divisiones)`);
 }
 
 async function getNextId(client) {
@@ -327,6 +381,10 @@ async function runQuick(client) {
     await syncWeek(client, { ...params, semana: Number(semana), etapa, nextIdRef });
   }
 
+  // Un resultado nuevo puede mover el orden de una división; es una sola
+  // petición extra por corrida, y solo cuando hay juegos cerca de hoy.
+  await syncStandings(client);
+
   // Mientras siga habiendo algo cerca de "hoy", vale la pena que el workflow
   // se vuelva a disparar solo en vez de esperar al próximo cron.
   writeGithubOutput("reencadenar", "true");
@@ -352,6 +410,9 @@ async function runFull(client) {
       nextIdRef,
     });
   }
+
+  console.log("Sincronizando standings de división...");
+  await syncStandings(client);
 }
 
 async function main() {

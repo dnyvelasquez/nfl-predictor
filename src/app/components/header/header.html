@@ -16,9 +16,32 @@
     <button class="menu-button" mat-button routerLink="/juegos">
       <mat-icon class="icon">sports_football</mat-icon> Juegos de la semana
     </button>
-    <button class="menu-button desktop-2" mat-button routerLink="/equipos">
-      <mat-icon class="icon">groups</mat-icon> Equipos
-    </button>
+    <div
+      class="menu-button-container desktop-2"
+      (mouseenter)="equiposMenuTrigger.openMenu()"
+    >
+      <button
+        class="menu-button"
+        mat-button
+        [matMenuTriggerFor]="equiposSubMenu"
+        #equiposMenuTrigger="matMenuTrigger"
+        routerLink="/equipos"
+      >
+        <mat-icon class="icon">groups</mat-icon> Equipos
+        <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+      </button>
+
+      <mat-menu #equiposSubMenu="matMenu" class="submenu-hover">
+        <div (mouseenter)="equiposMenuTrigger.openMenu()" (mouseleave)="equiposMenuTrigger.closeMenu()">
+          <button mat-menu-item routerLink="/equipos">
+            <mat-icon>sports</mat-icon> En competición
+          </button>
+          <button mat-menu-item routerLink="/fixture">
+            <mat-icon>calendar_today</mat-icon> Fixture
+          </button>
+        </div>
+      </mat-menu>
+    </div>
     <button class="menu-button desktop-2" mat-button routerLink="/reglamento">
       <mat-icon class="icon">gavel</mat-icon> Reglamento
     </button>
@@ -45,10 +68,21 @@
     <mat-icon>sports_football</mat-icon>
     <span>Juegos de la semana</span>
   </button>
-  <button mat-menu-item routerLink="/equipos">
+  <!-- Submenú en móvil: se mantiene como clic tradicional -->
+  <button mat-menu-item [matMenuTriggerFor]="equiposMobileSubMenu">
     <mat-icon>groups</mat-icon>
     <span>Equipos</span>
   </button>
+  <mat-menu #equiposMobileSubMenu="matMenu">
+    <button mat-menu-item routerLink="/equipos">
+      <mat-icon>sports</mat-icon>
+      <span>En competición</span>
+    </button>
+    <button mat-menu-item routerLink="/fixture">
+      <mat-icon>calendar_today</mat-icon>
+      <span>Fixture</span>
+    </button>
+  </mat-menu>
   <button mat-menu-item routerLink="/reglamento">
     <mat-icon>gavel</mat-icon>
     <span>Reglamento</span>

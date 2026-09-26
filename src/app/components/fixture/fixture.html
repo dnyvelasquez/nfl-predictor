@@ -1,0 +1,43 @@
+<div class="fixture-container">
+  @if (loading) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Cargando fixture...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error }}</p>
+    </div>
+  } @else {
+    <div class="conferencias">
+      @for (conf of conferencias; track conf.conferencia) {
+        <section class="conferencia" [ngClass]="conf.conferencia === 'AFC' ? 'conf-afc' : 'conf-nfc'">
+          <div class="conferencia-header">
+            <img [src]="logosConferencia[conf.conferencia]" [alt]="conf.conferencia" class="conferencia-logo">
+            <h2>{{ conf.conferencia === 'AFC' ? 'American Football Conference' : 'National Football Conference' }}</h2>
+          </div>
+
+          <div class="divisiones">
+            @for (div of conf.divisiones; track div.division) {
+              <div class="division-card">
+                <div class="division-header">
+                  <span class="division-conf">{{ conf.conferencia }}</span>
+                  <strong>{{ nombreDivision(div.division) }}</strong>
+                  <span class="division-col">G-P-E</span>
+                </div>
+                @for (e of div.equipos; track e.id) {
+                  <div class="equipo-row" [ngClass]="claseFila(e)">
+                    <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo">
+                    <span class="equipo-nombre">{{ e.ciudad }} {{ e.nombre }}</span>
+                    <span class="equipo-record">{{ e.wins }}-{{ e.losses }}-{{ e.ties }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>

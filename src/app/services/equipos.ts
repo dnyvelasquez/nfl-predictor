@@ -21,6 +21,29 @@ export interface Equipo {
   participante?: string;
 }
 
+export interface EquipoStanding {
+  id: string;
+  nombre: string;
+  ciudad: string;
+  logo: string;
+  posicion_division: number | null;
+  /** Puesto en la conferencia según ESPN: 1-4 líderes de división, 5-7 wild card. */
+  seed_conferencia: number | null;
+  wins: number;
+  losses: number;
+  ties: number;
+}
+
+export interface DivisionStanding {
+  division: string;
+  equipos: EquipoStanding[];
+}
+
+export interface ConferenciaStanding {
+  conferencia: 'AFC' | 'NFC';
+  divisiones: DivisionStanding[];
+}
+
 export interface RegistroEquipoPorEtapa {
   etapa: Etapa;
   label: string;
@@ -199,6 +222,65 @@ export class EquiposService {
           participante: row.participante,
           etapa: row.etapa,
         })) as (Equipo & { etapa: Etapa })[];
+      })
+    );
+  }
+
+  /**
+   * Standings de temporada regular por conferencia/división, para el Fixture.
+   * El récord solo cuenta juegos de etapa 'regular' ya terminados (excluye
+   * 'en_vivo', que tiene marcador parcial). El orden viene de
+   * equipos.posicion_division, que scripts/sync-nfl.mjs copia de los standings
+   * de ESPN con los criterios de desempate oficiales ya aplicados; si a una
+   * división le falta esa posición, se ordena por porcentaje de victorias
+   * (empate = media victoria) sin desempates.
+   */
+  getStandingsTemporadaRegular(): Observable<ConferenciaStanding[]> {
+    return forkJoin({
+      equiposRes: from(
+        this.supabaseClient
+          .from('equipos')
+          .select('id,nombre,ciudad,division,logo,posicion_division,seed_conferencia')
+          .order('id', { ascending: true })
+      ),
+      juegos: this.juegosService.getJuegosConResultado(),
+    }).pipe(
+      map(({ equiposRes, juegos }: any) => {
+        if (equiposRes.error) throw equiposRes.error;
+
+        const terminados = (juegos as any[]).filter(j => j.estado !== 'en_vivo');
+        const porDivision: Record<string, EquipoStanding[]> = {};
+
+        for (const e of (equiposRes.data ?? [])) {
+          const { wins, ties, losses } = registroEquipoEnEtapa(e.nombre, 'regular', terminados);
+          (porDivision[e.division] ??= []).push({
+            id: e.id, nombre: e.nombre, ciudad: e.ciudad, logo: e.logo,
+            posicion_division: e.posicion_division ?? null,
+            seed_conferencia: e.seed_conferencia ?? null, wins, losses, ties,
+          });
+        }
+
+        const pct = (e: EquipoStanding) => {
+          const jugados = e.wins + e.losses + e.ties;
+          return jugados ? (e.wins + e.ties / 2) / jugados : 0;
+        };
+
+        return (['AFC', 'NFC'] as const).map(conferencia => ({
+          conferencia,
+          divisiones: Object.keys(porDivision)
+            .filter(d => d.startsWith(conferencia))
+            .sort()
+            .map(division => {
+              const equipos = porDivision[division];
+              const conPosicion = equipos.every(e => e.posicion_division !== null);
+              return {
+                division,
+                equipos: [...equipos].sort(conPosicion
+                  ? (a, b) => a.posicion_division! - b.posicion_division!
+                  : (a, b) => pct(b) - pct(a)),
+              };
+            }),
+        }));
       })
     );
   }

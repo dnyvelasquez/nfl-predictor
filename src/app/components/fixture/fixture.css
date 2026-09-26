@@ -1,0 +1,188 @@
+.fixture-container {
+  padding: 80px 16px 20px;
+  background-color: #003B73;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.conferencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.conferencia {
+  --conf-color: #013369;
+  --conf-color-light: rgba(1, 51, 105, 0.08);
+  flex: 1 1 520px;
+  max-width: 580px;
+  background-color: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.conf-afc {
+  --conf-color: #D50A0A;
+  --conf-color-light: rgba(213, 10, 10, 0.07);
+}
+
+.conf-nfc {
+  --conf-color: #013369;
+  --conf-color-light: rgba(1, 51, 105, 0.07);
+}
+
+.conferencia-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, var(--conf-color-light) 0%, #fff 70%);
+  border-bottom: 1px solid #eee;
+}
+
+.conferencia-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.conferencia-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--conf-color);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.divisiones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  padding: 16px;
+}
+
+.division-card {
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.division-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--conf-color);
+  color: #fff;
+}
+
+.division-conf {
+  font-size: 0.7rem;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.division-col {
+  margin-left: auto;
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.equipo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid #f0f0f0;
+  border-left: 4px solid transparent;
+}
+
+.equipo-row.seed-uno {
+  border-left-color: #fbc02d;
+}
+
+.equipo-row.campeon-division {
+  border-left-color: #1565c0;
+}
+
+.equipo-row.wildcard {
+  border-left-color: #c62828;
+}
+
+.equipo-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.equipo-nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.equipo-record {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--conf-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 16px;
+  background-color: white;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.loading-container p,
+.error-container p {
+  margin: 0;
+  color: #666;
+}
+
+.error-container {
+  color: #d32f2f;
+}
+
+.error-container mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+@media (max-width: 600px) {
+  .divisiones {
+    padding: 10px;
+  }
+
+  .conferencia-logo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .conferencia-header h2 {
+    font-size: 0.95rem;
+  }
+}
