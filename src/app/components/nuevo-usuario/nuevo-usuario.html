@@ -30,6 +30,26 @@
         @if (f.password.touched && f.password.hasError('required')) { <mat-error>La contraseña es requerida</mat-error> }
         @if (f.password.touched && f.password.hasError('minlength')) { <mat-error>Mínimo 6 caracteres</mat-error> }
       </mat-form-field>
+
+      <mat-form-field appearance="fill" class="box">
+        <mat-label>Rol</mat-label>
+        <mat-select formControlName="rol">
+          @for (r of roles; track r.value) {
+            <mat-option [value]="r.value">{{ r.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (necesitaGrupo()) {
+        <mat-form-field appearance="fill" class="box">
+          <mat-label>Grupo</mat-label>
+          <mat-select formControlName="grupoId">
+            @for (g of grupos; track g.id) {
+              <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
       <div>
         <button mat-raised-button type="submit" [disabled]="form.invalid || loading">
           {{ loading ? 'Creando…' : 'Crear' }}

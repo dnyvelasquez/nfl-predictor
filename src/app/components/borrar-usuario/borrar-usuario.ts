@@ -1,24 +1,30 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { AuthService } from '../../services/auth/auth';
+import { AuthService, ROLES, Rol, UsuarioVisible } from '../../services/auth/auth';
+import { GruposService, Grupo } from '../../services/grupos';
 import { Router, RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
+
+const POR_PAGINA = 20;
 
 @Component({
   selector: 'app-borrar-usuario',
   standalone: true,
   imports: [
-    ReactiveFormsModule, 
-    MatCardModule, 
-    MatButtonModule, 
-    MatFormFieldModule, 
+    ReactiveFormsModule,
+    MatCardModule,
+    MatButtonModule,
+    MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatDividerModule,
     MatIconModule,
     MatMenuModule,
@@ -30,76 +36,151 @@ import { Router, RouterModule } from '@angular/router';
 export class BorrarUsuario implements OnInit {
 
   private svc = inject(AuthService);
+  private gruposService = inject(GruposService);
   private fb = inject(FormBuilder);
-
-  constructor(private authService: AuthService, private router: Router) {}
-
+  private router = inject(Router);
 
   loading = false;
   errorMsg: string | null = null;
   okMsg: string | null = null;
 
   page = 1;
-  perPage = 20;
   q = '';
 
-  // resultado
-  users: Array<{ id: string; email: string | null; full_name: string | null; created_at: string; last_sign_in_at: string | null }> = [];
+  private todos: UsuarioVisible[] = [];
+  users: UsuarioVisible[] = [];
+  hayMas = false;
+
+  roles = ROLES;
+  grupos: Grupo[] = [];
+  // El usuario en sesión no puede cambiarse el rol ni borrarse (evita quedarse sin super usuario).
+  miUserId: string | null = null;
 
   search = this.fb.control('');
+  nuevoGrupo = this.fb.control('', [Validators.required, Validators.minLength(2)]);
 
   ngOnInit(): void {
+    this.svc.getUserId$().subscribe((id) => this.miUserId = id);
     this.load();
   }
 
-  load(page = this.page, q = this.q) {
+  load() {
     this.loading = true;
-    this.errorMsg = this.okMsg = null;
-    this.svc.listUsers(page, this.perPage, q).subscribe({
-      next: (res: any) => {
-        if (res?.error) { this.errorMsg = res.error; return; }
-        this.users = res.users ?? [];
-        this.page  = res.page  ?? page;
-        this.perPage = res.perPage ?? this.perPage;
+    this.errorMsg = null;
+    forkJoin({ usuarios: this.svc.listUsers(), grupos: this.gruposService.getGrupos() }).subscribe({
+      next: ({ usuarios, grupos }) => {
+        this.todos = usuarios;
+        this.grupos = grupos;
+        this.paginar();
+        this.loading = false;
       },
-      error: (e) => this.errorMsg = e?.message || 'Error cargando usuarios',
-      complete: () => this.loading = false
+      error: (e) => {
+        this.errorMsg = e?.message || 'Error cargando usuarios';
+        this.loading = false;
+      },
     });
+  }
+
+  private paginar() {
+    const query = this.q.toLowerCase();
+    const filtrados = query ? this.todos.filter((u) => u.email?.toLowerCase().includes(query)) : this.todos;
+    const inicio = (this.page - 1) * POR_PAGINA;
+    this.users = filtrados.slice(inicio, inicio + POR_PAGINA);
+    this.hayMas = filtrados.length > inicio + POR_PAGINA;
   }
 
   doSearch() {
     this.q = this.search.value?.trim() || '';
     this.page = 1;
-    this.load(1, this.q);
+    this.paginar();
   }
 
-  nextPage() { this.load(this.page + 1, this.q); }
-  prevPage() { if (this.page > 1) this.load(this.page - 1, this.q); }
+  nextPage() { if (this.hayMas) { this.page++; this.paginar(); } }
+  prevPage() { if (this.page > 1) { this.page--; this.paginar(); } }
 
-  confirmAndDelete(u: { id: string; email: string | null }) {
+  cambiarRol(u: UsuarioVisible, rol: Rol) {
+    // Pasar de super usuario (sin grupo) a otro rol exige un grupo: se usa el primero.
+    const grupoId = rol === 'superusuario' ? null : (u.grupo_id ?? this.grupos[0]?.id ?? null);
+    this.guardar(u, rol, grupoId);
+  }
+
+  cambiarGrupo(u: UsuarioVisible, grupoId: string) {
+    this.guardar(u, u.rol, grupoId);
+  }
+
+  private guardar(u: UsuarioVisible, rol: Rol, grupoId: string | null) {
+    const anterior = { rol: u.rol, grupo_id: u.grupo_id };
+    this.loading = true; this.errorMsg = this.okMsg = null;
+    this.svc.setRol(u.id, rol, grupoId).subscribe({
+      next: () => {
+        u.rol = rol;
+        u.grupo_id = grupoId;
+        this.okMsg = `Usuario ${u.email} actualizado.`;
+        this.loading = false;
+      },
+      error: (e) => {
+        Object.assign(u, anterior);
+        this.errorMsg = e?.message || 'No se pudo actualizar el usuario';
+        this.loading = false;
+      },
+    });
+  }
+
+  crearGrupo() {
+    const nombre = this.nuevoGrupo.value?.trim();
+    if (!nombre || this.nuevoGrupo.invalid) { this.nuevoGrupo.markAsTouched(); return; }
+    this.loading = true; this.errorMsg = this.okMsg = null;
+    this.gruposService.crearGrupo(nombre).subscribe({
+      next: (g) => {
+        this.grupos = [...this.grupos, g].sort((a, b) => a.nombre.localeCompare(b.nombre));
+        this.nuevoGrupo.reset('');
+        this.okMsg = `Grupo "${g.nombre}" creado.`;
+        this.loading = false;
+      },
+      error: (e) => {
+        this.errorMsg = e?.message || 'No se pudo crear el grupo';
+        this.loading = false;
+      },
+    });
+  }
+
+  borrarGrupo(g: Grupo) {
+    const ok = confirm(`¿Eliminar el grupo "${g.nombre}"? Solo se puede si no tiene participantes, asignaciones ni usuarios.`);
+    if (!ok) return;
+
+    this.loading = true; this.errorMsg = this.okMsg = null;
+    this.gruposService.borrarGrupo(g.id).subscribe({
+      next: () => {
+        this.grupos = this.grupos.filter((x) => x.id !== g.id);
+        this.okMsg = `Grupo "${g.nombre}" eliminado.`;
+        this.loading = false;
+      },
+      error: (e) => {
+        this.errorMsg = e?.message || 'No se pudo eliminar el grupo';
+        this.loading = false;
+      },
+    });
+  }
+
+  confirmAndDelete(u: UsuarioVisible) {
     const ok = confirm(`¿Eliminar al usuario ${u.email ?? u.id}? Esta acción no se puede deshacer.`);
     if (!ok) return;
 
     this.loading = true; this.errorMsg = this.okMsg = null;
     this.svc.deleteUser(u.id).subscribe({
-      next: (r: any) => {
-        if (r?.error) { this.errorMsg = r.error; return; }
+      next: () => {
         this.okMsg = 'Usuario eliminado.';
-        // refresca la lista
-        this.load(this.page, this.q);
+        this.load();
       },
-      error: (e) => this.errorMsg = e?.message || 'No se pudo eliminar',
-      complete: () => this.loading = false
+      error: (e) => {
+        this.errorMsg = e?.message || 'No se pudo eliminar';
+        this.loading = false;
+      },
     });
   }
 
-  
   logout(): void {
-    this.authService.logout();
+    this.svc.logout();
     this.router.navigate(['/login']);
-  }  
-
-
-
-
+  }
 }

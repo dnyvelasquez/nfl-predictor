@@ -2,7 +2,7 @@
   <mat-card class="borrar-card">
     <div class="header">
       <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
-      <h1>Borrar Usuario</h1>
+      <h1>Usuarios</h1>
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
@@ -37,12 +37,15 @@
         <div class="info">{{ okMsg }}</div>
     }
 
-    @if (!loading && !errorMsg) {
+    @if (users.length > 0) {
         <div class="users-table" style="overflow:auto">
         <table class="borrar-table">
             <thead>
             <tr>
                 <th>Email</th>
+                <th>Rol</th>
+                <th>Grupo</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -50,7 +53,27 @@
                 <tr>
                 <td>{{ u.email }}</td>
                 <td>
-                    <button mat-button color="warn" (click)="confirmAndDelete(u)">
+                    <mat-select [value]="u.rol" (selectionChange)="cambiarRol(u, $event.value)"
+                        [disabled]="u.id === miUserId || loading" aria-label="Rol">
+                    @for (r of roles; track r.value) {
+                        <mat-option [value]="r.value">{{ r.label }}</mat-option>
+                    }
+                    </mat-select>
+                </td>
+                <td>
+                    @if (u.rol === 'superusuario') {
+                        <span>Todos</span>
+                    } @else {
+                        <mat-select [value]="u.grupo_id" (selectionChange)="cambiarGrupo(u, $event.value)"
+                            [disabled]="loading" placeholder="Sin grupo" aria-label="Grupo">
+                        @for (g of grupos; track g.id) {
+                            <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
+                        }
+                        </mat-select>
+                    }
+                </td>
+                <td>
+                    <button mat-button color="warn" (click)="confirmAndDelete(u)" [disabled]="u.id === miUserId || loading">
                         <mat-icon>delete</mat-icon>
                     </button>
                 </td>
@@ -62,11 +85,31 @@
 
         <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
         <button mat-stroked-button (click)="prevPage()" [disabled]="page<=1">Anterior</button>
-        <button mat-stroked-button (click)="nextPage()">Siguiente</button>
+        <button mat-stroked-button (click)="nextPage()" [disabled]="!hayMas">Siguiente</button>
         </div>
     }
 
+    <mat-divider style="margin:16px 0"></mat-divider>
 
+    <h2>Grupos</h2>
+    <ul>
+    @for (g of grupos; track g.id) {
+        <li>
+            {{ g.nombre }}
+            <button mat-icon-button color="warn" (click)="borrarGrupo(g)" [disabled]="loading"
+                [attr.aria-label]="'Borrar grupo ' + g.nombre">
+                <mat-icon>delete</mat-icon>
+            </button>
+        </li>
+    }
+    </ul>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <mat-form-field appearance="fill" style="flex:1">
+        <mat-label>Nuevo grupo</mat-label>
+        <input matInput [formControl]="nuevoGrupo" (keyup.enter)="crearGrupo()" />
+        </mat-form-field>
+        <button mat-raised-button color="primary" (click)="crearGrupo()" [disabled]="loading">Crear grupo</button>
+    </div>
 
   </mat-card>
 </div>

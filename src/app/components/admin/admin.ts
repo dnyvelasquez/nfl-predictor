@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Injectable } from '@angular/core';
@@ -8,7 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { AuthService } from '../../services/auth/auth';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { AuthService, ROLES } from '../../services/auth/auth';
 
 @Injectable({
   providedIn: 'root'
@@ -34,6 +35,12 @@ import { AuthService } from '../../services/auth/auth';
 export class Admin {
 
   constructor(private authService: AuthService, private router: Router) {}
+
+  rol = toSignal(inject(AuthService).getRol$(), { initialValue: null });
+
+  rolLabel() {
+    return ROLES.find((r) => r.value === this.rol())?.label ?? '';
+  }
 
   logout(): void {
     this.authService.logout();

@@ -12,6 +12,8 @@ import { Etapa, ETAPAS } from '../../services/core/etapas';
 import { AsignacionService } from '../../services/asignacion';
 import { EquiposService, Equipo } from '../../services/equipos';
 import { ParticipantesService, Participante } from '../../services/participantes';
+import { GruposService, Grupo } from '../../services/grupos';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth/auth';
 import { forkJoin } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
@@ -43,6 +45,12 @@ export class Asignacion implements OnInit {
   private participantesService = inject(ParticipantesService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private gruposService = inject(GruposService);
+
+  // Solo el super usuario edita a mano (RLS también rechaza la escritura de los demás roles).
+  esSuperusuario = toSignal(inject(AuthService).esSuperusuario$(), { initialValue: false });
+  // El administrador solo puede usar la auto-asignación de temporada regular.
+  puedeAutoAsignar = toSignal(inject(AuthService).puedeAutoAsignar$(), { initialValue: false });
 
   loading = signal(true);
   errorMsg = signal<string | null>(null);
@@ -51,6 +59,9 @@ export class Asignacion implements OnInit {
   participantes = signal<Participante[]>([]);
   equipos       = signal<Equipo[]>([]);
   asignaciones  = signal<AsignacionRow[]>([]);
+
+  grupos  = signal<Grupo[]>([]);
+  grupoId = signal<string | null>(null);
 
   etapas = ETAPAS;
   etapaActiva = signal<Etapa>('regular');
@@ -63,16 +74,14 @@ export class Asignacion implements OnInit {
     this.okMsg.set(null);
 
     forkJoin({
-      participantes: this.participantesService.getParticipantes(),
-      equipos:       this.equiposService.getEquipos(),
+      disponibles: this.gruposService.gruposDisponibles$(),
+      equipos:     this.equiposService.getEquipos(),
     }).subscribe({
-      next: ({ participantes, equipos }) => {
-        const ordPart = [...participantes].sort(
-          (a, b) => (a.numero ?? 0) - (b.numero ?? 0) || a.nombre.localeCompare(b.nombre)
-        );
-        this.participantes.set(ordPart);
+      next: ({ disponibles, equipos }) => {
+        this.grupos.set(disponibles.grupos);
+        this.grupoId.set(disponibles.seleccionado);
         this.equipos.set(equipos);
-        this.cargarAsignaciones(this.etapaActiva());
+        this.cargarGrupo();
       },
       error: (e) => {
         this.errorMsg.set(e?.message || 'No fue posible cargar la asignación');
@@ -81,11 +90,48 @@ export class Asignacion implements OnInit {
     });
   }
 
+  // Participantes y asignaciones dependen del grupo; los equipos no.
+  private cargarGrupo() {
+    const grupoId = this.grupoId();
+    if (!grupoId) {
+      this.participantes.set([]);
+      this.asignaciones.set([]);
+      this.errorMsg.set('Tu usuario no tiene un grupo asignado');
+      this.loading.set(false);
+      return;
+    }
+
+    this.loading.set(true);
+    this.participantesService.getParticipantes(grupoId).subscribe({
+      next: (participantes) => {
+        const ordPart = [...participantes].sort(
+          (a, b) => (a.numero ?? 0) - (b.numero ?? 0) || a.nombre.localeCompare(b.nombre)
+        );
+        this.participantes.set(ordPart);
+        this.cargarAsignaciones(this.etapaActiva());
+      },
+      error: (e) => {
+        this.errorMsg.set(e?.message || 'No fue posible cargar los participantes');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  cambiarGrupo(grupoId: string) {
+    this.grupoId.set(grupoId);
+    this.gruposService.recordarGrupo(grupoId);
+    this.errorMsg.set(null);
+    this.okMsg.set(null);
+    this.cargarGrupo();
+  }
+
   private cargarAsignaciones(etapa: Etapa) {
+    const grupoId = this.grupoId();
+    if (!grupoId) return;
     this.loading.set(true);
     this.errorMsg.set(null);
 
-    this.svc.getAsignaciones(etapa).subscribe({
+    this.svc.getAsignaciones(etapa, grupoId).subscribe({
       next: (asign) => this.asignaciones.set(asign ?? []),
       error: (e) => this.errorMsg.set(e?.message || 'No fue posible cargar la asignación'),
       complete: () => this.loading.set(false)
@@ -137,11 +183,13 @@ export class Asignacion implements OnInit {
   }
 
   onChangeCelda(division: string, participanteNombre: string, equipoId: string | null) {
+    const grupoId = this.grupoId();
+    if (!grupoId) return;
     this.loading.set(true);
     this.errorMsg.set(null);
     this.okMsg.set(null);
 
-    this.svc.assignEquipo(participanteNombre, division, equipoId, this.etapaActiva()).subscribe({
+    this.svc.assignEquipo(participanteNombre, division, equipoId, this.etapaActiva(), grupoId).subscribe({
       next: () => {
         const byId = this.equipoById();
         const prev = this.asignaciones().filter(
@@ -161,8 +209,10 @@ export class Asignacion implements OnInit {
   }
 
   autoAsignarTemporadaRegular() {
+    const grupoId = this.grupoId();
+    if (!grupoId) return;
     const ok = confirm(
-      '¿Auto-asignar la temporada regular por ranking? Esto reemplaza por completo la asignación actual de "Temporada Regular".'
+      `¿Auto-asignar la temporada regular por ranking? Esto reemplaza por completo la asignación actual de "Temporada Regular" del grupo "${this.nombreGrupo()}".`
     );
     if (!ok) return;
 
@@ -170,7 +220,7 @@ export class Asignacion implements OnInit {
     this.errorMsg.set(null);
     this.okMsg.set(null);
 
-    this.svc.autoAsignarTemporadaRegular().subscribe({
+    this.svc.autoAsignarTemporadaRegular(grupoId).subscribe({
       next: ({ asignados }) => {
         this.okMsg.set(`Asignación por ranking completa (${asignados} equipos)`);
         this.cargarAsignaciones('regular');
@@ -183,15 +233,17 @@ export class Asignacion implements OnInit {
   }
 
   resetAll() {
+    const grupoId = this.grupoId();
+    if (!grupoId) return;
     const label = this.etapas.find(e => e.value === this.etapaActiva())?.label ?? this.etapaActiva();
-    const ok = confirm(`¿Quitar TODAS las asignaciones de "${label}"?`);
+    const ok = confirm(`¿Quitar TODAS las asignaciones de "${label}" del grupo "${this.nombreGrupo()}"?`);
     if (!ok) return;
 
     this.loading.set(true);
     this.errorMsg.set(null);
     this.okMsg.set(null);
 
-    this.svc.resetAsignaciones(this.etapaActiva()).subscribe({
+    this.svc.resetAsignaciones(this.etapaActiva(), grupoId).subscribe({
       next: () => {
         this.asignaciones.set([]);
         this.okMsg.set('Asignaciones reiniciadas');
@@ -199,6 +251,10 @@ export class Asignacion implements OnInit {
       error: (e) => this.errorMsg.set(e?.message || 'No se pudo reiniciar'),
       complete: () => this.loading.set(false),
     });
+  }
+
+  nombreGrupo(): string {
+    return this.grupos().find(g => g.id === this.grupoId())?.nombre ?? '';
   }
 
   logout(): void {

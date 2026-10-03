@@ -18,6 +18,7 @@ import { Router, RouterModule } from '@angular/router';
 import { Etapa, ETAPAS } from '../../services/core/etapas';
 import { JuegosService, Juego } from '../../services/juegos';
 import { EquiposService, Equipo } from '../../services/equipos';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth/auth';
 
 interface GrupoFecha {
@@ -59,6 +60,9 @@ export class IngresarJuego implements OnInit {
   private svc = inject(JuegosService);
   private equiposService = inject(EquiposService);
   private cdr = inject(ChangeDetectorRef);
+
+  // Solo el super usuario edita a mano (RLS también rechaza la escritura de los demás roles).
+  esSuperusuario = toSignal(inject(AuthService).esSuperusuario$(), { initialValue: false });
 
   constructor(private authService: AuthService, private router: Router) {}
 

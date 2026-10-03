@@ -17,6 +17,7 @@ export interface Participante {
   id: string;
   numero: number;
   nombre: string;
+  grupo_id?: string;
   acumulado: number;
   puntaje?: number;
   equiposPorEtapa?: { etapa: Etapa; label: string; equipos: RegistroEquipoParticipante[] }[];
@@ -35,11 +36,12 @@ export class ParticipantesService {
     private juegosService: JuegosService,
   ) {}
 
-  getParticipantes(): Observable<Participante[]> {
+  /** Sin `grupoId` devuelve los de todos los grupos (páginas públicas, donde el grupo aún no aplica). */
+  getParticipantes(grupoId?: string): Observable<Participante[]> {
+    let query = this.supabaseClient.from('participantes').select('*');
+    if (grupoId) query = query.eq('grupo_id', grupoId);
     return from(
-      this.supabaseClient
-        .from('participantes')
-        .select('*')
+      query
         .order('numero', { ascending: true })
         .order('nombre', { ascending: true })
     ).pipe(
@@ -99,9 +101,9 @@ export class ParticipantesService {
     );
   }
 
-  createParticipante(nombre: string) {
+  createParticipante(nombre: string, grupoId: string) {
     return from(
-      this.supabaseClient.from('participantes').select('numero')
+      this.supabaseClient.from('participantes').select('numero').eq('grupo_id', grupoId)
     ).pipe(
       switchMap(({ data, error }: any) => {
         if (error) throw error;
@@ -111,7 +113,7 @@ export class ParticipantesService {
         return from(
           this.supabaseClient
             .from('participantes')
-            .insert([{ nombre, numero: maxNumero + 1 }])
+            .insert([{ nombre, numero: maxNumero + 1, grupo_id: grupoId }])
             .select('id, nombre, numero')
             .single()
         );
@@ -139,8 +141,8 @@ export class ParticipantesService {
     );
   }
 
-  asignarNumerosAleatorios(): Observable<{ id: string; nombre: string; numero: number }[]> {
-    return this.getParticipantes().pipe(
+  asignarNumerosAleatorios(grupoId: string): Observable<{ id: string; nombre: string; numero: number }[]> {
+    return this.getParticipantes(grupoId).pipe(
       switchMap((participantes) => {
         if (participantes.length === 0) return of([]);
 

@@ -18,6 +18,7 @@
       
     <div class="table-container">
 
+      @if (esSuperusuario()) {
       <form [formGroup]="form" (ngSubmit)="guardar()" novalidate class="pg-form">
           <mat-form-field appearance="fill">
             <mat-label>Equipo visitante</mat-label>
@@ -98,6 +99,7 @@
       </form>
 
       <mat-divider class="section-divider"></mat-divider>
+      }
 
       <div class="week-nav">
         <button mat-icon-button (click)="prevWeek()"
@@ -113,12 +115,14 @@
         </button>
       </div>
 
+      @if (esSuperusuario()) {
       <div class="table-actions">
         <button mat-stroked-button color="warn" (click)="borrarTodosLosJuegos()" [disabled]="listLoading">
           <mat-icon>delete_sweep</mat-icon>
           Borrar todos los juegos
         </button>
       </div>
+      }
 
       @if (listLoading) {
         <div class="loading-container">
@@ -134,7 +138,7 @@
           <div class="cell equipo">Local</div>
           <div class="cell etapa">Etapa</div>
           <div class="cell resultado">Resultado</div>
-          <div class="cell a">Acciones</div>
+          @if (esSuperusuario()) { <div class="cell a">Acciones</div> }
         </div>
 
         <div class="tbody">
@@ -159,12 +163,14 @@
                       <span class="muted">Sin resultado</span>
                     }
                   </div>
+                  @if (esSuperusuario()) {
                   <div class="cell a">
                     <button mat-stroked-button (click)="startEdit(j)" [disabled]="listLoading">Editar</button>
                     <button mat-icon-button color="warn" (click)="borrarJuego(j)" [disabled]="listLoading" aria-label="Borrar juego">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
+                  }
                 </div>
               } @else {
                 <div class="row edit-row" [formGroup]="editForms[j.id]">

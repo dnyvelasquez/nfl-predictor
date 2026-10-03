@@ -8,8 +8,11 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ParticipantesService } from '../../services/participantes';
+import { GruposService, Grupo } from '../../services/grupos';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth/auth';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -32,6 +35,7 @@ type Row = { id: string; nombre: string; numero: number };
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatProgressSpinnerModule
   ],
   templateUrl: './participantes.html',
@@ -45,12 +49,19 @@ export class Participantes implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private gruposService = inject(GruposService);
+
+  // Solo el super usuario edita a mano (RLS también rechaza la escritura de los demás roles).
+  esSuperusuario = toSignal(inject(AuthService).esSuperusuario$(), { initialValue: false });
 
   loading = false;
   errorMsg: string | null = null;
   okMsg: string | null = null;  
 
   participantes: Row[] = [];
+
+  grupos: Grupo[] = [];
+  grupoId: string | null = null;
 
   addForm = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
@@ -59,12 +70,38 @@ export class Participantes implements OnInit {
   editForms: Record<string, FormGroup> = {};
 
   ngOnInit(): void {
+    this.loading = true;
+    this.gruposService.gruposDisponibles$().subscribe({
+      next: ({ grupos, seleccionado }) => {
+        this.grupos = grupos;
+        this.grupoId = seleccionado;
+        this.load();
+      },
+      error: (e) => {
+        this.errorMsg = e?.message || 'No se pudieron cargar los grupos';
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  cambiarGrupo(grupoId: string): void {
+    this.grupoId = grupoId;
+    this.gruposService.recordarGrupo(grupoId);
+    this.editForms = {};
     this.load();
   }
 
   load(): void {
     this.loading = true; this.errorMsg = this.okMsg = null;
-    this.svc.getParticipantes().pipe(
+    if (!this.grupoId) {
+      this.participantes = [];
+      this.errorMsg = 'Tu usuario no tiene un grupo asignado';
+      this.loading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+    this.svc.getParticipantes(this.grupoId).pipe(
       finalize(() => { this.loading = false; this.cdr.detectChanges(); })
     ).subscribe({
       next: (rows) => { this.participantes = rows; },
@@ -73,14 +110,14 @@ export class Participantes implements OnInit {
   }
 
   add(): void {
-    if (this.addForm.invalid || this.loading) {
+    if (this.addForm.invalid || this.loading || !this.grupoId) {
       this.addForm.markAllAsTouched();
       return;
     }
     const { nombre } = this.addForm.value;
     this.loading = true; this.errorMsg = this.okMsg = null;
 
-    this.svc.createParticipante(String(nombre)).pipe(
+    this.svc.createParticipante(String(nombre), this.grupoId).pipe(
       finalize(() => { this.loading = false; this.cdr.detectChanges(); })
     ).subscribe({
       next: (row: Row) => {
@@ -134,13 +171,13 @@ export class Participantes implements OnInit {
   }
 
   sortearNumeros(): void {
-    if (this.loading || this.participantes.length === 0) return;
+    if (this.loading || this.participantes.length === 0 || !this.grupoId) return;
 
     const ok = confirm('¿Asignar un número aleatorio a cada participante? Esto reemplazará los números actuales.');
     if (!ok) return;
 
     this.loading = true; this.errorMsg = this.okMsg = null;
-    this.svc.asignarNumerosAleatorios().pipe(
+    this.svc.asignarNumerosAleatorios(this.grupoId).pipe(
       finalize(() => { this.loading = false; this.cdr.detectChanges(); })
     ).subscribe({
       next: (rows: Row[]) => {

@@ -22,3 +22,14 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   background-color: transparent !important;
   box-shadow: none !important;
 }
+
+/* Selector de grupo en las páginas de admin (participantes, asignación). */
+.grupo-select {
+  width: 100%;
+  max-width: 320px;
+}
+
+.grupo-label {
+  margin: 0 0 12px;
+  font-weight: 500;
+}

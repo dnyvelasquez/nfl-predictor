@@ -12,7 +12,7 @@ import { IngresarJuego } from './components/ingresar-juego/ingresar-juego';
 import { BorrarUsuario } from './components/borrar-usuario/borrar-usuario';
 import { Participantes } from './components/participantes/participantes';
 import { Asignacion } from './components/asignacion/asignacion';
-import { authGuard } from '../app/auth-guard';
+import { authGuard, rolGuard } from '../app/auth-guard';
 import { guestGuard } from './guest-guard';
 
 export const routes: Routes = [
@@ -27,8 +27,8 @@ export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [guestGuard] },
 
   { path: 'admin', component: Admin, canActivate: [authGuard] },
-  { path: 'nuevo-usuario', component: NuevoUsuario, canActivate: [authGuard] },
-  { path: 'borrar-usuario', component: BorrarUsuario, canActivate: [authGuard] },
+  { path: 'nuevo-usuario', component: NuevoUsuario, canActivate: [authGuard, rolGuard('superusuario', 'administrador')] },
+  { path: 'borrar-usuario', component: BorrarUsuario, canActivate: [authGuard, rolGuard('superusuario')] },
   { path: 'ingresar-juego', component: IngresarJuego, canActivate: [authGuard] },
   { path: 'participantes', component: Participantes, canActivate: [authGuard] },
   { path: 'asignacion', component: Asignacion, canActivate: [authGuard] },

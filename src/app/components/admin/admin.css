@@ -109,3 +109,9 @@
     transform: none;
   }
 }
+
+.rol {
+  margin: -10px 0 15px;
+  color: white;
+  opacity: 0.85;
+}

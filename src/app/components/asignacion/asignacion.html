@@ -11,18 +11,33 @@
         <button class="left" mat-icon-button routerLink="/admin" aria-label="Volver">
             <mat-icon>arrow_back</mat-icon>
         </button>
-        @if (etapaActiva() === 'regular') {
+        @if (puedeAutoAsignar() && etapaActiva() === 'regular') {
             <button mat-stroked-button class="auto-asignar" (click)="autoAsignarTemporadaRegular()">
                 <mat-icon>auto_fix_high</mat-icon>&nbsp;Auto-asignar
             </button>
         }
+        @if (esSuperusuario()) {
         <button mat-stroked-button class="reset" (click)="resetAll()">
             <mat-icon>restart_alt</mat-icon>&nbsp;Reset
         </button>
+        }
         <button class="right" mat-icon-button (click)="logout()" aria-label="Logout">
             <mat-icon>logout</mat-icon>
         </button>
         </div>
+
+        @if (grupos().length > 1) {
+          <mat-form-field appearance="fill" class="grupo-select">
+            <mat-label>Grupo</mat-label>
+            <mat-select [value]="grupoId()" (selectionChange)="cambiarGrupo($event.value)">
+              @for (g of grupos(); track g.id) {
+                <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        } @else if (grupos().length === 1) {
+          <p class="grupo-label">Grupo: {{ grupos()[0].nombre }}</p>
+        }
 
         @if (errorMsg()) { <div class="err">{{ errorMsg() }}</div> }
         @if (okMsg())    { <div class="ok">{{ okMsg() }}</div> }
@@ -57,6 +72,7 @@
                     <mat-select
                         [value]="valorCelda(d, p.nombre)"
                         (selectionChange)="onChangeCelda(d, p.nombre, $event.value)"
+                        [disabled]="!esSuperusuario()"
                         disableOptionCentering
                         panelClass="asig-panel"
                     >

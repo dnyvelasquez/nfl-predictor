@@ -16,8 +16,23 @@
       </button>
     </div>
       
+
+    @if (grupos.length > 1) {
+      <mat-form-field appearance="fill" class="grupo-select">
+        <mat-label>Grupo</mat-label>
+        <mat-select [value]="grupoId" (selectionChange)="cambiarGrupo($event.value)">
+          @for (g of grupos; track g.id) {
+            <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    } @else if (grupos.length === 1) {
+      <p class="grupo-label">Grupo: {{ grupos[0].nombre }}</p>
+    }
+
     <div class="table-container">
 
+      @if (esSuperusuario()) {
       <form [formGroup]="addForm" (ngSubmit)="add()" class="add">
         <mat-form-field appearance="fill" class="w">
           <mat-label>Nombre</mat-label>
@@ -41,6 +56,7 @@
           Sortear números
         </button>
       </div>
+      }
 
       @if (loading) {
         <div class="loading-container">
@@ -55,7 +71,7 @@
         <div class="thead row">
           <div class="cell n">N°</div>
           <div class="cell w">Nombre</div>
-          <div class="cell a">Acciones</div>
+          @if (esSuperusuario()) { <div class="cell a">Acciones</div> }
         </div>
 
         <div class="tbody">
@@ -72,10 +88,12 @@
                   <span>{{ p.nombre }}</span>
                 </div>
 
+                @if (esSuperusuario()) {
                 <div class="cell a">
                   <button mat-stroked-button (click)="startEdit(p)" [disabled]="loading">Editar</button>
                   <button mat-button color="warn" (click)="remove(p)" [disabled]="loading">Eliminar</button>
                 </div>
+                }
               </div>
             } @else {
               <div class="row" [formGroup]="editForms[p.id]">
