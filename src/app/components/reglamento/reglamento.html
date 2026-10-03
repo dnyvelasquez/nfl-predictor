@@ -34,7 +34,22 @@
         <li>Si un equipo asignado a un participante gana el partido de final de conferencia se le sumarán 40 puntos al participante.</li>
         <li>Si el equipo asignado a un participante gana el partido del Super Bowl se le sumarán 50 puntos al participante.</li>
         <li>Si un equipo asignado a un participante empata un partido sumará la mitad de los puntos al participante según la ronda.</li>
-        <li>El valor de la apuesta es de $50.000 COP</li>
+        <li>
+          @if (apuestas() === null) {
+            El valor de la apuesta se está cargando…
+          } @else if (apuestas()!.length === 1) {
+            El valor de la apuesta es de {{ apuestas()![0].valor }}
+          } @else if (apuestas()!.length > 1) {
+            El valor de la apuesta depende del grupo:
+            <ul>
+              @for (a of apuestas(); track a.nombre) {
+                <li>{{ a.nombre }}: {{ a.valor }}</li>
+              }
+            </ul>
+          } @else {
+            El valor de la apuesta lo define cada grupo.
+          }
+        </li>
         <li>Quien haya acumulado más puntos al finalizar el Super Bowl recibirá el 70% del recaudo.</li>
         <li>Quien haya acumulado el segundo puesto en puntos al finalizar el Super Bowl recibirá el 30% del recaudo.</li>
         <li>Si al finalizar el Super Bowl hay empate en el primer lugar, el total del recaudo se repartirá en partes iguales en los participantes que hayan empatado en el primer lugar.</li>

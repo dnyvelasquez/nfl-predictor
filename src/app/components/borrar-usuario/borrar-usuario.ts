@@ -5,13 +5,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { AuthService, ROLES, Rol, UsuarioVisible } from '../../services/auth/auth';
+import { AuthService, ROLES_GRUPO, RolGrupo, UsuarioVisible, MembresiaVisible } from '../../services/auth/auth';
 import { GruposService, Grupo } from '../../services/grupos';
 import { Router, RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 
 const POR_PAGINA = 20;
 
@@ -25,6 +26,7 @@ const POR_PAGINA = 20;
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatCheckboxModule,
     MatDividerModule,
     MatIconModule,
     MatMenuModule,
@@ -51,13 +53,15 @@ export class BorrarUsuario implements OnInit {
   users: UsuarioVisible[] = [];
   hayMas = false;
 
-  roles = ROLES;
+  roles = ROLES_GRUPO;
   grupos: Grupo[] = [];
-  // El usuario en sesión no puede cambiarse el rol ni borrarse (evita quedarse sin super usuario).
+  // El usuario en sesión no puede quitarse el super usuario ni borrarse (evita quedarse sin super usuario).
   miUserId: string | null = null;
 
   search = this.fb.control('');
   nuevoGrupo = this.fb.control('', [Validators.required, Validators.minLength(2)]);
+  nuevaApuesta = this.fb.control<number | null>(null, [Validators.min(0)]);
+
 
   ngOnInit(): void {
     this.svc.getUserId$().subscribe((id) => this.miUserId = id);
@@ -98,28 +102,40 @@ export class BorrarUsuario implements OnInit {
   nextPage() { if (this.hayMas) { this.page++; this.paginar(); } }
   prevPage() { if (this.page > 1) { this.page--; this.paginar(); } }
 
-  cambiarRol(u: UsuarioVisible, rol: Rol) {
-    // Pasar de super usuario (sin grupo) a otro rol exige un grupo: se usa el primero.
-    const grupoId = rol === 'superusuario' ? null : (u.grupo_id ?? this.grupos[0]?.id ?? null);
-    this.guardar(u, rol, grupoId);
+  gruposSinMembresia(u: UsuarioVisible): Grupo[] {
+    return this.grupos.filter((g) => !u.membresias.some((m) => m.grupo_id === g.id));
   }
 
-  cambiarGrupo(u: UsuarioVisible, grupoId: string) {
-    this.guardar(u, u.rol, grupoId);
+  cambiarSuperusuario(u: UsuarioVisible, esSuper: boolean) {
+    this.ejecutar(this.svc.setSuperusuario(u.id, esSuper), `Usuario ${u.email} actualizado.`, () => u.esSuperusuario = esSuper);
   }
 
-  private guardar(u: UsuarioVisible, rol: Rol, grupoId: string | null) {
-    const anterior = { rol: u.rol, grupo_id: u.grupo_id };
+  cambiarRolEnGrupo(u: UsuarioVisible, m: MembresiaVisible, rol: RolGrupo) {
+    this.ejecutar(this.svc.setRolEnGrupo(u.id, m.grupo_id, rol), `Rol de ${u.email} en "${m.grupo}" actualizado.`, () => m.rol = rol);
+  }
+
+  quitarDeGrupo(u: UsuarioVisible, m: MembresiaVisible) {
+    if (!confirm(`¿Sacar a ${u.email} del grupo "${m.grupo}"?`)) return;
+    this.ejecutar(this.svc.quitarDeGrupo(u.id, m.grupo_id), `${u.email} salió de "${m.grupo}".`,
+      () => u.membresias = u.membresias.filter((x) => x.grupo_id !== m.grupo_id));
+  }
+
+  agregarAGrupo(u: UsuarioVisible, g: Grupo) {
+    this.ejecutar(this.svc.agregarMiembro(u.email, g.id, 'lectura'), `${u.email} agregado a "${g.nombre}" como solo lectura.`,
+      () => u.membresias = [...u.membresias, { grupo_id: g.id, grupo: g.nombre, rol: 'lectura' as RolGrupo }]
+        .sort((a, b) => a.grupo.localeCompare(b.grupo)));
+  }
+
+  // Ejecuta un cambio y, si sale bien, lo refleja en la fila sin recargar toda la lista.
+  private ejecutar(op: Observable<unknown>, ok: string, aplicar: () => void) {
     this.loading = true; this.errorMsg = this.okMsg = null;
-    this.svc.setRol(u.id, rol, grupoId).subscribe({
+    op.subscribe({
       next: () => {
-        u.rol = rol;
-        u.grupo_id = grupoId;
-        this.okMsg = `Usuario ${u.email} actualizado.`;
+        aplicar();
+        this.okMsg = ok;
         this.loading = false;
       },
       error: (e) => {
-        Object.assign(u, anterior);
         this.errorMsg = e?.message || 'No se pudo actualizar el usuario';
         this.loading = false;
       },
@@ -130,10 +146,11 @@ export class BorrarUsuario implements OnInit {
     const nombre = this.nuevoGrupo.value?.trim();
     if (!nombre || this.nuevoGrupo.invalid) { this.nuevoGrupo.markAsTouched(); return; }
     this.loading = true; this.errorMsg = this.okMsg = null;
-    this.gruposService.crearGrupo(nombre).subscribe({
+    this.gruposService.crearGrupo(nombre, this.leerApuesta(this.nuevaApuesta.value)).subscribe({
       next: (g) => {
         this.grupos = [...this.grupos, g].sort((a, b) => a.nombre.localeCompare(b.nombre));
         this.nuevoGrupo.reset('');
+        this.nuevaApuesta.reset(null);
         this.okMsg = `Grupo "${g.nombre}" creado.`;
         this.loading = false;
       },
@@ -142,6 +159,31 @@ export class BorrarUsuario implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  cambiarApuesta(g: Grupo, valor: string) {
+    const apuesta = this.leerApuesta(valor);
+    if (apuesta === g.apuesta) return;
+    if (apuesta !== null && apuesta < 0) { this.errorMsg = 'La apuesta no puede ser negativa'; return; }
+
+    this.loading = true; this.errorMsg = this.okMsg = null;
+    this.gruposService.actualizarApuesta(g.id, apuesta).subscribe({
+      next: () => {
+        g.apuesta = apuesta;
+        this.okMsg = `Apuesta de "${g.nombre}" actualizada.`;
+        this.loading = false;
+      },
+      error: (e) => {
+        this.errorMsg = e?.message || 'No se pudo actualizar la apuesta';
+        this.loading = false;
+      },
+    });
+  }
+
+  private leerApuesta(valor: string | number | null): number | null {
+    if (valor === null || valor === '') return null;
+    const n = Math.round(Number(valor));
+    return Number.isFinite(n) ? n : null;
   }
 
   borrarGrupo(g: Grupo) {

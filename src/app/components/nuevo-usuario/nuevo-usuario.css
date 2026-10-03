@@ -48,3 +48,9 @@
   max-width: 200px !important;
   justify-content: end;
 }
+
+.nota {
+  margin: -8px 0 12px;
+  font-size: 13px;
+  opacity: 0.8;
+}

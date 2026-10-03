@@ -66,3 +66,15 @@
 button mat-icon {
     padding-left: 12px;
 }
+
+.membresia {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px 40px;
+  align-items: center;
+  gap: 8px;
+}
+
+.agregar-grupo {
+  max-width: 200px;
+  margin-top: 4px;
+}

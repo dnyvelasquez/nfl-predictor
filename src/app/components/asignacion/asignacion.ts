@@ -12,7 +12,7 @@ import { Etapa, ETAPAS } from '../../services/core/etapas';
 import { AsignacionService } from '../../services/asignacion';
 import { EquiposService, Equipo } from '../../services/equipos';
 import { ParticipantesService, Participante } from '../../services/participantes';
-import { GruposService, Grupo } from '../../services/grupos';
+import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth/auth';
 import { forkJoin } from 'rxjs';
@@ -49,8 +49,6 @@ export class Asignacion implements OnInit {
 
   // Solo el super usuario edita a mano (RLS también rechaza la escritura de los demás roles).
   esSuperusuario = toSignal(inject(AuthService).esSuperusuario$(), { initialValue: false });
-  // El administrador solo puede usar la auto-asignación de temporada regular.
-  puedeAutoAsignar = toSignal(inject(AuthService).puedeAutoAsignar$(), { initialValue: false });
 
   loading = signal(true);
   errorMsg = signal<string | null>(null);
@@ -60,8 +58,14 @@ export class Asignacion implements OnInit {
   equipos       = signal<Equipo[]>([]);
   asignaciones  = signal<AsignacionRow[]>([]);
 
-  grupos  = signal<Grupo[]>([]);
+  grupos  = signal<GrupoDisponible[]>([]);
   grupoId = signal<string | null>(null);
+
+  // El administrador del grupo elegido solo puede usar la auto-asignación de temporada regular.
+  puedeAutoAsignar = computed(() => {
+    const rol = this.grupos().find(g => g.id === this.grupoId())?.rol;
+    return rol === 'superusuario' || rol === 'administrador';
+  });
 
   etapas = ETAPAS;
   etapaActiva = signal<Etapa>('regular');
@@ -96,7 +100,7 @@ export class Asignacion implements OnInit {
     if (!grupoId) {
       this.participantes.set([]);
       this.asignaciones.set([]);
-      this.errorMsg.set('Tu usuario no tiene un grupo asignado');
+      this.errorMsg.set('Tu usuario no pertenece a ningún grupo');
       this.loading.set(false);
       return;
     }

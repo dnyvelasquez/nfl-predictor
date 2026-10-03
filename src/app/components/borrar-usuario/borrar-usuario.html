@@ -43,8 +43,8 @@
             <thead>
             <tr>
                 <th>Email</th>
-                <th>Rol</th>
-                <th>Grupo</th>
+                <th>Super usuario</th>
+                <th>Grupos y rol</th>
                 <th></th>
             </tr>
             </thead>
@@ -53,21 +53,32 @@
                 <tr>
                 <td>{{ u.email }}</td>
                 <td>
-                    <mat-select [value]="u.rol" (selectionChange)="cambiarRol(u, $event.value)"
-                        [disabled]="u.id === miUserId || loading" aria-label="Rol">
-                    @for (r of roles; track r.value) {
-                        <mat-option [value]="r.value">{{ r.label }}</mat-option>
-                    }
-                    </mat-select>
+                    <mat-checkbox [checked]="u.esSuperusuario" (change)="cambiarSuperusuario(u, $event.checked)"
+                        [disabled]="u.id === miUserId || loading" aria-label="Super usuario"></mat-checkbox>
                 </td>
                 <td>
-                    @if (u.rol === 'superusuario') {
-                        <span>Todos</span>
-                    } @else {
-                        <mat-select [value]="u.grupo_id" (selectionChange)="cambiarGrupo(u, $event.value)"
-                            [disabled]="loading" placeholder="Sin grupo" aria-label="Grupo">
-                        @for (g of grupos; track g.id) {
-                            <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
+                    @for (m of u.membresias; track m.grupo_id) {
+                        <div class="membresia">
+                            <span>{{ m.grupo }}</span>
+                            <mat-select [value]="m.rol" (selectionChange)="cambiarRolEnGrupo(u, m, $event.value)"
+                                [disabled]="loading" [attr.aria-label]="'Rol en ' + m.grupo">
+                            @for (r of roles; track r.value) {
+                                <mat-option [value]="r.value">{{ r.label }}</mat-option>
+                            }
+                            </mat-select>
+                            <button mat-icon-button (click)="quitarDeGrupo(u, m)" [disabled]="loading"
+                                [attr.aria-label]="'Sacar de ' + m.grupo">
+                                <mat-icon>close</mat-icon>
+                            </button>
+                        </div>
+                    } @empty {
+                        @if (u.esSuperusuario) { <span>Todos</span> } @else { <span>Sin grupo</span> }
+                    }
+                    @if (gruposSinMembresia(u).length > 0) {
+                        <mat-select class="agregar-grupo" placeholder="Agregar a grupo…" [value]="null"
+                            (selectionChange)="agregarAGrupo(u, $event.value)" [disabled]="loading" aria-label="Agregar a grupo">
+                        @for (g of gruposSinMembresia(u); track g.id) {
+                            <mat-option [value]="g">{{ g.nombre }}</mat-option>
                         }
                         </mat-select>
                     }
@@ -92,10 +103,15 @@
     <mat-divider style="margin:16px 0"></mat-divider>
 
     <h2>Grupos</h2>
-    <ul>
+    <ul style="list-style:none; padding:0;">
     @for (g of grupos; track g.id) {
-        <li>
-            {{ g.nombre }}
+        <li style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="min-width:140px;">{{ g.nombre }}</span>
+            <mat-form-field appearance="fill" style="width:180px" subscriptSizing="dynamic">
+            <mat-label>Apuesta ({{ g.moneda }})</mat-label>
+            <input matInput type="number" min="0" step="1000" [value]="g.apuesta ?? ''"
+                (change)="cambiarApuesta(g, $any($event.target).value)" />
+            </mat-form-field>
             <button mat-icon-button color="warn" (click)="borrarGrupo(g)" [disabled]="loading"
                 [attr.aria-label]="'Borrar grupo ' + g.nombre">
                 <mat-icon>delete</mat-icon>
@@ -107,6 +123,10 @@
         <mat-form-field appearance="fill" style="flex:1">
         <mat-label>Nuevo grupo</mat-label>
         <input matInput [formControl]="nuevoGrupo" (keyup.enter)="crearGrupo()" />
+        </mat-form-field>
+        <mat-form-field appearance="fill" style="width:180px">
+        <mat-label>Apuesta (COP)</mat-label>
+        <input matInput type="number" min="0" step="1000" [formControl]="nuevaApuesta" />
         </mat-form-field>
         <button mat-raised-button color="primary" (click)="crearGrupo()" [disabled]="loading">Crear grupo</button>
     </div>

@@ -96,7 +96,7 @@ export class Participantes implements OnInit {
     this.loading = true; this.errorMsg = this.okMsg = null;
     if (!this.grupoId) {
       this.participantes = [];
-      this.errorMsg = 'Tu usuario no tiene un grupo asignado';
+      this.errorMsg = 'Tu usuario no pertenece a ningún grupo';
       this.loading = false;
       this.cdr.detectChanges();
       return;

@@ -305,3 +305,139 @@ END $$;
 
 REVOKE ALL ON FUNCTION calcular_auto_asignacion_regular(uuid), auto_asignar_temporada_regular(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auto_asignar_temporada_regular(uuid) TO authenticated;
+
+-- ============================================================
+-- APUESTA POR GRUPO (2026-10-03). Valor por participante, mostrado en el
+-- punto 26 del reglamento. Numérico para poder calcular el recaudo.
+-- ============================================================
+
+ALTER TABLE grupos ADD COLUMN apuesta numeric(12,0) CHECK (apuesta >= 0);
+ALTER TABLE grupos ADD COLUMN moneda text NOT NULL DEFAULT 'COP';
+UPDATE grupos SET apuesta = 50000 WHERE nombre = 'Grupo principal';
+
+-- ============================================================
+-- VARIOS GRUPOS POR USUARIO (2026-10-03). Un usuario puede pertenecer a
+-- varios grupos con un rol distinto en cada uno (miembros_grupo).
+-- roles_usuario queda solo para marcar al superusuario (global).
+-- Reemplaza rol_actual()/grupo_actual() y las versiones anteriores de
+-- usuarios_visibles()/auto_asignar_temporada_regular() definidas arriba.
+-- ============================================================
+
+CREATE TABLE miembros_grupo (
+  user_id  uuid NOT NULL REFERENCES neon_auth."user"(id) ON DELETE CASCADE,
+  grupo_id uuid NOT NULL REFERENCES grupos(id),
+  rol      text NOT NULL DEFAULT 'lectura' CHECK (rol IN ('administrador', 'lectura')),
+  PRIMARY KEY (user_id, grupo_id)
+);
+
+INSERT INTO miembros_grupo (user_id, grupo_id, rol)
+  SELECT user_id, grupo_id, rol FROM roles_usuario WHERE rol <> 'superusuario' AND grupo_id IS NOT NULL;
+DELETE FROM roles_usuario WHERE rol <> 'superusuario';
+
+DROP POLICY "Superusuario inserta roles" ON roles_usuario;
+DROP POLICY "Superusuario actualiza roles" ON roles_usuario;
+DROP POLICY "Superusuario elimina roles" ON roles_usuario;
+DROP POLICY "Ver rol propio, del grupo si administrador, o todos si superusu" ON roles_usuario;
+DROP POLICY "Administrador agrega usuarios de solo lectura a su grupo" ON roles_usuario;
+DROP FUNCTION usuarios_visibles();
+DROP FUNCTION auto_asignar_temporada_regular(uuid);
+DROP FUNCTION grupo_actual();
+
+CREATE OR REPLACE FUNCTION es_superusuario() RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.roles_usuario WHERE user_id::text = auth.user_id() AND rol = 'superusuario')
+$$;
+DROP FUNCTION rol_actual();
+
+ALTER TABLE roles_usuario DROP CONSTRAINT roles_usuario_grupo_requerido;
+ALTER TABLE roles_usuario DROP COLUMN grupo_id;
+ALTER TABLE roles_usuario DROP CONSTRAINT roles_usuario_rol_check;
+ALTER TABLE roles_usuario ADD CONSTRAINT roles_usuario_rol_check CHECK (rol = 'superusuario');
+ALTER TABLE roles_usuario ALTER COLUMN rol SET DEFAULT 'superusuario';
+
+-- 'superusuario' (en todos los grupos), 'administrador', 'lectura', o NULL si no es miembro.
+CREATE FUNCTION rol_en_grupo(p_grupo uuid) RETURNS text
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT CASE WHEN public.es_superusuario() THEN 'superusuario'
+    ELSE (SELECT rol FROM public.miembros_grupo WHERE user_id::text = auth.user_id() AND grupo_id = p_grupo) END
+$$;
+REVOKE ALL ON FUNCTION rol_en_grupo(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION rol_en_grupo(uuid) TO authenticated, anonymous;
+
+CREATE POLICY "Ver rol propio o todos si superusuario" ON roles_usuario FOR SELECT TO authenticated
+  USING (user_id::text = auth.user_id() OR es_superusuario());
+CREATE POLICY "Superusuario inserta roles" ON roles_usuario FOR INSERT TO authenticated WITH CHECK (es_superusuario());
+CREATE POLICY "Superusuario actualiza roles" ON roles_usuario FOR UPDATE TO authenticated
+  USING (es_superusuario()) WITH CHECK (es_superusuario());
+CREATE POLICY "Superusuario elimina roles" ON roles_usuario FOR DELETE TO authenticated USING (es_superusuario());
+
+ALTER TABLE miembros_grupo ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON miembros_grupo TO authenticated;
+CREATE POLICY "Ver membresias propias, de grupos que administra, o todas si superusuario" ON miembros_grupo
+  FOR SELECT TO authenticated USING (
+    user_id::text = auth.user_id() OR rol_en_grupo(grupo_id) IN ('superusuario', 'administrador'));
+CREATE POLICY "Superusuario inserta membresias" ON miembros_grupo FOR INSERT TO authenticated WITH CHECK (es_superusuario());
+CREATE POLICY "Superusuario actualiza membresias" ON miembros_grupo FOR UPDATE TO authenticated
+  USING (es_superusuario()) WITH CHECK (es_superusuario());
+CREATE POLICY "Superusuario elimina membresias" ON miembros_grupo FOR DELETE TO authenticated USING (es_superusuario());
+
+-- Unica via de escritura en `asignacion` para un administrador, y solo en los grupos que administra.
+CREATE FUNCTION auto_asignar_temporada_regular(p_grupo uuid) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  asignados int;
+BEGIN
+  IF p_grupo IS NULL THEN
+    RAISE EXCEPTION 'Grupo requerido' USING ERRCODE = '22023';
+  END IF;
+  IF coalesce(public.rol_en_grupo(p_grupo), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para auto-asignar este grupo' USING ERRCODE = '42501';
+  END IF;
+  DELETE FROM asignacion WHERE etapa = 'regular' AND grupo_id = p_grupo;
+  INSERT INTO asignacion (equipo_id, participante, etapa, grupo_id)
+    SELECT c.equipo_id, c.participante, 'regular', p_grupo FROM calcular_auto_asignacion_regular(p_grupo) c;
+  GET DIAGNOSTICS asignados = ROW_COUNT;
+  RETURN asignados;
+END $$;
+
+-- Una fila por (usuario, grupo); usuarios sin grupos salen una vez con grupo NULL.
+-- Superusuario: todos. Administrador: miembros de los grupos que administra.
+CREATE FUNCTION usuarios_visibles()
+RETURNS TABLE (user_id uuid, email text, es_superusuario boolean, grupo_id uuid, grupo text, rol text)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT u.id, u.email, (r.user_id IS NOT NULL), m.grupo_id, g.nombre, m.rol
+  FROM neon_auth."user" u
+  LEFT JOIN public.roles_usuario r ON r.user_id = u.id
+  LEFT JOIN public.miembros_grupo m ON m.user_id = u.id
+  LEFT JOIN public.grupos g ON g.id = m.grupo_id
+  WHERE public.es_superusuario()
+     OR (m.grupo_id IS NOT NULL AND public.rol_en_grupo(m.grupo_id) = 'administrador')
+  ORDER BY u.email, g.nombre
+$$;
+
+-- Agrega a un grupo a un usuario que ya existe en Neon Auth (buscado por email).
+-- Superusuario: cualquier grupo y rol. Administrador: solo 'lectura' en grupos que administra.
+-- Si ya era miembro no cambia su rol.
+CREATE FUNCTION agregar_miembro(p_email text, p_grupo uuid, p_rol text DEFAULT 'lectura') RETURNS uuid
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  uid uuid;
+  rol_caller text := public.rol_en_grupo(p_grupo);
+BEGIN
+  IF p_rol NOT IN ('administrador', 'lectura') THEN
+    RAISE EXCEPTION 'Rol invalido' USING ERRCODE = '22023';
+  END IF;
+  IF NOT (rol_caller = 'superusuario' OR (rol_caller = 'administrador' AND p_rol = 'lectura')) THEN
+    RAISE EXCEPTION 'No autorizado para agregar miembros a este grupo' USING ERRCODE = '42501';
+  END IF;
+  SELECT id INTO uid FROM neon_auth."user" WHERE lower(email) = lower(trim(p_email));
+  IF uid IS NULL THEN
+    RAISE EXCEPTION 'No existe un usuario con ese email' USING ERRCODE = 'P0002';
+  END IF;
+  INSERT INTO miembros_grupo (user_id, grupo_id, rol) VALUES (uid, p_grupo, p_rol)
+    ON CONFLICT (user_id, grupo_id) DO NOTHING;
+  RETURN uid;
+END $$;
+
+REVOKE ALL ON FUNCTION auto_asignar_temporada_regular(uuid), usuarios_visibles(), agregar_miembro(text, uuid, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION auto_asignar_temporada_regular(uuid), usuarios_visibles(), agregar_miembro(text, uuid, text) TO authenticated;

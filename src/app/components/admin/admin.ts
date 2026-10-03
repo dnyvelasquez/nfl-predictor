@@ -9,7 +9,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { AuthService, ROLES } from '../../services/auth/auth';
+import { AuthService, etiquetaRol } from '../../services/auth/auth';
+import { GruposService } from '../../services/grupos';
+import { map } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -36,11 +38,20 @@ export class Admin {
 
   constructor(private authService: AuthService, private router: Router) {}
 
-  rol = toSignal(inject(AuthService).getRol$(), { initialValue: null });
+  esSuperusuario = toSignal(inject(AuthService).esSuperusuario$(), { initialValue: false });
+  esAdministrador = toSignal(inject(AuthService).esAdministrador$(), { initialValue: false });
 
-  rolLabel() {
-    return ROLES.find((r) => r.value === this.rol())?.label ?? '';
-  }
+  // "Super usuario", o el rol en cada grupo ("Grupo principal: Solo lectura").
+  rolLabel = toSignal(
+    inject(GruposService).gruposDisponibles$().pipe(
+      map(({ grupos }) =>
+        grupos.some((g) => g.rol === 'superusuario')
+          ? 'Super usuario'
+          : grupos.map((g) => `${g.nombre}: ${etiquetaRol(g.rol)}`).join(' · ')
+      )
+    ),
+    { initialValue: '' }
+  );
 
   logout(): void {
     this.authService.logout();

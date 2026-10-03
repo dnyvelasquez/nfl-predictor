@@ -27,7 +27,7 @@ export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [guestGuard] },
 
   { path: 'admin', component: Admin, canActivate: [authGuard] },
-  { path: 'nuevo-usuario', component: NuevoUsuario, canActivate: [authGuard, rolGuard('superusuario', 'administrador')] },
+  { path: 'nuevo-usuario', component: NuevoUsuario, canActivate: [authGuard, rolGuard('administrador')] },
   { path: 'borrar-usuario', component: BorrarUsuario, canActivate: [authGuard, rolGuard('superusuario')] },
   { path: 'ingresar-juego', component: IngresarJuego, canActivate: [authGuard] },
   { path: 'participantes', component: Participantes, canActivate: [authGuard] },

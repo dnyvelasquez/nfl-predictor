@@ -8,7 +8,7 @@
     <mat-divider></mat-divider>
 
     <h2 class="subtitle">Admin Module</h2>
-    @if (rol()) { <p class="rol">Rol: {{ rolLabel() }}</p> }
+    @if (rolLabel()) { <p class="rol">{{ rolLabel() }}</p> }
     <mat-divider></mat-divider>
 
     <div class="button-container">
@@ -24,13 +24,13 @@
         <mat-icon>dashboard_customize</mat-icon>
         <span>Asignación</span>
       </button>
-      @if (rol() === 'superusuario' || rol() === 'administrador') {
+      @if (esAdministrador()) {
         <button mat-button routerLink="/nuevo-usuario">
           <mat-icon>person_add</mat-icon>
           <span>Nuevo Usuario</span>
         </button>
       }
-      @if (rol() === 'superusuario') {
+      @if (esSuperusuario()) {
         <button mat-button routerLink="/borrar-usuario">
           <mat-icon>manage_accounts</mat-icon>
           <span>Usuarios</span>
