@@ -343,3 +343,50 @@
   justify-content: center;
   margin: 8px 0;
 }
+
+/* Celular: que la hora / "Final" no se corte y las flechas no tapen las tarjetas. */
+@media (max-width: 600px) {
+  .grid-row {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 10px 8px;
+  }
+
+  .equipo-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .equipo .nombre {
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+  }
+
+  .scheduled {
+    min-width: 52px;
+    font-size: 0.85rem;
+  }
+
+  .scheduled mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .fab-left,
+  .fab-right {
+    top: auto;
+    bottom: 12px;
+    transform: scale(0.8);
+  }
+
+  .fab-left.mat-mdc-fab:active,
+  .fab-right.mat-mdc-fab:active {
+    transform: scale(0.78);
+  }
+
+  /* Espacio para que el último juego no quede debajo de las flechas. */
+  .juegos-container {
+    padding-bottom: 88px;
+  }
+}

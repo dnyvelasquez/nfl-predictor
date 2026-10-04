@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { Subject, of } from 'rxjs';
 import { takeUntil, catchError, finalize } from 'rxjs/operators';
@@ -15,6 +16,7 @@ const LOGOS_CONFERENCIA: Record<'AFC' | 'NFC', string> = {
   selector: 'app-fixture',
   standalone: true,
   imports: [
+    MatCardModule,
     MatProgressSpinnerModule,
     MatIconModule,
     CommonModule

@@ -1,5 +1,5 @@
 .fixture-container {
-  padding: 80px 16px 20px;
+  padding: 80px 12px 20px;
   background-color: #003B73;
   min-height: 100vh;
   box-sizing: border-box;
@@ -15,65 +15,69 @@
   justify-content: center;
   width: 100%;
   max-width: 1200px;
+  /* Sin esto el contenedor crece hasta el flex-basis de 520 px de las
+     conferencias y en celular se salen por la derecha. */
+  min-width: 0;
 }
 
 .conferencia {
+  /* Contenedor oscuro (mat-card del tema), como el resto de páginas. */
   --conf-color: #013369;
-  --conf-color-light: rgba(1, 51, 105, 0.08);
   flex: 1 1 520px;
   max-width: 580px;
-  background-color: #fff;
-  border-radius: 14px;
+  min-width: 0;
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
 .conf-afc {
   --conf-color: #D50A0A;
-  --conf-color-light: rgba(213, 10, 10, 0.07);
 }
 
 .conf-nfc {
   --conf-color: #013369;
-  --conf-color-light: rgba(1, 51, 105, 0.07);
 }
 
+/* Misma cabecera con degradado que las tarjetas de Equipos y Ranking. */
 .conferencia-header {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 18px;
-  background: linear-gradient(135deg, var(--conf-color-light) 0%, #fff 70%);
-  border-bottom: 1px solid #eee;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .conferencia-logo {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
+  padding: 4px;
+  box-sizing: border-box;
   object-fit: contain;
   flex-shrink: 0;
+  background: #fff;
+  border-radius: 50%;
 }
 
 .conferencia-header h2 {
   margin: 0;
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: var(--conf-color);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 
 .divisiones {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: 14px;
   padding: 16px;
 }
 
 .division-card {
-  border: 1px solid #e6e6e6;
+  background: #fff;
   border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .division-header {
@@ -130,10 +134,10 @@
   min-width: 0;
   font-size: 0.9rem;
   font-weight: 600;
+  line-height: 1.2;
   color: #222;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Nombres largos ("Washington Commanders") pasan a dos líneas en vez de cortarse. */
+  overflow-wrap: anywhere;
 }
 
 .equipo-record {
@@ -173,6 +177,11 @@
 }
 
 @media (max-width: 600px) {
+  .conferencia {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+
   .divisiones {
     padding: 10px;
   }

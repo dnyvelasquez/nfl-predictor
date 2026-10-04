@@ -1,7 +1,16 @@
 <div class="ranking-container">
+  <mat-card class="ranking-card">
+    <div class="header">
+      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo-nfl">
+      <mat-card-title class="ranking-title">Ranking inicial</mat-card-title>
+      <h1> 🏈</h1>
+      <mat-divider></mat-divider>
+    </div>
+
   <div class="ranking">
     <section class="tarjeta intro">
-      <h1>Ranking global @if (temporada()) { {{ temporada() }} }</h1>
+      <h1 class="tarjeta-header">Ranking global @if (temporada()) { {{ temporada() }} }</h1>
+      <div class="tarjeta-cuerpo">
       <p>
         Este es el orden con el que se hizo la asignación inicial de equipos de la temporada regular
         (<a routerLink="/reglamento">reglamento</a>, reglas 4 a 10). Primero va el campeón del Super Bowl
@@ -11,6 +20,7 @@
         Dentro de cada grupo, los equipos van de mejor a peor récord de temporada regular; los empates se
         desempatan por fortaleza del calendario.
       </p>
+      </div>
     </section>
 
     @if (cargando()) {
@@ -26,10 +36,11 @@
     } @else {
       @for (n of niveles(); track n.desde) {
         <section class="tarjeta nivel">
-          <h2>
+          <h2 class="tarjeta-header">
             <span>{{ n.titulo }}</span>
             <span class="rango">{{ n.desde === n.hasta ? n.desde : n.desde + '–' + n.hasta }}</span>
           </h2>
+          <div class="tarjeta-cuerpo">
           @for (e of n.equipos; track e.id) {
             <div class="fila" [class.campeon]="e.ranking === 1">
               <span class="puesto">{{ e.ranking }}</span>
@@ -40,6 +51,7 @@
               </span>
             </div>
           }
+          </div>
         </section>
       } @empty {
         <div class="estado">
@@ -49,4 +61,5 @@
       }
     }
   </div>
+  </mat-card>
 </div>

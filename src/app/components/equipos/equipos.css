@@ -33,11 +33,15 @@
 }
 
 .equipos-lista {
-  display: flex;
-  flex-wrap: wrap;
+  /* Las tarjetas ocupan todo el ancho del contenedor, como en Tabla de puntajes. */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: 16px;
-  justify-content: center;
   padding: 8px 0;
+}
+
+.equipos-lista .empty-container {
+  grid-column: 1 / -1;
 }
 
 .equipo-card {
@@ -46,8 +50,7 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 360px;
+  min-width: 0;
   text-align: left;
 }
 
@@ -185,10 +188,6 @@
 @media (max-width: 600px) {
   .equipos-card {
     padding: 12px;
-  }
-
-  .equipo-card {
-    max-width: 100%;
   }
 
   .equipo-logo {

@@ -1,6 +1,8 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin } from 'rxjs';
 import { EquiposService, EquipoRanking } from '../../services/equipos';
@@ -24,7 +26,7 @@ const NIVELES: { desde: number; hasta: number; titulo: string }[] = [
 @Component({
   selector: 'app-ranking',
   standalone: true,
-  imports: [RouterModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [RouterModule, MatCardModule, MatDividerModule, MatIconModule, MatProgressSpinnerModule],
   templateUrl: './ranking.html',
   styleUrls: ['./ranking.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
