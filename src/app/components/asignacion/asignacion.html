@@ -64,11 +64,11 @@
                 <div class="cell head sticky">{{ p.numero }} - {{ p.nombre }}</div>
             }
 
-            @for (d of divisiones(); track d) {
+            @for (d of divisiones(); track d; let i = $index) {
                 <div class="cell head sticky-left">{{ d }}</div>
 
                 @for (p of participantes(); track p.id) {
-                <div class="cell">
+                <div class="cell" [id]="'celda-' + i + '-' + p.id">
                     <mat-select
                         [value]="valorCelda(d, p.nombre)"
                         (selectionChange)="onChangeCelda(d, p.nombre, $event.value)"
@@ -89,3 +89,28 @@
 
     </mat-card>
 </div>
+
+@if (animando()) {
+  <div #revOverlay class="revelado-overlay" [class.vuelo]="enVuelo()" role="dialog" aria-label="Asignación de equipos">
+    <p class="revelado-titulo">
+      {{ tituloRevelado }}
+      @if (actual()) { <span>· Equipo {{ revelados().size + 1 }} de {{ totalRevelar }}</span> }
+    </p>
+    <div class="revelado-escena" aria-live="assertive">
+      <div #revEquipo class="revelado-equipo">
+        @if (actual(); as a) {
+          <img [src]="mascotaGrande(a.equipo.nombre)" alt="" />
+          <div class="revelado-nombre">{{ a.equipo.ciudad }} {{ a.equipo.nombre }}</div>
+          @if (a.detalle) { <div class="revelado-detalle">{{ a.detalle }}</div> }
+        }
+      </div>
+      <div #revDuenos class="revelado-duenos">
+        @if (actual(); as a) {
+          <mat-icon>arrow_downward</mat-icon>
+          <span>{{ a.duenos.join(' · ') }}</span>
+        }
+      </div>
+    </div>
+    <button mat-stroked-button type="button" class="revelado-saltar" (click)="saltarAnimacion()">Saltar animación</button>
+  </div>
+}

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, computed, signal, ChangeDetectionStrategy, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
@@ -9,6 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { Etapa, ETAPAS } from '../../services/core/etapas';
+import { mascotaIzquierda } from '../../services/core/mascotas';
 import { AsignacionService } from '../../services/asignacion';
 import { EquiposService, Equipo } from '../../services/equipos';
 import { ParticipantesService, Participante } from '../../services/participantes';
@@ -20,6 +21,9 @@ import { forkJoin, firstValueFrom } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
 
 type AsignacionRow = { id?: string; equipo_id: string; participante: string };
+
+/** Un paso de la animación de auto-asignación: un equipo y quiénes lo reciben. */
+type Revelacion = { equipo: Equipo; duenos: string[]; detalle: string };
 
 @Component({
   selector: 'app-asignacion',
@@ -40,7 +44,7 @@ type AsignacionRow = { id?: string; equipo_id: string; participante: string };
   styleUrls: ['./asignacion.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class Asignacion implements OnInit {
+export class Asignacion implements OnInit, OnDestroy {
   private svc = inject(AsignacionService);
   private equiposService = inject(EquiposService);
   private participantesService = inject(ParticipantesService);
@@ -48,6 +52,7 @@ export class Asignacion implements OnInit {
   private router = inject(Router);
   private gruposService = inject(GruposService);
   private juegosService = inject(JuegosService);
+  private cdr = inject(ChangeDetectorRef);
 
   // Etapas con asignación automática: temporada regular (por ranking) y todas
   // las rondas de playoffs (por puntaje).
@@ -184,6 +189,8 @@ export class Asignacion implements OnInit {
     const byId = this.equipoById();
     const row = this.asignaciones()
       .find(a => a.participante === participanteNombre && byId[a.equipo_id]?.division === d);
+    // Durante la animación, los equipos aún no revelados se ven vacíos.
+    if (row && this.animando() && !this.revelados().has(row.equipo_id)) return null;
     return row ? row.equipo_id : null;
   }
 
@@ -255,16 +262,182 @@ export class Asignacion implements OnInit {
       : this.svc.autoAsignarEliminatoria(grupoId, etapa as 'divisional' | 'conferencia' | 'superbowl');
     op.subscribe({
       next: ({ asignados }) => {
-        this.okMsg.set(etapa === 'regular'
+        const ok = etapa === 'regular'
           ? `Asignación por ranking completa (${asignados} equipos)`
-          : `Asignación de "${label}" completa (${asignados} equipos)`);
-        this.cargarAsignaciones(etapa);
+          : `Asignación de "${label}" completa (${asignados} equipos)`;
+        // La grilla arranca vacía y se va llenando con la animación.
+        const reducido = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        this.revelados.set(new Set());
+        this.animando.set(!reducido);
+        this.svc.getAsignaciones(etapa, grupoId).subscribe({
+          next: (asign) => {
+            this.asignaciones.set(asign ?? []);
+            this.loading.set(false);
+            this.revelarAsignacion(etapa, label, ok);
+          },
+          error: (e) => {
+            this.animando.set(false);
+            this.errorMsg.set(e?.message || 'No fue posible cargar la asignación');
+            this.loading.set(false);
+          },
+        });
       },
       error: (e) => {
         this.errorMsg.set(e?.message || 'No se pudo auto-asignar');
         this.loading.set(false);
       },
     });
+  }
+
+  // ===== Animación de la auto-asignación =====
+  // Como la asignación se hace en público, cada equipo se revela uno a uno en el
+  // orden en que se reparte (temporada regular: por ranking; playoffs: por
+  // conferencia y semilla): aparece en el centro con su mascota, luego quién lo
+  // recibe, y vuela a la celda de cada participante. Las animaciones son CSS;
+  // aquí solo se calcula el trayecto (depende del layout).
+
+  @ViewChild('revEquipo') private revEquipoEl?: ElementRef<HTMLElement>;
+  @ViewChild('revDuenos') private revDuenosEl?: ElementRef<HTMLElement>;
+  @ViewChild('revOverlay') private revOverlayEl?: ElementRef<HTMLElement>;
+
+  animando = signal(false);
+  enVuelo = signal(false);
+  actual = signal<Revelacion | null>(null);
+  revelados = signal<Set<string>>(new Set());
+  totalRevelar = 0;
+  tituloRevelado = '';
+  private saltarAnim = false;
+
+  mascotaGrande(nombre: string): string {
+    return mascotaIzquierda(nombre);
+  }
+
+  idCelda(division: string, participanteNombre: string): string {
+    const p = this.participantes().find(x => x.nombre === participanteNombre);
+    return 'celda-' + this.divisiones().indexOf(division) + '-' + (p?.id ?? '');
+  }
+
+  saltarAnimacion(): void {
+    this.saltarAnim = true;
+  }
+
+  private esperar(ms: number): Promise<void> {
+    return new Promise(r => setTimeout(r, this.saltarAnim ? 0 : ms));
+  }
+
+  /** Orden de revelado: el mismo en que el reglamento reparte los equipos. */
+  private ordenRevelado(etapa: Etapa): Revelacion[] {
+    const byId = this.equipoById();
+    const numero = new Map(this.participantes().map(p => [p.nombre, p.numero ?? 0]));
+    const duenos = new Map<string, string[]>();
+    for (const a of this.asignaciones()) {
+      if (!byId[a.equipo_id]) continue;
+      if (!duenos.has(a.equipo_id)) duenos.set(a.equipo_id, []);
+      duenos.get(a.equipo_id)!.push(a.participante);
+    }
+    const lista: Revelacion[] = [...duenos.entries()].map(([id, ps]) => {
+      const equipo = byId[id];
+      const conf = equipo.division.slice(0, 3);
+      return {
+        equipo,
+        duenos: ps.sort((a, b) => (numero.get(a) ?? 0) - (numero.get(b) ?? 0)),
+        detalle: etapa === 'regular'
+          ? (equipo.ranking ? `Ranking #${equipo.ranking}` : '')
+          : (equipo.seed_conferencia ? `${conf} · Semilla ${equipo.seed_conferencia}` : conf),
+      };
+    });
+    const alto = 999;
+    return etapa === 'regular'
+      ? lista.sort((a, b) => (a.equipo.ranking ?? alto) - (b.equipo.ranking ?? alto))
+      : lista.sort((a, b) =>
+          a.equipo.division.slice(0, 3).localeCompare(b.equipo.division.slice(0, 3)) ||
+          (a.equipo.seed_conferencia ?? alto) - (b.equipo.seed_conferencia ?? alto) ||
+          a.equipo.nombre.localeCompare(b.equipo.nombre));
+  }
+
+  private async revelarAsignacion(etapa: Etapa, label: string, okMsg: string): Promise<void> {
+    try {
+      if (this.animando()) {
+        const lista = this.ordenRevelado(etapa);
+        this.totalRevelar = lista.length;
+        this.tituloRevelado = `Asignación · ${label}`;
+        this.saltarAnim = false;
+        this.cdr.detectChanges();
+        for (const r of lista) {
+          if (this.saltarAnim) break;
+          await this.revelarUno(r);
+          this.revelados.update(s => new Set(s).add(r.equipo.id));
+          this.cdr.detectChanges();
+        }
+      }
+    } catch (e) {
+      // Si la animación falla, la capa se cierra igual: la asignación ya quedó guardada.
+      console.error('Falló la animación de la asignación', e);
+    }
+    this.animando.set(false);
+    this.enVuelo.set(false);
+    this.actual.set(null);
+    this.okMsg.set(okMsg);
+    this.cdr.detectChanges();
+  }
+
+  private async revelarUno(r: Revelacion): Promise<void> {
+    const destinos = r.duenos
+      .map(n => document.getElementById(this.idCelda(r.equipo.division, n)))
+      .filter((d): d is HTMLElement => !!d);
+    destinos[0]?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+
+    this.enVuelo.set(false);
+    this.actual.set(r);
+    this.cdr.detectChanges();
+    const equipo = this.revEquipoEl?.nativeElement;
+    const duenos = this.revDuenosEl?.nativeElement;
+    if (!equipo || !duenos) return;
+
+    for (const el of [equipo, duenos]) el.classList.remove('entra');
+    void equipo.offsetWidth; // fuerza el reflow para que la animación de entrada se repita
+
+    equipo.classList.add('entra');
+    await this.esperar(900);
+    duenos.classList.add('entra');
+    await this.esperar(1100);
+
+    this.enVuelo.set(true);
+    this.cdr.detectChanges();
+    for (const d of destinos) this.lanzarFicha(r.equipo, equipo, d);
+    await this.esperar(750);
+    for (const d of destinos) {
+      d.classList.remove('destello');
+      void d.offsetWidth;
+      d.classList.add('destello');
+    }
+  }
+
+  // Una ficha con la mascota y el nombre vuela del centro a la celda del participante.
+  private lanzarFicha(eq: Equipo, origen: HTMLElement, destino: HTMLElement): void {
+    const capa = this.revOverlayEl?.nativeElement;
+    if (!capa) return;
+    const o = origen.getBoundingClientRect();
+    const d = destino.getBoundingClientRect();
+    const ficha = document.createElement('div');
+    ficha.className = 'ficha-vuelo';
+    const img = document.createElement('img');
+    img.src = eq.mascota;
+    img.alt = '';
+    ficha.append(img, document.createTextNode(eq.nombre));
+    ficha.style.left = `${o.left + o.width / 2}px`;
+    ficha.style.top = `${o.top + o.height / 2}px`;
+    capa.appendChild(ficha);
+    void ficha.offsetWidth;
+    const dx = d.left + d.width / 2 - (o.left + o.width / 2);
+    const dy = d.top + d.height / 2 - (o.top + o.height / 2);
+    ficha.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.75)`;
+    ficha.style.opacity = '0.2';
+    setTimeout(() => ficha.remove(), 800);
+  }
+
+  ngOnDestroy(): void {
+    this.saltarAnim = true;
   }
 
   resetAll() {

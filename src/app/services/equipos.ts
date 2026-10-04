@@ -20,6 +20,8 @@ export interface Equipo {
   division: string;
   /** Puesto en la conferencia según ESPN (1 = primera semilla, descansa en comodines). */
   seed_conferencia?: number | null;
+  /** Ranking global de la temporada anterior (1 = campeón); solo lo trae getEquipos(). */
+  ranking?: number | null;
   /** Mascota ilustrada (256 px), derivada del nombre: ver core/mascotas.ts. */
   mascota: string;
   participante?: string;
@@ -83,7 +85,7 @@ export class EquiposService {
       equiposRes: from(
         this.supabaseClient
           .from('equipos')
-          .select('id,nombre,ciudad,division,pg,pe,pp,pw,pd,pc,sb')
+          .select('id,nombre,ciudad,division,ranking,seed_conferencia,pg,pe,pp,pw,pd,pc,sb')
           .order('id', { ascending: true })
       ),
       asignRes: from(
@@ -113,6 +115,8 @@ export class EquiposService {
           ciudad: e.ciudad,
           puntaje: e.puntaje,
           division:e.division,
+          ranking: e.ranking ?? null,
+          seed_conferencia: e.seed_conferencia ?? null,
           mascota: mascotaIzquierda(e.nombre),
           pg: e.pg,
           pe: e.pe,
