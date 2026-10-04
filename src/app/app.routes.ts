@@ -6,34 +6,29 @@ import { Reglamento } from './components/reglamento/reglamento';
 import { Juegos } from './components/juegos/juegos';
 import { Fixture } from './components/fixture/fixture';
 import { Ranking } from './components/ranking/ranking';
-import { Login } from './components/login/login';
-import { Admin } from './components/admin/admin';
-import { NuevoUsuario } from './components/nuevo-usuario/nuevo-usuario';
-import { IngresarJuego } from './components/ingresar-juego/ingresar-juego';
-import { BorrarUsuario } from './components/borrar-usuario/borrar-usuario';
-import { Participantes } from './components/participantes/participantes';
-import { Asignacion } from './components/asignacion/asignacion';
 import { authGuard, rolGuard } from '../app/auth-guard';
 import { guestGuard } from './guest-guard';
 
 export const routes: Routes = [
-  
-  { path: '', component: Home, pathMatch: 'full' }, 
+
+  { path: '', component: Home, pathMatch: 'full' },
   { path: 'tabla-puntajes', component: TablaPuntajes },
   { path: 'equipos', component: Equipos },
   { path: 'juegos', component: Juegos },
   { path: 'fixture', component: Fixture },
   { path: 'ranking', component: Ranking },
   { path: 'reglamento', component: Reglamento },
-  
-  { path: 'login', component: Login, canActivate: [guestGuard] },
 
-  { path: 'admin', component: Admin, canActivate: [authGuard, rolGuard('administrador')] },
-  { path: 'nuevo-usuario', component: NuevoUsuario, canActivate: [authGuard, rolGuard('administrador')] },
-  { path: 'borrar-usuario', component: BorrarUsuario, canActivate: [authGuard, rolGuard('superusuario')] },
-  { path: 'ingresar-juego', component: IngresarJuego, canActivate: [authGuard, rolGuard('administrador')] },
-  { path: 'participantes', component: Participantes, canActivate: [authGuard, rolGuard('administrador')] },
-  { path: 'asignacion', component: Asignacion, canActivate: [authGuard, rolGuard('administrador')] },
+  // Login y páginas de admin se cargan solo al abrirlas (lazy loading): la
+  // mayoría de visitas son a las páginas públicas y no necesitan este código.
+  { path: 'login', loadComponent: () => import('./components/login/login').then(m => m.Login), canActivate: [guestGuard] },
+
+  { path: 'admin', loadComponent: () => import('./components/admin/admin').then(m => m.Admin), canActivate: [authGuard, rolGuard('administrador')] },
+  { path: 'nuevo-usuario', loadComponent: () => import('./components/nuevo-usuario/nuevo-usuario').then(m => m.NuevoUsuario), canActivate: [authGuard, rolGuard('administrador')] },
+  { path: 'borrar-usuario', loadComponent: () => import('./components/borrar-usuario/borrar-usuario').then(m => m.BorrarUsuario), canActivate: [authGuard, rolGuard('superusuario')] },
+  { path: 'ingresar-juego', loadComponent: () => import('./components/ingresar-juego/ingresar-juego').then(m => m.IngresarJuego), canActivate: [authGuard, rolGuard('administrador')] },
+  { path: 'participantes', loadComponent: () => import('./components/participantes/participantes').then(m => m.Participantes), canActivate: [authGuard, rolGuard('administrador')] },
+  { path: 'asignacion', loadComponent: () => import('./components/asignacion/asignacion').then(m => m.Asignacion), canActivate: [authGuard, rolGuard('administrador')] },
 
   { path: '**', redirectTo: '' }
 

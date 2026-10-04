@@ -110,7 +110,7 @@
                 <div class="cell a">
                   <button mat-raised-button color="primary"
                     (click)="saveEdit(p)"
-                    [disabled]="editForms[p.id]?.invalid || loading">
+                    [disabled]="editForms[p.id].invalid || loading">
                     Guardar
                   </button>
                   <button mat-button (click)="cancelEdit(p)" [disabled]="loading">Cancelar</button>
