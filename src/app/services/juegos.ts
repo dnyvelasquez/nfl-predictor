@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, from, map, of, switchMap, forkJoin } from 'rxjs';
 import { SupabaseClientService } from './core/supabase-client';
 import { Etapa } from './core/etapas';
+import { mascotaIzquierda, mascotaDerecha } from './core/mascotas';
 
 export type EstadoJuego = 'programado' | 'en_vivo' | 'final' | 'pospuesto';
 
@@ -117,7 +118,7 @@ export class JuegosService {
               .order('hora', { ascending: true })
           ).pipe(map((res: any) => res.data || [])),
           equipos: from(
-            this.supabaseClient.from('equipos').select('id,nombre,left_mascot,right_mascot')
+            this.supabaseClient.from('equipos').select('id,nombre')
           ).pipe(map((res: any) => res.data || [])),
           asign: from(
             this.supabaseClient.from('asignacion').select('equipo_id,participante,etapa')
@@ -290,7 +291,7 @@ export class JuegosService {
           .order('fecha', { ascending: true })
           .order('hora', { ascending: true })
       ).pipe(map((res: any) => res.data || [])),
-      equipos: from(this.supabaseClient.from('equipos').select('id,nombre,left_mascot,right_mascot'))
+      equipos: from(this.supabaseClient.from('equipos').select('id,nombre'))
                 .pipe(map((res: any) => res.data || [])),
       asign: from(this.supabaseClient.from('asignacion').select('equipo_id,participante,etapa'))
               .pipe(map((res: any) => res.data || []))
@@ -322,8 +323,8 @@ export class JuegosService {
 
       return {
         ...j,
-        logoVisitante: v?.left_mascot || '',
-        logoLocal:     l?.right_mascot || l?.left_mascot || '',
+        logoVisitante: v ? mascotaIzquierda(v.nombre) : '',
+        logoLocal:     l ? mascotaDerecha(l.nombre) : '',
         participanteVisitante: listV.join(' / '),
         participanteLocal:     listL.join(' / '),
       } as Juego;
