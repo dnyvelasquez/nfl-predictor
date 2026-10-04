@@ -98,6 +98,23 @@ export class AsignacionService {
     );
   }
 
+  /**
+   * Asigna la ronda divisional de un grupo (reglamento, reglas 11-16):
+   * conserva los ganadores de comodines y completa de menor a mayor puntaje,
+   * compartiendo equipos de forma pareja. Lógica en Neon:
+   * `calcular_auto_asignacion_divisional()` / `auto_asignar_divisional()`.
+   */
+  autoAsignarDivisional(grupoId: string) {
+    return from(
+      this.supabaseClient.getClient().rpc('auto_asignar_divisional', { p_grupo: grupoId })
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return { ok: true as const, asignados: Number(data ?? 0) };
+      })
+    );
+  }
+
   resetAsignaciones(etapa: Etapa, grupoId: string) {
     return from(this.supabaseClient.from('asignacion').delete().eq('etapa', etapa).eq('grupo_id', grupoId))
       .pipe(

@@ -66,8 +66,17 @@ export class JuegosService {
    * vuelve a 'programado'). Habilita el bono de la primera semilla.
    */
   temporadaRegularTerminada(): Observable<boolean> {
+    return this.rondaTerminada('regular');
+  }
+
+  /**
+   * true cuando la etapa tiene juegos y ninguno está programado ni en vivo. Los
+   * juegos de playoffs que ESPN crea como "TBD" antes de definirse cuentan como
+   * programados, así que la ronda no figura terminada hasta que se jueguen.
+   */
+  rondaTerminada(etapa: Etapa): Observable<boolean> {
     return from(
-      this.supabaseClient.from('juegos').select('estado').eq('etapa', 'regular')
+      this.supabaseClient.from('juegos').select('estado').eq('etapa', etapa)
     ).pipe(
       map(({ data, error }: any) => {
         if (error) throw error;
