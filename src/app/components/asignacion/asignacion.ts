@@ -12,10 +12,11 @@ import { Etapa, ETAPAS } from '../../services/core/etapas';
 import { AsignacionService } from '../../services/asignacion';
 import { EquiposService, Equipo } from '../../services/equipos';
 import { ParticipantesService, Participante } from '../../services/participantes';
+import { JuegosService } from '../../services/juegos';
 import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth/auth';
-import { forkJoin } from 'rxjs';
+import { forkJoin, firstValueFrom } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
 
 type AsignacionRow = { id?: string; equipo_id: string; participante: string };
@@ -46,6 +47,10 @@ export class Asignacion implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private gruposService = inject(GruposService);
+  private juegosService = inject(JuegosService);
+
+  // Etapas con asignación automática: temporada regular (por ranking) y comodines (por puntaje).
+  readonly etapasAutomaticas: Etapa[] = ['regular', 'wildcard'];
 
   // Solo el super usuario edita a mano (RLS también rechaza la escritura de los demás roles).
   esSuperusuario = toSignal(inject(AuthService).esSuperusuario$(), { initialValue: false });
@@ -212,22 +217,32 @@ export class Asignacion implements OnInit {
     });
   }
 
-  autoAsignarTemporadaRegular() {
+  async autoAsignar() {
     const grupoId = this.grupoId();
-    if (!grupoId) return;
-    const ok = confirm(
-      `¿Auto-asignar la temporada regular por ranking? Esto reemplaza por completo la asignación actual de "Temporada Regular" del grupo "${this.nombreGrupo()}".`
-    );
-    if (!ok) return;
+    const etapa = this.etapaActiva();
+    if (!grupoId || !this.etapasAutomaticas.includes(etapa)) return;
+
+    let mensaje: string;
+    if (etapa === 'regular') {
+      mensaje = `¿Auto-asignar la temporada regular por ranking? Esto reemplaza por completo la asignación actual de "Temporada Regular" del grupo "${this.nombreGrupo()}".`;
+    } else {
+      const terminada = await firstValueFrom(this.juegosService.temporadaRegularTerminada()).catch(() => false);
+      mensaje = `¿Auto-asignar la ronda de comodines según el reglamento? Esto reemplaza por completo la asignación actual de "Wild Card" del grupo "${this.nombreGrupo()}".`
+        + (terminada ? '' : '\n\nLa temporada regular todavía no termina: se usará la clasificación provisional de ESPN. Vuelve a ejecutarlo al cerrar la temporada.');
+    }
+    if (!confirm(mensaje)) return;
 
     this.loading.set(true);
     this.errorMsg.set(null);
     this.okMsg.set(null);
 
-    this.svc.autoAsignarTemporadaRegular(grupoId).subscribe({
+    const op = etapa === 'regular' ? this.svc.autoAsignarTemporadaRegular(grupoId) : this.svc.autoAsignarWildcard(grupoId);
+    op.subscribe({
       next: ({ asignados }) => {
-        this.okMsg.set(`Asignación por ranking completa (${asignados} equipos)`);
-        this.cargarAsignaciones('regular');
+        this.okMsg.set(etapa === 'regular'
+          ? `Asignación por ranking completa (${asignados} equipos)`
+          : `Asignación de comodines completa (${asignados} equipos)`);
+        this.cargarAsignaciones(etapa);
       },
       error: (e) => {
         this.errorMsg.set(e?.message || 'No se pudo auto-asignar');

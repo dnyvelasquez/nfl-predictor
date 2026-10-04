@@ -80,6 +80,24 @@ export class AsignacionService {
     );
   }
 
+  /**
+   * Asigna la ronda de comodines de un grupo (reglamento, reglas 11-16 y 19),
+   * reemplazando la asignación de "wildcard" de ese grupo. Lógica en Neon:
+   * `calcular_auto_asignacion_wildcard()`, aplicada por `auto_asignar_wildcard()`.
+   * Usa las semillas de ESPN que haya en el momento: antes de cerrar la
+   * temporada regular son provisionales.
+   */
+  autoAsignarWildcard(grupoId: string) {
+    return from(
+      this.supabaseClient.getClient().rpc('auto_asignar_wildcard', { p_grupo: grupoId })
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return { ok: true as const, asignados: Number(data ?? 0) };
+      })
+    );
+  }
+
   resetAsignaciones(etapa: Etapa, grupoId: string) {
     return from(this.supabaseClient.from('asignacion').delete().eq('etapa', etapa).eq('grupo_id', grupoId))
       .pipe(

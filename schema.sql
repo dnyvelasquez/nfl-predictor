@@ -463,3 +463,142 @@ CREATE POLICY "Miembros ven participantes de sus grupos" ON participantes
   FOR SELECT TO authenticated USING (rol_en_grupo(grupo_id) IS NOT NULL);
 CREATE POLICY "Miembros ven sus grupos" ON grupos
   FOR SELECT TO authenticated USING (rol_en_grupo(id) IS NOT NULL);
+
+-- ============================================================
+-- AUTO-ASIGNACIÓN DE LA RONDA DE COMODINES (2026-10-04)
+-- Reglamento, reglas 11-16 y 19. Ver CLAUDE.md para las decisiones.
+-- ============================================================
+
+-- Puntaje de cada participante del grupo, con la misma fórmula que el frontend.
+CREATE OR REPLACE FUNCTION puntajes_grupo(p_grupo uuid)
+RETURNS TABLE (participante text, numero numeric, puntos numeric)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  WITH valores(etapa, valor) AS (
+    VALUES ('regular', 10), ('wildcard', 20), ('divisional', 30), ('conferencia', 40), ('superbowl', 50)
+  ),
+  regular_terminada AS (
+    SELECT EXISTS (SELECT 1 FROM juegos WHERE etapa = 'regular')
+       AND NOT EXISTS (SELECT 1 FROM juegos WHERE etapa = 'regular' AND estado IN ('programado', 'en_vivo')) AS t
+  ),
+  por_asignacion AS (
+    SELECT a.participante,
+           v.valor * (
+             SELECT coalesce(sum(CASE WHEN x.propio > x.rival THEN 1 WHEN x.propio = x.rival THEN 0.5 ELSE 0 END), 0)
+             FROM (
+               SELECT CASE WHEN j.local = e.nombre THEN j.resultado_local ELSE j.resultado_visitante END AS propio,
+                      CASE WHEN j.local = e.nombre THEN j.resultado_visitante ELSE j.resultado_local END AS rival
+               FROM juegos j
+               WHERE j.etapa = a.etapa
+                 AND (j.local = e.nombre OR j.visitante = e.nombre)
+                 AND j.resultado_local IS NOT NULL AND j.resultado_visitante IS NOT NULL
+             ) x
+           )
+           + CASE WHEN a.etapa = 'wildcard' AND e.seed_conferencia = 1 AND (SELECT t FROM regular_terminada) THEN 20 ELSE 0 END
+           AS puntos
+    FROM asignacion a
+    JOIN equipos e ON e.id = a.equipo_id
+    JOIN valores v ON v.etapa = a.etapa
+    WHERE a.grupo_id = p_grupo
+  )
+  SELECT p.nombre, p.numero, coalesce(sum(pa.puntos), 0)
+  FROM participantes p
+  LEFT JOIN por_asignacion pa ON pa.participante = p.nombre
+  WHERE p.grupo_id = p_grupo
+  GROUP BY p.nombre, p.numero
+$$;
+
+CREATE OR REPLACE FUNCTION calcular_auto_asignacion_wildcard(p_grupo uuid)
+RETURNS TABLE (equipo_id text, participante text, conferencia text, motivo text)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+-- 1. Quien tiene la primera semilla de una conferencia va solo con ese equipo
+--    (descansa y cuenta como victoria) y cede los demás.
+-- 2. Los demás conservan sus equipos vivos de temporada regular; con dos de la
+--    misma conferencia se quedan con el de mejor récord (desempate: semilla).
+-- 3. De menor a mayor puntaje (empate: número de sorteo), cada uno completa la
+--    conferencia que le falta con el equipo libre de mejor récord.
+-- "Récord" = % de victorias de temporada regular (empate = media victoria).
+#variable_conflict use_column
+DECLARE
+  part record;
+  v_conf text;
+  elegido text;
+BEGIN
+  DROP TABLE IF EXISTS _wc_equipos;
+  DROP TABLE IF EXISTS _wc_resultado;
+
+  CREATE TEMP TABLE _wc_equipos ON COMMIT DROP AS
+  SELECT e.id, e.nombre, left(e.division, 3) AS conf, e.seed_conferencia AS seed,
+         coalesce(r.pct, 0) AS pct, a.participante AS dueno
+  FROM equipos e
+  LEFT JOIN LATERAL (
+    SELECT sum(CASE WHEN x.propio > x.rival THEN 1 WHEN x.propio = x.rival THEN 0.5 ELSE 0 END) / nullif(count(*), 0) AS pct
+    FROM (
+      SELECT CASE WHEN j.local = e.nombre THEN j.resultado_local ELSE j.resultado_visitante END AS propio,
+             CASE WHEN j.local = e.nombre THEN j.resultado_visitante ELSE j.resultado_local END AS rival
+      FROM juegos j
+      WHERE j.etapa = 'regular' AND j.estado <> 'en_vivo'
+        AND j.resultado_local IS NOT NULL AND j.resultado_visitante IS NOT NULL
+        AND (j.local = e.nombre OR j.visitante = e.nombre)
+    ) x
+  ) r ON true
+  LEFT JOIN asignacion a ON a.equipo_id = e.id AND a.etapa = 'regular' AND a.grupo_id = p_grupo
+  WHERE e.seed_conferencia BETWEEN 1 AND 7;
+
+  CREATE TEMP TABLE _wc_resultado (equipo_id text, participante text, conf text, motivo text) ON COMMIT DROP;
+
+  INSERT INTO _wc_resultado
+  SELECT id, dueno, conf, 'Primera semilla: descansa y cuenta como victoria'
+  FROM _wc_equipos WHERE seed = 1 AND dueno IS NOT NULL;
+
+  INSERT INTO _wc_resultado
+  SELECT DISTINCT ON (dueno, conf) id, dueno, conf, 'Conserva su equipo de temporada regular'
+  FROM _wc_equipos
+  WHERE seed BETWEEN 2 AND 7 AND dueno IS NOT NULL
+    AND dueno NOT IN (SELECT r.participante FROM _wc_resultado r)
+  ORDER BY dueno, conf, pct DESC, seed ASC;
+
+  FOR part IN
+    SELECT pg.participante AS nombre
+    FROM puntajes_grupo(p_grupo) pg
+    WHERE pg.participante NOT IN (SELECT r.participante FROM _wc_resultado r WHERE r.motivo LIKE 'Primera semilla%')
+    ORDER BY pg.puntos ASC, pg.numero ASC
+  LOOP
+    FOREACH v_conf IN ARRAY ARRAY['AFC', 'NFC'] LOOP
+      CONTINUE WHEN EXISTS (SELECT 1 FROM _wc_resultado r WHERE r.participante = part.nombre AND r.conf = v_conf);
+      elegido := NULL;
+      SELECT e.id INTO elegido
+      FROM _wc_equipos e
+      WHERE e.conf = v_conf AND e.seed BETWEEN 2 AND 7
+        AND e.id NOT IN (SELECT r.equipo_id FROM _wc_resultado r)
+      ORDER BY e.pct DESC, e.seed ASC
+      LIMIT 1;
+      IF elegido IS NOT NULL THEN
+        INSERT INTO _wc_resultado VALUES (elegido, part.nombre, v_conf, 'Asignado por puntaje');
+      END IF;
+    END LOOP;
+  END LOOP;
+
+  RETURN QUERY SELECT r.equipo_id, r.participante, r.conf, r.motivo FROM _wc_resultado r;
+END $$;
+
+-- Reemplaza la asignación de comodines del grupo. Superusuario o administrador del grupo.
+CREATE OR REPLACE FUNCTION auto_asignar_wildcard(p_grupo uuid) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  asignados int;
+BEGIN
+  IF p_grupo IS NULL THEN
+    RAISE EXCEPTION 'Grupo requerido' USING ERRCODE = '22023';
+  END IF;
+  IF coalesce(public.rol_en_grupo(p_grupo), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para auto-asignar este grupo' USING ERRCODE = '42501';
+  END IF;
+  DELETE FROM asignacion WHERE etapa = 'wildcard' AND grupo_id = p_grupo;
+  INSERT INTO asignacion (equipo_id, participante, etapa, grupo_id)
+    SELECT c.equipo_id, c.participante, 'wildcard', p_grupo FROM calcular_auto_asignacion_wildcard(p_grupo) c;
+  GET DIAGNOSTICS asignados = ROW_COUNT;
+  RETURN asignados;
+END $$;
+
+REVOKE ALL ON FUNCTION puntajes_grupo(uuid), calcular_auto_asignacion_wildcard(uuid), auto_asignar_wildcard(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION auto_asignar_wildcard(uuid) TO authenticated;
