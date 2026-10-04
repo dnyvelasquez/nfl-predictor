@@ -19,6 +19,46 @@ function esJwtDeUsuario(token: string | null | undefined): token is string {
   return !!claims && claims['sub'] !== 'anonymous' && claims['role'] !== 'anonymous';
 }
 
+// --- JWT del usuario guardado por la app -----------------------------------
+// Una vez obtenido, se reutiliza hasta 30 s antes de vencer, así las consultas
+// no dependen de que la librería consiga la sesión en cada una.
+let jwtUsuario: { token: string; exp: number } | null = null;
+let busquedaEnCurso: Promise<string | null> | null = null;
+// Sin sesión confirmada: no se vuelve a buscar en cada consulta durante 30 s.
+let sinSesionHasta = 0;
+
+// Marca en el navegador de que hubo sesión: si existe y no se consigue el
+// token, se reintenta en vez de mandar la consulta como anónima.
+const MARCA_SESION = 'nfl-predictor.sesion';
+function marcarSesion(activa: boolean) {
+  try {
+    if (activa) localStorage.setItem(MARCA_SESION, '1');
+    else localStorage.removeItem(MARCA_SESION);
+  } catch { /* sin almacenamiento: solo no hay reintentos */ }
+}
+function huboSesion(): boolean {
+  try { return localStorage.getItem(MARCA_SESION) === '1'; } catch { return false; }
+}
+
+function guardar(token: string) {
+  jwtUsuario = { token, exp: Number(claimsJwt(token)?.['exp'] ?? 0) };
+  marcarSesion(true);
+}
+
+function jwtVigente(): string | null {
+  return jwtUsuario && jwtUsuario.exp * 1000 - 30_000 > Date.now() ? jwtUsuario.token : null;
+}
+
+/** Olvida el JWT guardado (login, logout). */
+export function olvidarSesionDataApi(cerroSesion = false) {
+  jwtUsuario = null;
+  busquedaEnCurso = null;
+  sinSesionHasta = 0;
+  if (cerroSesion) marcarSesion(false);
+}
+
+const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 // Token JWT del usuario con sesión, o null si no hay sesión.
 async function tokenDeUsuario(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
@@ -32,27 +72,50 @@ async function tokenDeUsuario(): Promise<string | null> {
   return esJwtDeUsuario(jwt) ? jwt : null;
 }
 
+// Busca el JWT del usuario (una sola búsqueda a la vez); si en este navegador
+// hubo sesión, reintenta antes de rendirse.
+function buscarJwtUsuario(): Promise<string | null> {
+  busquedaEnCurso ??= (async () => {
+    const intentos = huboSesion() ? 4 : 1;
+    for (let i = 0; i < intentos; i++) {
+      try {
+        const token = await tokenDeUsuario();
+        if (token) {
+          guardar(token);
+          return token;
+        }
+      } catch { /* reintento */ }
+      if (i < intentos - 1) await esperar(250 * (i + 1));
+    }
+    if (intentos > 1) {
+      console.error('[neon] Había sesión en este navegador pero no se pudo obtener su token: la consulta va como anónima.');
+      marcarSesion(false);
+    }
+    sinSesionHasta = Date.now() + 30_000;
+    return null;
+  })().finally(() => { busquedaEnCurso = null; });
+  return busquedaEnCurso;
+}
+
 /**
  * fetch del Data API. La librería de Neon Auth (beta) pide la sesión en cada
  * consulta y, si en ese momento no obtiene el JWT del usuario, cae en silencio
- * al token anónimo. Desde que los datos de los grupos son privados (RLS), eso
- * hacía que algunas consultas de un usuario con sesión volvieran vacías: "tu
- * usuario no pertenece a ningún grupo" o participantes con 0 puntos, distinto
- * en cada recarga. Aquí, si una consulta va a salir sin JWT de usuario pero
- * hay sesión, se reemplaza por el token del usuario.
+ * al token anónimo (con varias consultas a la vez, comparten una sola petición
+ * de sesión y fallan juntas). Con los datos de los grupos privados (RLS), eso
+ * dejaba consultas vacías: "tu usuario no pertenece a ningún grupo" o
+ * participantes con 0 puntos. Aquí, si la consulta no lleva el JWT de un
+ * usuario, se usa el guardado o se busca el de la sesión.
  */
 async function fetchDataApi(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers);
   const actual = (headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
-  if (!esJwtDeUsuario(actual)) {
-    try {
-      const token = await tokenDeUsuario();
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-        console.warn('[neon] Consulta sin token de usuario pese a haber sesión: se corrigió con el token de la sesión.');
-      }
-    } catch {
-      // Sin sesión disponible: la consulta sigue como anónima.
+  if (esJwtDeUsuario(actual)) {
+    guardar(actual);
+  } else {
+    const token = jwtVigente() ?? (Date.now() < sinSesionHasta ? null : await buscarJwtUsuario());
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+      console.warn('[neon] La consulta iba sin token de usuario pese a haber sesión: se corrigió.');
     }
   }
   return fetch(input, { ...init, headers });

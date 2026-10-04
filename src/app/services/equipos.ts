@@ -214,34 +214,48 @@ export class EquiposService {
     );
   }
 
-  /** Sin `grupoId` busca en todos los grupos (páginas públicas, donde el grupo aún no aplica). */
+  /** Sin `grupoId` busca en todos los grupos (RLS igual limita a los grupos del usuario). */
   getEquiposDeTodasEtapas(nombre: string, grupoId?: string): Observable<(Equipo & { etapa: Etapa })[]> {
     let query = this.supabaseClient
       .from('asignacion')
-      .select('equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,seed_conferencia)')
+      .select(EquiposService.COLUMNAS_ASIGNACION)
       .eq('participante', nombre);
     if (grupoId) query = query.eq('grupo_id', grupoId);
-    return from(query).pipe(
-      map(({ data, error }: any) => {
-        if (error) throw error;
-        return (data ?? []).map((row: any) => ({
-          id: row.equipos.id,
-          nombre: row.equipos.nombre,
-          division: row.equipos.division,
-          mascota: mascotaIzquierda(row.equipos.nombre),
-          pg: row.equipos.pg,
-          pe: row.equipos.pe,
-          pp: row.equipos.pp,
-          pw: row.equipos.pw,
-          pd: row.equipos.pd,
-          pc: row.equipos.pc,
-          sb: row.equipos.sb,
-          seed_conferencia: row.equipos.seed_conferencia,
-          participante: row.participante,
-          etapa: row.etapa,
-        })) as (Equipo & { etapa: Etapa })[];
-      })
-    );
+    return from(query).pipe(map((res: any) => this.filasAsignacion(res)));
+  }
+
+  /**
+   * Todas las asignaciones de un grupo (todas las etapas y participantes) en una
+   * sola consulta, para calcular la tabla de puntajes sin una consulta por
+   * participante.
+   */
+  getEquiposDelGrupo(grupoId: string): Observable<(Equipo & { etapa: Etapa })[]> {
+    return from(
+      this.supabaseClient.from('asignacion').select(EquiposService.COLUMNAS_ASIGNACION).eq('grupo_id', grupoId)
+    ).pipe(map((res: any) => this.filasAsignacion(res)));
+  }
+
+  private static readonly COLUMNAS_ASIGNACION =
+    'equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,seed_conferencia)';
+
+  private filasAsignacion({ data, error }: any): (Equipo & { etapa: Etapa })[] {
+    if (error) throw error;
+    return (data ?? []).map((row: any) => ({
+      id: row.equipos.id,
+      nombre: row.equipos.nombre,
+      division: row.equipos.division,
+      mascota: mascotaIzquierda(row.equipos.nombre),
+      pg: row.equipos.pg,
+      pe: row.equipos.pe,
+      pp: row.equipos.pp,
+      pw: row.equipos.pw,
+      pd: row.equipos.pd,
+      pc: row.equipos.pc,
+      sb: row.equipos.sb,
+      seed_conferencia: row.equipos.seed_conferencia,
+      participante: row.participante,
+      etapa: row.etapa,
+    })) as (Equipo & { etapa: Etapa })[];
   }
 
   /**

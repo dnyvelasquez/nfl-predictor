@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, from, map, catchError, of, switchMap, shareReplay, forkJoin, tap } from 'rxjs';
 import { SupabaseClientService } from '../core/supabase-client';
 import { environment } from '../../../environments/environment';
+import { olvidarSesionDataApi } from '../../core/supabase.client';
 
 // Acceso de un usuario autenticado:
 // - `roles_usuario`: solo marca al super usuario (global, opera sobre todos los grupos).
@@ -118,6 +119,7 @@ export class AuthService {
 
   login(email: string, password: string): Observable<any> {
     this.perfilCache.clear();
+    olvidarSesionDataApi();
     return from(
       this.supabaseClient.auth().signInWithPassword({ email, password })
     ).pipe(
@@ -132,6 +134,7 @@ export class AuthService {
 
   logout(): Observable<any> {
     this.perfilCache.clear();
+    olvidarSesionDataApi(true);
     return from(this.supabaseClient.auth().signOut()).pipe(
       map(({ error }: any) => {
         if (error) {

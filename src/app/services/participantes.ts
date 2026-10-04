@@ -55,18 +55,25 @@ export class ParticipantesService {
     );
   }
 
-  /** Sin `grupoId` mezcla todos los grupos (páginas públicas, donde el grupo aún no aplica). */
+  /**
+   * Participantes con su puntaje. Con `grupoId`, todas las asignaciones del grupo
+   * se traen en una sola consulta; sin él (no se usa hoy), una por participante.
+   */
   getParticipantesConPuntaje(grupoId?: string): Observable<(Participante & {
   })[]> {
     return forkJoin({
       participantes: this.getParticipantes(grupoId),
       juegos: this.juegosService.getJuegosConResultado(),
       regularTerminada: this.juegosService.temporadaRegularTerminada(),
+      equiposGrupo: grupoId ? this.equiposService.getEquiposDelGrupo(grupoId) : of(null),
     }).pipe(
-      switchMap(({ participantes, juegos, regularTerminada }) =>
-        forkJoin(
+      switchMap(({ participantes, juegos, regularTerminada, equiposGrupo }) =>
+        participantes.length === 0 ? of([]) : forkJoin(
           participantes.map(p =>
-            this.equiposService.getEquiposDeTodasEtapas(p.nombre, grupoId).pipe(
+            (equiposGrupo
+              ? of(equiposGrupo.filter(eq => eq.participante === p.nombre))
+              : this.equiposService.getEquiposDeTodasEtapas(p.nombre, grupoId)
+            ).pipe(
               map(equiposTodasEtapas => {
                 const equiposPorEtapa = ETAPAS
                   .map(e => ({
