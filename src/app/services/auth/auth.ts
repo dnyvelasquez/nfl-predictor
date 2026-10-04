@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, map, catchError, of, switchMap, shareReplay, forkJoin } from 'rxjs';
+import { Observable, from, map, catchError, of, switchMap, shareReplay, forkJoin, tap } from 'rxjs';
 import { SupabaseClientService } from '../core/supabase-client';
 import { environment } from '../../../environments/environment';
 
@@ -91,6 +91,11 @@ export class AuthService {
               membresias: (membresias.data ?? []) as Membresia[],
             })),
             catchError(() => of({ esSuperusuario: false, membresias: [] })),
+            // Un perfil vacío (sin grupos ni super usuario) no se deja en caché: puede venir
+            // de una consulta que salió sin el token del usuario, y quedaría así toda la sesión.
+            tap((p: Perfil) => {
+              if (!p.esSuperusuario && p.membresias.length === 0) this.perfilCache.delete(userId);
+            }),
             shareReplay(1)
           );
           this.perfilCache.set(userId, perfil$);
