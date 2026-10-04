@@ -337,3 +337,9 @@
     transform: translateY(-50%) scale(0.9);
   }
 }
+
+.grupo-juegos {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+}

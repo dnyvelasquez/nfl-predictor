@@ -6,21 +6,38 @@
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
-    @if (loading$ | async) {
+    @if (grupos().length > 0) {
+      <div class="grupo-tabla">
+        <app-selector-grupo [grupos]="grupos()" [grupoId]="grupoId()" (cambio)="cambiarGrupo($event)"></app-selector-grupo>
+      </div>
+    }
+
+    @if (loading()) {
       <div class="loading-overlay">
         <mat-spinner diameter="40"></mat-spinner>
         <p>Cargando puntajes...</p>
       </div>
     }
 
-    @if (error$ | async; as error) {
+    @if (error(); as error) {
       <div class="error-overlay">
         <mat-icon>error_outline</mat-icon>
         <p>{{ error }}</p>
       </div>
     }
 
-    @if ((participantes$ | async); as participantes) {
+    @if (!loading() && !logueado()) {
+      <div class="empty-overlay">
+        <mat-icon>lock</mat-icon>
+        <p>La tabla de puntajes es privada de cada grupo.</p>
+        <a mat-flat-button color="primary" routerLink="/login" [queryParams]="{ redirect: '/tabla-puntajes' }">Iniciar sesión</a>
+      </div>
+    } @else if (!loading() && grupos().length === 0) {
+      <div class="empty-overlay">
+        <mat-icon>group_off</mat-icon>
+        <p>Tu usuario todavía no pertenece a ningún grupo.</p>
+      </div>
+    } @else if (participantes(); as participantes) {
       @if (participantes.length === 0) {
         <div class="empty-overlay">
           <mat-icon>info_outline</mat-icon>

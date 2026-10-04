@@ -7,6 +7,13 @@
       <mat-divider></mat-divider>
     </div>
 
+    @if (grupos().length > 0) {
+      <div class="grupo-reglamento">
+        <span>Reglamento del grupo</span>
+        <app-selector-grupo [grupos]="grupos()" [grupoId]="grupoId()" (cambio)="grupoId.set($event)"></app-selector-grupo>
+      </div>
+    }
+
     <div class="container">
       <ol>
         <li>A cada participante se le asignará un número aleatorio e irrepetible sorteado en la plataforma NFL-Predictor.</li>
@@ -35,19 +42,16 @@
         <li>Si el equipo asignado a un participante gana el partido del Super Bowl se le sumarán 50 puntos al participante.</li>
         <li>Si un equipo asignado a un participante empata un partido sumará la mitad de los puntos al participante según la ronda.</li>
         <li>
-          @if (apuestas() === null) {
+          @if (!cargado()) {
             El valor de la apuesta se está cargando…
-          } @else if (apuestas()!.length === 1) {
-            El valor de la apuesta es de {{ apuestas()![0].valor }}
-          } @else if (apuestas()!.length > 1) {
-            El valor de la apuesta depende del grupo:
-            <ul>
-              @for (a of apuestas(); track a.nombre) {
-                <li>{{ a.nombre }}: {{ a.valor }}</li>
-              }
-            </ul>
+          } @else if (!logueado()) {
+            El valor de la apuesta lo define cada grupo. <a routerLink="/login" [queryParams]="{ redirect: '/reglamento' }">Inicia sesión</a> para ver el de tu grupo.
+          } @else if (!grupo()) {
+            El valor de la apuesta lo define cada grupo; tu usuario todavía no pertenece a ninguno.
+          } @else if (apuesta()) {
+            El valor de la apuesta es de {{ apuesta() }}
           } @else {
-            El valor de la apuesta lo define cada grupo.
+            El grupo {{ grupo()!.nombre }} todavía no ha definido el valor de la apuesta.
           }
         </li>
         <li>Quien haya acumulado más puntos al finalizar el Super Bowl recibirá el 70% del recaudo.</li>

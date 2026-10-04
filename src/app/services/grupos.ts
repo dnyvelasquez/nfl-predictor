@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, forkJoin, from, map } from 'rxjs';
+import { Observable, forkJoin, from, map, of, switchMap, catchError } from 'rxjs';
 import { SupabaseClientService } from './core/supabase-client';
 import { AuthService, RolEnGrupo } from './auth/auth';
 
@@ -30,9 +30,19 @@ export function formatearApuesta(g: Pick<Grupo, 'apuesta' | 'moneda'>): string |
 })
 export class GruposService {
 
-  // Último grupo elegido por el super usuario en las páginas de admin, para no
-  // tener que volver a elegirlo al pasar de Participantes a Asignación.
-  private ultimoGrupoId: string | null = null;
+  // Último grupo elegido, compartido por todas las páginas y guardado en el
+  // navegador para que sobreviva a recargas. Solo es una preferencia: la
+  // pertenencia real la valida `gruposDisponibles$()` (y RLS en la base).
+  private static readonly CLAVE_GRUPO = 'nfl-predictor.grupo';
+  private ultimoGrupoId: string | null = GruposService.leerGrupoGuardado();
+
+  private static leerGrupoGuardado(): string | null {
+    try {
+      return localStorage.getItem(GruposService.CLAVE_GRUPO);
+    } catch {
+      return null;
+    }
+  }
 
   constructor(private supabaseClient: SupabaseClientService, private authService: AuthService) {}
 
@@ -105,5 +115,26 @@ export class GruposService {
 
   recordarGrupo(grupoId: string | null) {
     this.ultimoGrupoId = grupoId;
+    try {
+      if (grupoId) localStorage.setItem(GruposService.CLAVE_GRUPO, grupoId);
+      else localStorage.removeItem(GruposService.CLAVE_GRUPO);
+    } catch {
+      // Sin almacenamiento disponible: la elección vale solo para esta sesión de la app.
+    }
+  }
+
+  /**
+   * Contexto de grupo para las páginas públicas que muestran datos de un grupo
+   * (portada, tabla de puntajes, equipos, juegos, reglamento): sin sesión no hay
+   * grupos (RLS no deja leer participantes, asignaciones ni grupos); con sesión,
+   * los grupos del usuario y el que está elegido.
+   */
+  contexto$(): Observable<{ logueado: boolean; grupos: GrupoDisponible[]; seleccionado: string | null }> {
+    return this.authService.isAuthenticated$().pipe(
+      switchMap((logueado) => logueado
+        ? this.gruposDisponibles$().pipe(map((d) => ({ logueado, ...d })))
+        : of({ logueado, grupos: [] as GrupoDisponible[], seleccionado: null })),
+      catchError(() => of({ logueado: false, grupos: [] as GrupoDisponible[], seleccionado: null }))
+    );
   }
 }

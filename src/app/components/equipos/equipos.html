@@ -7,10 +7,27 @@
       <mat-divider></mat-divider>
     </div>
 
+    @if (grupos.length > 0) {
+      <div class="grupo-equipos">
+        <app-selector-grupo [grupos]="grupos" [grupoId]="grupoId" (cambio)="cambiarGrupo($event)"></app-selector-grupo>
+      </div>
+    }
+
     @if (loading) {
       <div class="loading-container">
         <mat-spinner diameter="40"></mat-spinner>
         <p>Cargando equipos...</p>
+      </div>
+    } @else if (!logueado) {
+      <div class="error-container">
+        <mat-icon>lock</mat-icon>
+        <p>Qué participante tiene cada equipo es información privada de cada grupo.</p>
+        <a mat-flat-button color="primary" routerLink="/login" [queryParams]="{ redirect: '/equipos' }">Iniciar sesión</a>
+      </div>
+    } @else if (grupos.length === 0) {
+      <div class="error-container">
+        <mat-icon>group_off</mat-icon>
+        <p>Tu usuario todavía no pertenece a ningún grupo.</p>
       </div>
     } @else if (error) {
       <div class="error-container">

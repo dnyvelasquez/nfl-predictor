@@ -115,7 +115,10 @@ export class EquiposService {
     );
   }
 
-  getEquiposConPuntajePorEtapa(): Observable<(Equipo & { porEtapa: RegistroEquipoPorEtapa[] })[]> {
+  /** Con `grupoId`, el participante de cada equipo es el de ese grupo. Sin sesión RLS no devuelve asignaciones. */
+  getEquiposConPuntajePorEtapa(grupoId?: string): Observable<(Equipo & { porEtapa: RegistroEquipoPorEtapa[] })[]> {
+    let asignQuery = this.supabaseClient.from('asignacion').select('equipo_id,participante,etapa');
+    if (grupoId) asignQuery = asignQuery.eq('grupo_id', grupoId);
     return forkJoin({
       equiposRes: from(
         this.supabaseClient
@@ -123,9 +126,7 @@ export class EquiposService {
           .select('id,nombre,ciudad,division,pg,pe,pp,pw,pd,pc,sb')
           .order('id', { ascending: true })
       ),
-      asignRes: from(
-        this.supabaseClient.from('asignacion').select('equipo_id,participante,etapa')
-      ),
+      asignRes: from(asignQuery),
       juegos: this.juegosService.getJuegosConResultado(),
     }).pipe(
       map(({ equiposRes, asignRes, juegos }: any) => {

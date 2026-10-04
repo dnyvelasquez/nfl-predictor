@@ -9,6 +9,10 @@ import { Subject, of } from 'rxjs';
 import { takeUntil, catchError, finalize } from 'rxjs/operators';
 import { EquiposService, Equipo, RegistroEquipoPorEtapa } from '../../services/equipos';
 import { marcaEquipoPorEtapa } from '../../services/core/etapas';
+import { GruposService, GrupoDisponible } from '../../services/grupos';
+import { SelectorGrupo } from '../selector-grupo/selector-grupo';
+import { RouterModule } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 
 type EquipoConEtapas = Equipo & { porEtapa: RegistroEquipoPorEtapa[] };
 
@@ -21,7 +25,10 @@ type EquipoConEtapas = Equipo & { porEtapa: RegistroEquipoPorEtapa[] };
     MatTableModule,
     MatProgressSpinnerModule,
     MatIconModule,
-    CommonModule
+    MatButtonModule,
+    RouterModule,
+    CommonModule,
+    SelectorGrupo
   ],
   templateUrl: './equipos.html',
   styleUrls: ['./equipos.css'],
@@ -38,8 +45,29 @@ export class Equipos implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private service = inject(EquiposService);
   private cdr = inject(ChangeDetectorRef);
+  private gruposService = inject(GruposService);
+
+  // Quién tiene cada equipo es dato privado del grupo: sin sesión se invita a iniciarla.
+  logueado = false;
+  grupos: GrupoDisponible[] = [];
+  grupoId: string | null = null;
 
   ngOnInit(): void {
+    this.gruposService.contexto$().pipe(takeUntil(this.destroy$)).subscribe(({ logueado, grupos, seleccionado }) => {
+      this.logueado = logueado;
+      this.grupos = grupos;
+      this.grupoId = seleccionado;
+      if (seleccionado) {
+        this.loadEquipos();
+      } else {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  cambiarGrupo(grupoId: string): void {
+    this.grupoId = grupoId;
     this.loadEquipos();
   }
 
@@ -47,7 +75,7 @@ export class Equipos implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
 
-    this.service.getEquiposConPuntajePorEtapa().pipe(
+    this.service.getEquiposConPuntajePorEtapa(this.grupoId ?? undefined).pipe(
       catchError(err => {
         console.error('Error loading equipos:', err);
         this.error = 'Error al cargar los equipos. Por favor, intenta de nuevo.';

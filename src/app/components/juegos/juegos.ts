@@ -11,6 +11,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject, forkJoin, of, map } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { takeUntil, catchError, finalize } from 'rxjs/operators';
+import { GruposService, GrupoDisponible } from '../../services/grupos';
+import { SelectorGrupo } from '../selector-grupo/selector-grupo';
 
 interface GrupoFecha {
   fecha: string;
@@ -28,7 +30,8 @@ interface GrupoFecha {
     MatIconModule,
     MatButtonModule,
     MatProgressSpinnerModule,
-    CommonModule
+    CommonModule,
+    SelectorGrupo
   ],
   templateUrl: './juegos.html',
   styleUrls: ['./juegos.css'],
@@ -49,20 +52,36 @@ export class Juegos implements OnDestroy {
   private static readonly REFRESH_INTERVAL_MS = 60000;
   private refreshTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
+  private gruposService = inject(GruposService);
+
+  // La página es pública; quién tiene cada equipo solo se ve con sesión y es el del grupo elegido.
+  logueado = false;
+  grupos: GrupoDisponible[] = [];
+  grupoId: string | null = null;
+
   constructor() {
     this.loadInitialData();
+  }
+
+  cambiarGrupo(grupoId: string): void {
+    this.grupoId = grupoId;
+    this.loadGames();
   }
 
   private loadInitialData(): void {
     this.loading = true;
 
     forkJoin({
+      contexto: this.gruposService.contexto$(),
       sem: this.service.getSemanaActualId(),
       lim: this.service.getExtremosSemanas()
     }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: ({ sem, lim }) => {
+      next: ({ contexto, sem, lim }) => {
+        this.logueado = contexto.logueado;
+        this.grupos = contexto.grupos;
+        this.grupoId = contexto.seleccionado;
         this.minWeek = lim.min;
         this.maxWeek = lim.max;
         this.currentWeekId = sem ?? lim.min ?? null;
@@ -87,7 +106,7 @@ export class Juegos implements OnDestroy {
     this.clearAutoRefresh();
     this.loading = true;
 
-    this.service.getJuegosPorSemanaId(this.currentWeekId).pipe(
+    this.service.getJuegosPorSemanaId(this.currentWeekId, this.grupoId ?? undefined).pipe(
       map(juegos => this.agruparPorFecha(juegos)),
       catchError(() => of([])),
       finalize(() => {
@@ -105,7 +124,7 @@ export class Juegos implements OnDestroy {
   private refreshGamesQuietly(): void {
     if (this.currentWeekId === null) return;
 
-    this.service.getJuegosPorSemanaId(this.currentWeekId).pipe(
+    this.service.getJuegosPorSemanaId(this.currentWeekId, this.grupoId ?? undefined).pipe(
       map(juegos => this.agruparPorFecha(juegos)),
       catchError(() => of(null)),
       takeUntil(this.destroy$)

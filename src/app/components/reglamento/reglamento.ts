@@ -1,33 +1,50 @@
-import { Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, computed, inject, signal } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTableModule } from '@angular/material/table';
-import { catchError, map, of } from 'rxjs';
-import { GruposService, formatearApuesta } from '../../services/grupos';
+import { GruposService, GrupoDisponible, formatearApuesta } from '../../services/grupos';
+import { SelectorGrupo } from '../selector-grupo/selector-grupo';
 
+/**
+ * Reglamento. Lo común a todos los grupos es público; lo que depende del grupo
+ * (por ahora el valor de la apuesta, punto 26) solo se ve con sesión y sale del
+ * grupo elegido. Si en el futuro un grupo tiene reglas propias, deben salir de
+ * `grupo()` igual que la apuesta.
+ */
 @Component({
   selector: 'app-reglamento',
   standalone: true,
   imports: [
+    RouterModule,
     MatCardModule,
     MatDividerModule,
-    MatTableModule
+    MatTableModule,
+    SelectorGrupo
   ],
   templateUrl: './reglamento.html',
   styleUrls: ['./reglamento.css']
 })
 export class Reglamento {
-  // El valor de la apuesta (punto 26) sale de `grupos.apuesta`. La página es
-  // pública y aún no distingue grupos: con uno solo se muestra su valor, con
-  // varios se listan todos.
-  apuestas = toSignal(
-    inject(GruposService).getGrupos().pipe(
-      map((grupos) => grupos
-        .map((g) => ({ nombre: g.nombre, valor: formatearApuesta(g) }))
-        .filter((g): g is { nombre: string; valor: string } => g.valor !== null)),
-      catchError(() => of([]))
-    ),
-    { initialValue: null }
-  );
+  private gruposService = inject(GruposService);
+
+  cargado = signal(false);
+  logueado = signal(false);
+  grupos = signal<GrupoDisponible[]>([]);
+  grupoId = signal<string | null>(null);
+
+  grupo = computed(() => this.grupos().find((g) => g.id === this.grupoId()) ?? null);
+  apuesta = computed(() => {
+    const g = this.grupo();
+    return g ? formatearApuesta(g) : null;
+  });
+
+  constructor() {
+    this.gruposService.contexto$().subscribe(({ logueado, grupos, seleccionado }) => {
+      this.logueado.set(logueado);
+      this.grupos.set(grupos);
+      this.grupoId.set(seleccionado);
+      this.cargado.set(true);
+    });
+  }
 }

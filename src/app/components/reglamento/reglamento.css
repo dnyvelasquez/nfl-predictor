@@ -56,3 +56,12 @@ li::marker {
     transition-duration: 0.01ms !important;
   }
 }
+
+.grupo-reglamento {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 4px;
+}

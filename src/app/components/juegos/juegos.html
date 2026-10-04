@@ -16,6 +16,12 @@
       <mat-divider></mat-divider>
     </div>
 
+    @if (grupos.length > 0) {
+      <div class="grupo-juegos">
+        <app-selector-grupo [grupos]="grupos" [grupoId]="grupoId" (cambio)="cambiarGrupo($event)"></app-selector-grupo>
+      </div>
+    }
+
     @if (loading) {
       <div class="loading-container">
         <mat-spinner diameter="40"></mat-spinner>
@@ -38,10 +44,12 @@
                     <img [src]="j.logoVisitante" [alt]="j.visitante" class="equipo-logo" loading="lazy">
                     <div class="equipo-info">
                       <span class="nombre">{{ j.visitante }}</span>
-                      @if ((j.participanteVisitante || '').trim()) {
-                        <span class="participante">{{ j.participanteVisitante }}</span>
-                      } @else {
-                        <span class="participante muted">No asignado</span>
+                      @if (logueado) {
+                        @if ((j.participanteVisitante || '').trim()) {
+                          <span class="participante">{{ j.participanteVisitante }}</span>
+                        } @else {
+                          <span class="participante muted">No asignado</span>
+                        }
                       }
                     </div>
                     @if (j.resultado_local !== null && j.resultado_visitante !== null) {
@@ -55,10 +63,12 @@
                     <img [src]="j.logoLocal" [alt]="j.local" class="equipo-logo" loading="lazy">
                     <div class="equipo-info">
                       <span class="nombre">{{ j.local }}</span>
-                      @if ((j.participanteLocal || '').trim()) {
-                        <span class="participante">{{ j.participanteLocal }}</span>
-                      } @else {
-                        <span class="participante">No asignado</span>
+                      @if (logueado) {
+                        @if ((j.participanteLocal || '').trim()) {
+                          <span class="participante">{{ j.participanteLocal }}</span>
+                        } @else {
+                          <span class="participante muted">No asignado</span>
+                        }
                       }
                     </div>
                     @if (j.resultado_local !== null && j.resultado_visitante !== null) {

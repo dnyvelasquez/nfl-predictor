@@ -346,3 +346,9 @@
 img[loading="lazy"] {
   content-visibility: auto;
 }
+
+.grupo-tabla {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+}

@@ -441,3 +441,25 @@ END $$;
 
 REVOKE ALL ON FUNCTION auto_asignar_temporada_regular(uuid), usuarios_visibles(), agregar_miembro(text, uuid, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auto_asignar_temporada_regular(uuid), usuarios_visibles(), agregar_miembro(text, uuid, text) TO authenticated;
+
+-- ============================================================
+-- DATOS DE GRUPO PRIVADOS (2026-10-03). participantes, asignacion y grupos
+-- solo se leen con sesión y solo los de los grupos del usuario (el
+-- superusuario ve todos). equipos, juegos y semana siguen públicos.
+-- Se mantiene el GRANT SELECT a anonymous a propósito: sin política, una
+-- consulta anónima devuelve cero filas en vez de un error de permisos.
+-- ============================================================
+
+DROP POLICY "Acceso publico de lectura a asignacion" ON asignacion;
+DROP POLICY "Usuarios autenticados pueden ver asignacion" ON asignacion;
+DROP POLICY "Acceso publico de lectura a participantes" ON participantes;
+DROP POLICY "Usuarios autenticados pueden ver participantes" ON participantes;
+DROP POLICY "Acceso publico de lectura a grupos" ON grupos;
+DROP POLICY "Usuarios autenticados pueden ver grupos" ON grupos;
+
+CREATE POLICY "Miembros ven asignaciones de sus grupos" ON asignacion
+  FOR SELECT TO authenticated USING (rol_en_grupo(grupo_id) IS NOT NULL);
+CREATE POLICY "Miembros ven participantes de sus grupos" ON participantes
+  FOR SELECT TO authenticated USING (rol_en_grupo(grupo_id) IS NOT NULL);
+CREATE POLICY "Miembros ven sus grupos" ON grupos
+  FOR SELECT TO authenticated USING (rol_en_grupo(id) IS NOT NULL);
