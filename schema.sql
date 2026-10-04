@@ -308,7 +308,7 @@ GRANT EXECUTE ON FUNCTION auto_asignar_temporada_regular(uuid) TO authenticated;
 
 -- ============================================================
 -- APUESTA POR GRUPO (2026-10-03). Valor por participante, mostrado en el
--- punto 26 del reglamento. Numérico para poder calcular el recaudo.
+-- punto 26 del reglamento (22 desde la reescritura del 2026-10-03). Numérico para poder calcular el recaudo.
 -- ============================================================
 
 ALTER TABLE grupos ADD COLUMN apuesta numeric(12,0) CHECK (apuesta >= 0);

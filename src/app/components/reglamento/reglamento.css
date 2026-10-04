@@ -24,6 +24,13 @@
   background-color: white;
   border-radius: 16px;
   color: black;
+  padding: 4px 16px 12px;
+}
+
+.container h3 {
+  margin: 16px 0 4px;
+  color: #003B73;
+  font-size: 1.05rem;
 }
 
 .logo {

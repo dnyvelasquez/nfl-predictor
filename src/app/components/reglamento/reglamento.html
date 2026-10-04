@@ -15,32 +15,54 @@
     }
 
     <div class="container">
-      <ol>
-        <li>A cada participante se le asignará un número aleatorio e irrepetible sorteado en la plataforma NFL-Predictor.</li>
-        <li>El número inicial que tiene cada participante antes del sorteo es el orden en el que fueron inscritos en la plataforma y no tiene nada que ver con el orden aleatorio en el que quedarán después del sorteo.</li>
-        <li>Al participante con el menor número le será asignado el equipo con el puesto más alto del ranking global de la temporada anterior.</li>
-        <li>Al siguiente participante con el número consecutivo en orden ascendente le será asignado el siguiente equipo del ranking.</li>
-        <li>Se seguirá asignando un equipo de la misma manera hasta que haya un equipo asignado a cada participante.</li>
-        <li>Cuando se haya asignado un equipo a cada participante, se seguira haciendo la asignación usando el mismo orden de los equipos pero el orden inverso de los participantes.</li>        
-        <li>La dinámica se repetirá hasta que los equipos queden repartidos equitativamente en los participantes sin repetir equipo en una división.</li>
-        <li>Si por orden en el ranking, un participante da con un equipo de una división donde ya tiene equipo asignado, este equipo pasará al siguiente participante que pueda recibirlo siguiendo el mismo criterio.</li>
-        <li>Si por orden en el ranking, un participante da con un tercer equipo de una conferencia, este equipo pasará al siguiente participante que pueda recibirlo siguiendo el mismo criterio.</li>
-        <li>Esta asignación se hará automáticamente con un algoritmo interno de la plataforma NFL-Predictor siguiendo estrictamente las normas mencionadas.</li>
-        <li>Esos sorteos se realizarán con una videoconferencia en vivo y/o con participantes presentes con el fin de que atestigüen su legalidad.</li>
-        <li>Para las rondas de comodines, divisional, campeonato de conferencia y Super Bowl, cada participante tendrá un equipo en cada conferencia.</li>
-        <li>La asignación se hará dando prioridad a los participantes con el menor puntaje al cierre de la ronda donde el participante con menor puntaje recibirá el equipo con la mejor marca de la temporada que esté disponible para ser asignado.</li>
-        <li>Si dos de los equipos asignados en la ronda anterior al participante pasan a la siguiente ronda, el participante los conservará si están en diferente conferencia.</li>
-        <li>El criterio se repetirá para asignar equipos a los participantes que hayan quedado sin equipo en alguna conferencia.</li>
-        <li>Si son más de dos los equipos asignados en la ronda anterior al participante que pasan a la siguiente ronda o los tiene en la misma conferencia, el participante deberá ceder los que excedan el par y/o que que exceda uno en la misma conferencia.</li>
-        <li>Si son menos de dos los equipos asignados en la ronda anterior al participante que pasan a la siguiente ronda, al participante se le asignará entre los disponibles hasta completar el par pero que queden en diferente conferencia siguiendo el criterio de marca por equipo y posición del jugador.</li>
-        <li>Los equipos deberán quedar repartidos de forma equitativa sin repetir participante, a menos que el número de participantes exceda el número de equipos.</li>
-        <li>Si un equipo asignado a un participante gana un partido de temporada regular se le sumarán 10 puntos al participante.</li>
-        <li>Si un equipo asignado a un participante gana un partido de ronda de comodines se le sumarán 20 puntos al participante.</li>
-        <li>Si un equipo asignado a un participante gana un partido de ronda de divisional se le sumarán 30 puntos al participante.</li>
-        <li>Si un equipo asignado a un participante gana queda de primero en la conferencia antes de la ronda de comodines se le sumarán 20 puntos adicionales al participante debido a que no participará en la ronda de comodines.</li>
-        <li>Si un equipo asignado a un participante gana el partido de final de conferencia se le sumarán 40 puntos al participante.</li>
-        <li>Si el equipo asignado a un participante gana el partido del Super Bowl se le sumarán 50 puntos al participante.</li>
-        <li>Si un equipo asignado a un participante empata un partido sumará la mitad de los puntos al participante según la ronda.</li>
+      <h3>Sorteo</h3>
+      <ol start="1">
+        <li>Al inicio de la temporada, la plataforma NFL Predictor sortea un número único para cada participante. Ese número define el orden de asignación de equipos.</li>
+        <li>Antes del sorteo, cada participante tiene un número provisional según el orden en que se inscribió; ese número no influye en el resultado del sorteo.</li>
+        <li>El sorteo se hace en una videoconferencia en vivo o con los participantes presentes, para que todos puedan verificarlo.</li>
+      </ol>
+
+      <h3>Asignación de equipos en temporada regular</h3>
+      <ol start="4">
+        <li>Los equipos se reparten según el ranking global de la temporada anterior: el primero es el campeón del Super Bowl y el último, el equipo con peor récord de temporada regular.</li>
+        <li>En la primera vuelta, el participante con el número más bajo recibe el equipo mejor ubicado en el ranking, el siguiente número recibe el siguiente equipo, y así hasta que cada participante tenga uno.</li>
+        <li>En la vuelta siguiente se sigue con los equipos en el mismo orden, pero los participantes van al revés, del número más alto al más bajo. Las vueltas se alternan así hasta repartir los equipos.</li>
+        <li>Todos los participantes reciben la misma cantidad de equipos. Si los equipos restantes no alcanzan para una vuelta completa, quedan sin asignar.</li>
+        <li>Un participante no puede tener dos equipos de la misma división ni más de dos equipos de la misma conferencia.</li>
+        <li>Si un participante no puede recibir el equipo que le corresponde por la regla anterior, ese equipo pasa al siguiente participante que sí pueda recibirlo. El participante saltado recibe el siguiente equipo disponible.</li>
+        <li>La plataforma hace esta asignación automáticamente, siguiendo estrictamente estas reglas.</li>
+      </ol>
+
+      <h3>Asignación de equipos en playoffs</h3>
+      <ol start="11">
+        <li>En cada ronda de playoffs (comodines, divisional, final de conferencia y Super Bowl), cada participante tiene un equipo de cada conferencia.</li>
+        <li>Al cerrar cada ronda, se asigna primero al participante con menor puntaje: recibe el equipo disponible con mejor récord de temporada regular, y así sucesivamente.</li>
+        <li>Si dos de los equipos que un participante tenía en la ronda anterior siguen vivos y son de conferencias distintas, los conserva.</li>
+        <li>Si le siguen vivos más de dos equipos, o dos de la misma conferencia, cede los que sobren para quedar con uno por conferencia.</li>
+        <li>Si le sigue vivo menos de un equipo por conferencia, se le completa con equipos disponibles, siguiendo el criterio de la regla 12.</li>
+        <li>Un equipo no puede quedar asignado a dos participantes, salvo que haya más participantes que equipos disponibles.</li>
+        <li>Los equipos asignados no se pueden cambiar durante una ronda; solo cambian en la reasignación de la ronda siguiente, según estas reglas.</li>
+      </ol>
+
+      <h3>Puntos</h3>
+      <ol start="18">
+        <li>
+          Cada victoria de un equipo asignado suma puntos a su participante, según la ronda:
+          <ul>
+            <li>Temporada regular: 10 puntos</li>
+            <li>Ronda de comodines: 20 puntos</li>
+            <li>Ronda divisional: 30 puntos</li>
+            <li>Final de conferencia: 40 puntos</li>
+            <li>Super Bowl: 50 puntos</li>
+          </ul>
+        </li>
+        <li>La primera semilla de cada conferencia descansa en la ronda de comodines. Quien la tenga asignada en esa ronda suma 20 puntos, lo mismo que daría ganarla, para no quedar en desventaja. Estos puntos se otorgan al cerrar la temporada regular, cuando las semillas ya son definitivas.</li>
+        <li>En temporada regular, un empate suma la mitad de los puntos de una victoria (5 puntos). En playoffs no hay empates.</li>
+        <li>Una derrota no suma ni resta puntos.</li>
+      </ol>
+
+      <h3>Apuesta y premios</h3>
+      <ol start="22">
         <li>
           @if (!cargado()) {
             El valor de la apuesta se está cargando…
@@ -49,16 +71,15 @@
           } @else if (!grupo()) {
             El valor de la apuesta lo define cada grupo; tu usuario todavía no pertenece a ninguno.
           } @else if (apuesta()) {
-            El valor de la apuesta es de {{ apuesta() }}
+            El valor de la apuesta lo define cada grupo; en {{ grupo()!.nombre }} es de {{ apuesta() }}.
           } @else {
-            El grupo {{ grupo()!.nombre }} todavía no ha definido el valor de la apuesta.
+            El valor de la apuesta lo define cada grupo; {{ grupo()!.nombre }} todavía no lo ha definido.
           }
         </li>
-        <li>Quien haya acumulado más puntos al finalizar el Super Bowl recibirá el 70% del recaudo.</li>
-        <li>Quien haya acumulado el segundo puesto en puntos al finalizar el Super Bowl recibirá el 30% del recaudo.</li>
-        <li>Si al finalizar el Super Bowl hay empate en el primer lugar, el total del recaudo se repartirá en partes iguales en los participantes que hayan empatado en el primer lugar.</li>
-        <li>Si al finalizar el Super Bowl hay empate en el segundo lugar, el 30% del recaudo se repartirá en partes iguales en los participantes que hayan empatado en el segundo lugar.</li>
-        <li>No se puede cambiar de equipos hasta que termine la ronda, teniendo en cuenta los puntos anteriores.</li>
+        <li>Quien tenga más puntos al terminar el Super Bowl recibe el 70&nbsp;% del recaudo.</li>
+        <li>Quien quede de segundo en puntos recibe el 30&nbsp;% del recaudo.</li>
+        <li>Si hay empate en el primer lugar, el recaudo completo se reparte en partes iguales entre los empatados, y no hay premio de segundo lugar.</li>
+        <li>Si hay empate en el segundo lugar, el 30&nbsp;% del recaudo se reparte en partes iguales entre los empatados.</li>
       </ol>
     </div>
   </mat-card>

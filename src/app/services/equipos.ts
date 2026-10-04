@@ -18,6 +18,8 @@ export interface Equipo {
   pc: number;
   sb: number;
   division: string;
+  /** Puesto en la conferencia según ESPN (1 = primera semilla, descansa en comodines). */
+  seed_conferencia?: number | null;
   /** Mascota ilustrada (256 px), derivada del nombre: ver core/mascotas.ts. */
   mascota: string;
   participante?: string;
@@ -54,6 +56,7 @@ export interface RegistroEquipoPorEtapa {
   ties: number;
   losses: number;
   puntos: number;
+  descanso: boolean;
 }
 
 @Injectable({
@@ -123,13 +126,14 @@ export class EquiposService {
       equiposRes: from(
         this.supabaseClient
           .from('equipos')
-          .select('id,nombre,ciudad,division,pg,pe,pp,pw,pd,pc,sb')
+          .select('id,nombre,ciudad,division,seed_conferencia,pg,pe,pp,pw,pd,pc,sb')
           .order('id', { ascending: true })
       ),
       asignRes: from(asignQuery),
       juegos: this.juegosService.getJuegosConResultado(),
+      regularTerminada: this.juegosService.temporadaRegularTerminada(),
     }).pipe(
-      map(({ equiposRes, asignRes, juegos }: any) => {
+      map(({ equiposRes, asignRes, juegos, regularTerminada }: any) => {
         if (equiposRes.error) throw equiposRes.error;
         if (asignRes.error) throw asignRes.error;
 
@@ -147,8 +151,8 @@ export class EquiposService {
             .map(et => {
               const participantes = participantesPorEquipoEtapa[`${e.id}|${et.value}`] ?? [];
               const participante = participantes.join(' / ');
-              const { wins, ties, losses, puntos } = registroEquipoEnEtapa(e.nombre, et.value, juegos);
-              return { etapa: et.value, label: et.label, participante, wins, ties, losses, puntos };
+              const { wins, ties, losses, puntos, descanso } = registroEquipoEnEtapa(e.nombre, et.value, juegos, regularTerminada ? e.seed_conferencia : null);
+              return { etapa: et.value, label: et.label, participante, wins, ties, losses, puntos, descanso };
             })
             .filter(g => g.participante);
 
@@ -205,7 +209,7 @@ export class EquiposService {
   getEquiposDeTodasEtapas(nombre: string, grupoId?: string): Observable<(Equipo & { etapa: Etapa })[]> {
     let query = this.supabaseClient
       .from('asignacion')
-      .select('equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division)')
+      .select('equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,seed_conferencia)')
       .eq('participante', nombre);
     if (grupoId) query = query.eq('grupo_id', grupoId);
     return from(query).pipe(
@@ -223,6 +227,7 @@ export class EquiposService {
           pd: row.equipos.pd,
           pc: row.equipos.pc,
           sb: row.equipos.sb,
+          seed_conferencia: row.equipos.seed_conferencia,
           participante: row.participante,
           etapa: row.etapa,
         })) as (Equipo & { etapa: Etapa })[];

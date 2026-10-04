@@ -21,9 +21,18 @@ export interface JuegoConResultado {
   resultado_visitante: number | null;
 }
 
+/**
+ * Récord y puntos de un equipo en una etapa. `seedConferencia` activa el bono
+ * de descanso (reglamento, regla 19): la primera semilla de cada conferencia no
+ * juega la ronda de comodines, así que quien la tenga asignada en esa ronda
+ * recibe los mismos puntos que daría ganarla (20) para no quedar en desventaja.
+ * Quien llama solo debe pasar la semilla cuando la temporada regular ya
+ * terminó (`JuegosService.temporadaRegularTerminada()`): antes de eso la
+ * semilla de ESPN todavía puede cambiar y el bono no se otorga.
+ */
 export function registroEquipoEnEtapa(
-  nombreEquipo: string, etapa: Etapa, juegos: JuegoConResultado[]
-): { wins: number; ties: number; losses: number; puntos: number } {
+  nombreEquipo: string, etapa: Etapa, juegos: JuegoConResultado[], seedConferencia?: number | null
+): { wins: number; ties: number; losses: number; puntos: number; descanso: boolean } {
   let wins = 0, ties = 0, losses = 0;
   for (const j of juegos) {
     if (j.etapa !== etapa) continue;
@@ -37,24 +46,26 @@ export function registroEquipoEnEtapa(
     else losses++;
   }
   const valorWin = PUNTOS_POR_ETAPA[etapa];
-  const puntos = wins * valorWin + ties * (valorWin / 2);
-  return { wins, ties, losses, puntos };
+  const descanso = etapa === 'wildcard' && seedConferencia === 1;
+  const puntos = wins * valorWin + ties * (valorWin / 2) + (descanso ? PUNTOS_POR_ETAPA.wildcard : 0);
+  return { wins, ties, losses, puntos, descanso };
 }
 
-export function marcaEquipoEnEtapa(etapa: Etapa, wins: number, ties: number, losses: number): string {
+export function marcaEquipoEnEtapa(etapa: Etapa, wins: number, ties: number, losses: number, descanso = false): string {
   if (etapa === 'regular') {
     return `${wins}-${losses}-${ties}`;
   }
+  if (descanso) return 'Descansó (1ª semilla)';
   if (wins > 0) return 'Ganó';
   if (losses > 0) return 'Perdió';
   if (ties > 0) return 'Empató';
   return 'Pendiente';
 }
 
-export function estadoEquipoEnEtapa(item: { equipo: { etapa: Etapa }; wins: number; ties: number; losses: number }): string {
-  return marcaEquipoEnEtapa(item.equipo.etapa, item.wins, item.ties, item.losses);
+export function estadoEquipoEnEtapa(item: { equipo: { etapa: Etapa }; wins: number; ties: number; losses: number; descanso?: boolean }): string {
+  return marcaEquipoEnEtapa(item.equipo.etapa, item.wins, item.ties, item.losses, item.descanso);
 }
 
-export function marcaEquipoPorEtapa(item: { etapa: Etapa; wins: number; ties: number; losses: number }): string {
-  return marcaEquipoEnEtapa(item.etapa, item.wins, item.ties, item.losses);
+export function marcaEquipoPorEtapa(item: { etapa: Etapa; wins: number; ties: number; losses: number; descanso?: boolean }): string {
+  return marcaEquipoEnEtapa(item.etapa, item.wins, item.ties, item.losses, item.descanso);
 }

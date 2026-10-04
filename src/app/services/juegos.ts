@@ -47,6 +47,23 @@ export class JuegosService {
     );
   }
 
+  /**
+   * true cuando ya no queda ningún juego de temporada regular programado ni en
+   * vivo (los pospuestos no bloquean: si se reprograman, la sincronización los
+   * vuelve a 'programado'). Habilita el bono de la primera semilla.
+   */
+  temporadaRegularTerminada(): Observable<boolean> {
+    return from(
+      this.supabaseClient.from('juegos').select('estado').eq('etapa', 'regular')
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        const juegos = (data ?? []) as { estado: EstadoJuego }[];
+        return juegos.length > 0 && juegos.every((j) => j.estado !== 'programado' && j.estado !== 'en_vivo');
+      })
+    );
+  }
+
   private hoyYYYYMMDD(): string {
     const d = new Date();
     const y = d.getFullYear();

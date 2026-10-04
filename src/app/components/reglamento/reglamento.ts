@@ -8,7 +8,7 @@ import { SelectorGrupo } from '../selector-grupo/selector-grupo';
 
 /**
  * Reglamento. Lo común a todos los grupos es público; lo que depende del grupo
- * (por ahora el valor de la apuesta, punto 26) solo se ve con sesión y sale del
+ * (por ahora el valor de la apuesta, punto 22) solo se ve con sesión y sale del
  * grupo elegido. Si en el futuro un grupo tiene reglas propias, deben salir de
  * `grupo()` igual que la apuesta.
  */

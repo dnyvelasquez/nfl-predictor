@@ -11,6 +11,7 @@ export interface RegistroEquipoParticipante {
   ties: number;
   losses: number;
   puntos: number;
+  descanso: boolean;
 }
 
 export interface Participante {
@@ -60,8 +61,9 @@ export class ParticipantesService {
     return forkJoin({
       participantes: this.getParticipantes(grupoId),
       juegos: this.juegosService.getJuegosConResultado(),
+      regularTerminada: this.juegosService.temporadaRegularTerminada(),
     }).pipe(
-      switchMap(({ participantes, juegos }) =>
+      switchMap(({ participantes, juegos, regularTerminada }) =>
         forkJoin(
           participantes.map(p =>
             this.equiposService.getEquiposDeTodasEtapas(p.nombre, grupoId).pipe(
@@ -72,7 +74,7 @@ export class ParticipantesService {
                     label: e.label,
                     equipos: equiposTodasEtapas
                       .filter(eq => eq.etapa === e.value)
-                      .map(equipo => ({ equipo, ...registroEquipoEnEtapa(equipo.nombre, e.value, juegos) })),
+                      .map(equipo => ({ equipo, ...registroEquipoEnEtapa(equipo.nombre, e.value, juegos, regularTerminada ? equipo.seed_conferencia : null) })),
                   }))
                   .filter(g => g.equipos.length > 0);
                 const puntaje = equiposPorEtapa.reduce(
