@@ -32,6 +32,12 @@ export class JuegosService {
 
   constructor(private supabaseClient: SupabaseClientService) {}
 
+  /**
+   * Juegos terminados con resultado: la base de todos los puntajes y récords.
+   * Excluye los que están en vivo (la sincronización con ESPN escribe el
+   * marcador parcial mientras se juega) y los pospuestos, para que los puntos
+   * solo cambien cuando un juego termina.
+   */
   getJuegosConResultado(): Observable<Juego[]> {
     return from(
       this.supabaseClient
@@ -39,6 +45,7 @@ export class JuegosService {
         .select('*')
         .not('resultado_local', 'is', null)
         .not('resultado_visitante', 'is', null)
+        .not('estado', 'in', '(en_vivo,pospuesto)')
     ).pipe(
       map(({ data, error }: any) => {
         if (error) throw error;

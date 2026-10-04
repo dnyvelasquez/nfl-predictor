@@ -963,3 +963,46 @@ BEGIN
 END $$;
 
 REVOKE ALL ON FUNCTION calcular_auto_asignacion_superbowl(uuid) FROM PUBLIC;
+
+-- ============================================================
+-- PUNTAJES SOLO CON JUEGOS TERMINADOS (2026-10-04): puntajes_grupo() deja de
+-- contar juegos en vivo (marcador parcial) o pospuestos.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION puntajes_grupo(p_grupo uuid)
+RETURNS TABLE (participante text, numero numeric, puntos numeric)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  WITH valores(etapa, valor) AS (
+    VALUES ('regular', 10), ('wildcard', 20), ('divisional', 30), ('conferencia', 40), ('superbowl', 50)
+  ),
+  regular_terminada AS (
+    SELECT EXISTS (SELECT 1 FROM juegos WHERE etapa = 'regular')
+       AND NOT EXISTS (SELECT 1 FROM juegos WHERE etapa = 'regular' AND estado IN ('programado', 'en_vivo')) AS t
+  ),
+  por_asignacion AS (
+    SELECT a.participante,
+           v.valor * (
+             SELECT coalesce(sum(CASE WHEN x.propio > x.rival THEN 1 WHEN x.propio = x.rival THEN 0.5 ELSE 0 END), 0)
+             FROM (
+               SELECT CASE WHEN j.local = e.nombre THEN j.resultado_local ELSE j.resultado_visitante END AS propio,
+                      CASE WHEN j.local = e.nombre THEN j.resultado_visitante ELSE j.resultado_local END AS rival
+               FROM juegos j
+               WHERE j.etapa = a.etapa
+                 AND (j.local = e.nombre OR j.visitante = e.nombre)
+                 AND j.resultado_local IS NOT NULL AND j.resultado_visitante IS NOT NULL
+                 AND j.estado NOT IN ('en_vivo', 'pospuesto')
+             ) x
+           )
+           + CASE WHEN a.etapa = 'wildcard' AND e.seed_conferencia = 1 AND (SELECT t FROM regular_terminada) THEN 20 ELSE 0 END
+           AS puntos
+    FROM asignacion a
+    JOIN equipos e ON e.id = a.equipo_id
+    JOIN valores v ON v.etapa = a.etapa
+    WHERE a.grupo_id = p_grupo
+  )
+  SELECT p.nombre, p.numero, coalesce(sum(pa.puntos), 0)
+  FROM participantes p
+  LEFT JOIN por_asignacion pa ON pa.participante = p.nombre
+  WHERE p.grupo_id = p_grupo
+  GROUP BY p.nombre, p.numero
+$$;
