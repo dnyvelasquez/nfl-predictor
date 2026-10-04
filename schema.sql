@@ -1006,3 +1006,23 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   WHERE p.grupo_id = p_grupo
   GROUP BY p.nombre, p.numero
 $$;
+
+-- 2026-10-04: sorteo de números de participantes en SQL, para que también lo
+-- puedan hacer los administradores del grupo (no escriben directo en participantes).
+CREATE OR REPLACE FUNCTION sortear_numeros(p_grupo uuid) RETURNS TABLE (id uuid, nombre text, numero numeric)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF p_grupo IS NULL THEN
+    RAISE EXCEPTION 'Grupo requerido' USING ERRCODE = '22023';
+  END IF;
+  IF coalesce(public.rol_en_grupo(p_grupo), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para sortear los números de este grupo' USING ERRCODE = '42501';
+  END IF;
+  UPDATE participantes p SET numero = s.n
+    FROM (SELECT x.id, row_number() OVER (ORDER BY random()) AS n FROM participantes x WHERE x.grupo_id = p_grupo) s
+    WHERE p.id = s.id;
+  RETURN QUERY SELECT p.id, p.nombre, p.numero FROM participantes p WHERE p.grupo_id = p_grupo ORDER BY p.numero;
+END $$;
+
+REVOKE ALL ON FUNCTION sortear_numeros(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION sortear_numeros(uuid) TO authenticated;

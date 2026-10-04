@@ -151,38 +151,18 @@ export class ParticipantesService {
     );
   }
 
+  // Sorteo de números (1..N, sin repetir) en una función SQL: la pueden usar el
+  // superusuario y los administradores del grupo, que no escriben directo en participantes.
   asignarNumerosAleatorios(grupoId: string): Observable<{ id: string; nombre: string; numero: number }[]> {
-    return this.getParticipantes(grupoId).pipe(
-      switchMap((participantes) => {
-        if (participantes.length === 0) return of([]);
-
-        const numeros = participantes.map((_, i) => i + 1);
-        for (let i = numeros.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [numeros[i], numeros[j]] = [numeros[j], numeros[i]];
-        }
-
-        return forkJoin(
-          participantes.map((p, i) =>
-            from(
-              this.supabaseClient
-                .from('participantes')
-                .update({ numero: numeros[i] })
-                .eq('id', p.id)
-                .select('id, nombre, numero')
-                .single()
-            )
-          )
-        );
-      }),
-      map((results: any[]) =>
-        results
-          .map(({ data, error }: any) => {
-            if (error) throw error;
-            return data;
-          })
-          .sort((a, b) => a.numero - b.numero)
-      )
+    return from(
+      this.supabaseClient.getClient().rpc('sortear_numeros', { p_grupo: grupoId })
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return ((data ?? []) as any[])
+          .map(r => ({ id: r.id, nombre: r.nombre, numero: Number(r.numero) }))
+          .sort((a, b) => a.numero - b.numero);
+      })
     );
   }
 

@@ -50,6 +50,9 @@
         </button>
       </form>
 
+      }
+
+      @if (puedeSortear) {
       <div class="sorteo">
         <button mat-raised-button color="accent" (click)="sortearNumeros()" [disabled]="loading || participantes.length === 0">
           <mat-icon>casino</mat-icon>
@@ -79,13 +82,14 @@
           @for (p of participantes; track p.id) {
 
             @if (!editForms[p.id]) {
-              <div class="row">
+              <div class="row" [class.por-revelar]="sorteando && !revelados.has(p.id)"
+                   [class.revelado]="sorteando && revelados.has(p.id)">
                 <div class="cell n">
-                  <span>{{ p.numero }}</span>
+                  <span [id]="'num-' + p.id">{{ p.numero }}</span>
                 </div>
 
                 <div class="cell w">
-                  <span>{{ p.nombre }}</span>
+                  <span [id]="'nom-' + p.id">{{ p.nombre }}</span>
                 </div>
 
                 @if (esSuperusuario()) {
@@ -97,8 +101,10 @@
               </div>
             } @else {
               <div class="row" [formGroup]="editForms[p.id]">
-                <div class="cell n">
-                  <span>{{ p.numero }}</span>
+                <div class="cell n editando">
+                  <mat-form-field appearance="fill" class="tight numero">
+                    <input matInput type="number" min="1" step="1" formControlName="numero" aria-label="Número" />
+                  </mat-form-field>
                 </div>
 
                 <div class="cell w">
@@ -126,5 +132,16 @@
   </mat-card>
 </div>
 
-
-
+@if (sorteando) {
+  <div class="sorteo-overlay" [class.vuelo]="enVuelo" role="dialog" aria-label="Sorteo de números">
+    <p class="sorteo-titulo">
+      Sorteo de números
+      @if (actual) { <span>· Participante {{ revelados.size + 1 }} de {{ participantes.length }}</span> }
+    </p>
+    <div class="sorteo-escena" aria-live="assertive">
+      <div #sorteoNumero class="sorteo-numero">{{ actual?.numero }}</div>
+      <div #sorteoNombre class="sorteo-nombre">{{ actual?.nombre }}</div>
+    </div>
+    <button mat-stroked-button type="button" class="sorteo-saltar" (click)="saltarSorteo()">Saltar animación</button>
+  </div>
+}
