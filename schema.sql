@@ -709,3 +709,130 @@ END $$;
 
 REVOKE ALL ON FUNCTION calcular_auto_asignacion_divisional(uuid), auto_asignar_divisional(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auto_asignar_divisional(uuid) TO authenticated;
+
+-- ============================================================
+-- RONDAS ELIMINATORIAS GENERALIZADAS (2026-10-04): divisional y final de
+-- conferencia comparten el mismo algoritmo. calcular_auto_asignacion_divisional
+-- y auto_asignar_divisional quedan como atajos hacia la versión general.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION calcular_auto_asignacion_eliminatoria(p_grupo uuid, p_etapa text)
+RETURNS TABLE (equipo_id text, participante text, conferencia text, motivo text)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+-- Vivos: los ganadores de la ronda anterior con resultado (en divisional,
+-- además las dos primeras semillas, que descansaron en comodines).
+-- 1. Cada uno conserva sus equipos de la ronda anterior que siguen vivos.
+-- 2. De menor a mayor puntaje (empate: número de sorteo), cada uno completa la
+--    conferencia que le falta: primero el equipo con menos participantes, y entre
+--    ellos el de mejor récord de temporada regular (desempate: semilla).
+#variable_conflict use_column
+DECLARE
+  anterior text;
+  nombre_anterior text;
+  part record;
+  v_conf text;
+  elegido text;
+  ya_tiene int;
+BEGIN
+  IF p_etapa = 'divisional' THEN
+    anterior := 'wildcard'; nombre_anterior := 'comodines';
+  ELSIF p_etapa = 'conferencia' THEN
+    anterior := 'divisional'; nombre_anterior := 'la ronda divisional';
+  ELSE
+    RAISE EXCEPTION 'Etapa no soportada: %', p_etapa USING ERRCODE = '22023';
+  END IF;
+
+  DROP TABLE IF EXISTS _el_equipos;
+  DROP TABLE IF EXISTS _el_resultado;
+
+  CREATE TEMP TABLE _el_equipos ON COMMIT DROP AS
+  WITH ganadores AS (
+    SELECT CASE WHEN j.resultado_local > j.resultado_visitante THEN j.local ELSE j.visitante END AS nombre
+    FROM juegos j
+    WHERE j.etapa = anterior AND j.estado <> 'en_vivo'
+      AND j.resultado_local IS NOT NULL AND j.resultado_visitante IS NOT NULL
+      AND j.resultado_local <> j.resultado_visitante
+  )
+  SELECT e.id, e.nombre, left(e.division, 3) AS conf, e.seed_conferencia AS seed, coalesce(r.pct, 0) AS pct
+  FROM equipos e
+  LEFT JOIN LATERAL (
+    SELECT sum(CASE WHEN x.propio > x.rival THEN 1 WHEN x.propio = x.rival THEN 0.5 ELSE 0 END) / nullif(count(*), 0) AS pct
+    FROM (
+      SELECT CASE WHEN j.local = e.nombre THEN j.resultado_local ELSE j.resultado_visitante END AS propio,
+             CASE WHEN j.local = e.nombre THEN j.resultado_visitante ELSE j.resultado_local END AS rival
+      FROM juegos j
+      WHERE j.etapa = 'regular' AND j.estado <> 'en_vivo'
+        AND j.resultado_local IS NOT NULL AND j.resultado_visitante IS NOT NULL
+        AND (j.local = e.nombre OR j.visitante = e.nombre)
+    ) x
+  ) r ON true
+  WHERE e.nombre IN (SELECT g.nombre FROM ganadores g)
+     OR (p_etapa = 'divisional' AND e.seed_conferencia = 1);
+
+  CREATE TEMP TABLE _el_resultado (equipo_id text, participante text, conf text, motivo text) ON COMMIT DROP;
+
+  INSERT INTO _el_resultado
+  SELECT DISTINCT ON (a.participante, e.conf) e.id, a.participante, e.conf,
+         CASE WHEN p_etapa = 'divisional' AND e.seed = 1 THEN 'Conserva su primera semilla'
+              ELSE 'Conserva: ganó en ' || nombre_anterior END
+  FROM asignacion a
+  JOIN _el_equipos e ON e.id = a.equipo_id
+  WHERE a.etapa = anterior AND a.grupo_id = p_grupo
+  ORDER BY a.participante, e.conf, e.pct DESC, e.seed ASC;
+
+  FOR part IN
+    SELECT pg.participante AS nombre FROM puntajes_grupo(p_grupo) pg ORDER BY pg.puntos ASC, pg.numero ASC
+  LOOP
+    FOREACH v_conf IN ARRAY ARRAY['AFC', 'NFC'] LOOP
+      CONTINUE WHEN EXISTS (SELECT 1 FROM _el_resultado r WHERE r.participante = part.nombre AND r.conf = v_conf);
+      elegido := NULL;
+      SELECT e.id, coalesce(c.n, 0) INTO elegido, ya_tiene
+      FROM _el_equipos e
+      LEFT JOIN (SELECT r.equipo_id, count(*) AS n FROM _el_resultado r GROUP BY r.equipo_id) c ON c.equipo_id = e.id
+      WHERE e.conf = v_conf
+      ORDER BY coalesce(c.n, 0) ASC, e.pct DESC, e.seed ASC
+      LIMIT 1;
+      IF elegido IS NOT NULL THEN
+        INSERT INTO _el_resultado VALUES (elegido, part.nombre, v_conf,
+          CASE WHEN ya_tiene = 0 THEN 'Asignado por puntaje' ELSE 'Asignado por puntaje (compartido)' END);
+      END IF;
+    END LOOP;
+  END LOOP;
+
+  RETURN QUERY SELECT r.equipo_id, r.participante, r.conf, r.motivo FROM _el_resultado r;
+END $$;
+
+CREATE OR REPLACE FUNCTION auto_asignar_eliminatoria(p_grupo uuid, p_etapa text) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  asignados int;
+BEGIN
+  IF p_grupo IS NULL THEN
+    RAISE EXCEPTION 'Grupo requerido' USING ERRCODE = '22023';
+  END IF;
+  IF p_etapa NOT IN ('divisional', 'conferencia') THEN
+    RAISE EXCEPTION 'Etapa no soportada: %', p_etapa USING ERRCODE = '22023';
+  END IF;
+  IF coalesce(public.rol_en_grupo(p_grupo), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para auto-asignar este grupo' USING ERRCODE = '42501';
+  END IF;
+  DELETE FROM asignacion WHERE etapa = p_etapa AND grupo_id = p_grupo;
+  INSERT INTO asignacion (equipo_id, participante, etapa, grupo_id)
+    SELECT c.equipo_id, c.participante, p_etapa, p_grupo FROM calcular_auto_asignacion_eliminatoria(p_grupo, p_etapa) c;
+  GET DIAGNOSTICS asignados = ROW_COUNT;
+  RETURN asignados;
+END $$;
+
+CREATE OR REPLACE FUNCTION calcular_auto_asignacion_divisional(p_grupo uuid)
+RETURNS TABLE (equipo_id text, participante text, conferencia text, motivo text)
+LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
+  SELECT * FROM calcular_auto_asignacion_eliminatoria(p_grupo, 'divisional')
+$$;
+
+CREATE OR REPLACE FUNCTION auto_asignar_divisional(p_grupo uuid) RETURNS integer
+LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
+  SELECT auto_asignar_eliminatoria(p_grupo, 'divisional')
+$$;
+
+REVOKE ALL ON FUNCTION calcular_auto_asignacion_eliminatoria(uuid, text), auto_asignar_eliminatoria(uuid, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION auto_asignar_eliminatoria(uuid, text) TO authenticated;

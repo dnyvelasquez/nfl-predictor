@@ -49,8 +49,14 @@ export class Asignacion implements OnInit {
   private gruposService = inject(GruposService);
   private juegosService = inject(JuegosService);
 
-  // Etapas con asignación automática: temporada regular (por ranking), comodines y divisional (por puntaje).
-  readonly etapasAutomaticas: Etapa[] = ['regular', 'wildcard', 'divisional'];
+  // Etapas con asignación automática: temporada regular (por ranking) y las
+  // rondas de playoffs hasta la final de conferencia (por puntaje).
+  readonly etapasAutomaticas: Etapa[] = ['regular', 'wildcard', 'divisional', 'conferencia'];
+
+  // Ronda cuyo cierre arma cada ronda de playoffs.
+  private static readonly RONDA_ANTERIOR: Partial<Record<Etapa, Etapa>> = {
+    wildcard: 'regular', divisional: 'wildcard', conferencia: 'divisional',
+  };
 
   // Solo el super usuario edita a mano (RLS también rechaza la escritura de los demás roles).
   esSuperusuario = toSignal(inject(AuthService).esSuperusuario$(), { initialValue: false });
@@ -228,13 +234,14 @@ export class Asignacion implements OnInit {
       mensaje = `¿Auto-asignar la temporada regular por ranking? Esto reemplaza por completo la asignación actual de "${label}" del grupo "${this.nombreGrupo()}".`;
     } else {
       // Cada ronda de playoffs se arma con el cierre de la anterior.
-      const anterior: Etapa = etapa === 'wildcard' ? 'regular' : 'wildcard';
+      const anterior = Asignacion.RONDA_ANTERIOR[etapa]!;
+      const labelAnterior = this.etapas.find(e => e.value === anterior)?.label ?? anterior;
       const terminada = await firstValueFrom(this.juegosService.rondaTerminada(anterior)).catch(() => false);
       mensaje = `¿Auto-asignar "${label}" según el reglamento? Esto reemplaza por completo la asignación actual de "${label}" del grupo "${this.nombreGrupo()}".`;
       if (!terminada) {
         mensaje += etapa === 'wildcard'
           ? '\n\nLa temporada regular todavía no termina: se usará la clasificación provisional de ESPN. Vuelve a ejecutarlo al cerrar la temporada.'
-          : '\n\nLa ronda de comodines todavía no termina: solo cuentan los juegos que ya tienen resultado. Vuelve a ejecutarlo al cerrar la ronda.';
+          : `\n\n"${labelAnterior}" todavía no termina: solo cuentan los juegos que ya tienen resultado. Vuelve a ejecutarlo al cerrar esa ronda.`;
       }
     }
     if (!confirm(mensaje)) return;
@@ -245,7 +252,7 @@ export class Asignacion implements OnInit {
 
     const op = etapa === 'regular' ? this.svc.autoAsignarTemporadaRegular(grupoId)
       : etapa === 'wildcard' ? this.svc.autoAsignarWildcard(grupoId)
-      : this.svc.autoAsignarDivisional(grupoId);
+      : this.svc.autoAsignarEliminatoria(grupoId, etapa as 'divisional' | 'conferencia');
     op.subscribe({
       next: ({ asignados }) => {
         this.okMsg.set(etapa === 'regular'
