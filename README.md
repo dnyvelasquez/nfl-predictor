@@ -1,6 +1,6 @@
 # NFL Predictor
 
-Aplicación para gestionar una quiniela/pool de predicciones de la temporada de la NFL: asignación de equipos a participantes, calendario de juegos con resultados por ronda de playoffs, y tabla de posiciones calculada automáticamente.
+Aplicación para gestionar una quiniela/pool de predicciones de la temporada de la NFL: asignación de equipos a participantes (automática en todas las etapas, según el reglamento), calendario de juegos con resultados en vivo sincronizados desde ESPN, y tabla de posiciones calculada automáticamente. Varios grupos (pools independientes) pueden usar la misma instalación, cada uno con sus propios participantes, asignaciones y valor de apuesta.
 
 Construida con Angular 20 (componentes standalone) y [Neon](https://neon.com) (Postgres, vía su Data API y Neon Auth). Es un sitio 100% estático (sin backend propio) — todo el acceso a datos y autenticación va directo del navegador a Neon.
 
@@ -16,7 +16,9 @@ npm install
 npm start
 ```
 
-Abre `http://localhost:4200`. La app recarga automáticamente al modificar el código fuente.
+Abre `http://localhost:4200/nfl-predictor/` (la app usa ese `baseHref` porque se publica en GitHub Pages bajo `/nfl-predictor/`). La app recarga automáticamente al modificar el código fuente.
+
+Cada push a `main` publica el sitio en GitHub Pages automáticamente (`.github/workflows/deploy.yml`).
 
 ## Build
 
@@ -68,7 +70,7 @@ Al final de cada corrida `full`, y de cada corrida `quick` que encontró juegos 
 
 ### Ranking de equipos
 
-El script `scripts/sync-ranking.mjs` calcula el ranking de los 32 equipos de la temporada que acaba de terminar (1 = campeón del Super Bowl, 32 = peor récord de temporada regular, el inverso del orden del Draft de la NFL) y lo guarda en `equipos.ranking` — se usa para comprobar a mano que la asignación de equipos hecha en el panel de administración siguió el reglamento. Corre una vez al año, apenas termina el Super Bowl:
+El script `scripts/sync-ranking.mjs` calcula el ranking de los 32 equipos de la temporada que acaba de terminar (1 = campeón del Super Bowl, 32 = peor récord de temporada regular, el inverso del orden del Draft de la NFL) y lo guarda en `equipos.ranking` — es el orden con el que se hace la asignación automática de temporada regular, y se muestra en la página pública "Ranking inicial". Corre una vez al año, apenas termina el Super Bowl:
 
 ```powershell
 $env:DATABASE_URL="postgres://..."; $env:SEASON_YEAR="2026"; node scripts/sync-ranking.mjs
@@ -78,13 +80,32 @@ También tiene una GitHub Action (`.github/workflows/sync-ranking.yml`) que corr
 
 ## Funcionalidad principal
 
-- **Equipos**: catálogo de los 32 equipos de la NFL agrupados por división, mostrando la ciudad antes del nombre de cada uno (ej. "Buffalo Bills"); cada equipo muestra, por cada etapa en la que tiene un participante asignado, quién es ese participante y los puntos que el equipo le aportó en esa etapa.
-- **Fixture**: standings de temporada regular separados en dos cuadros, AFC y NFC, cada uno con sus 4 divisiones. Cada equipo muestra su logo oficial y su récord (Ganados-Perdidos-Empatados), ordenado dentro de la división según los desempates oficiales de la NFL. Una franja de color marca la clasificación a playoffs: amarillo para la semilla 1 de la conferencia, azul para los otros campeones de división (semillas 2-4) y rojo para los wild cards (semillas 5-7). Se abre desde el menú "Equipos" → "Fixture".
-- **Participantes** (admin): personas inscritas en la quiniela. El número de cada participante (usado como orden de selección de equipos) ya no se ingresa manualmente — se asigna con el botón "Sortear números", que reparte de una sola vez un número aleatorio y sin repetir entre 1 y N a todos los participantes.
-- **Asignación** (admin): cada participante recibe equipos por división siguiendo un orden de selección basado en puntaje (ver reglamento completo en la app). Hay un cuadro de asignación independiente por etapa del campeonato — Temporada Regular, Wild Card, Ronda Divisional, Final de Conferencia y Super Bowl — para que un mismo equipo pueda quedar con un participante distinto en cada ronda. En la pestaña de Temporada Regular hay un botón "Auto-asignar" que reparte los 32 equipos automáticamente según `equipos.ranking`, sin tener que llenar la grilla a mano.
-- **Ingresar Juego** (admin): programa el calendario semanal (equipo local/visitante, fecha, hora, etapa del campeonato), permite editar un juego ya creado y cargar su resultado final — el resultado es lo que alimenta el puntaje de cada participante. También permite borrar un juego individual o vaciar por completo el calendario almacenado.
-- **Nuevo Usuario / Borrar Usuario** (admin): gestión de las cuentas que pueden entrar al panel de administración.
-- **Tabla de puntajes / Juegos de la semana**: vistas públicas de posiciones y calendario. En "Tabla de puntajes" los equipos de cada participante aparecen agrupados por etapa del campeonato, cada uno con su récord de juegos ganados-perdidos-empatados y los puntos que aportó (derrotas se muestran pero no puntúan); el puntaje total se calcula automáticamente a partir de los resultados cargados en "Ingresar Juego", atribuyendo cada ronda de playoffs a la asignación de esa misma ronda. "Juegos de la semana" muestra la hora programada o el marcador final de cada juego, y mientras un partido está en curso muestra el marcador parcial con un letrero "En vivo" (sin la hora, que ya no aplica) y la fase actual del juego (1er/2do/3er/4to cuarto, medio tiempo o tiempo extra), que se actualiza solo (sin recargar la página) reflejando la sincronización automática con ESPN.
-- **Reglamento**: reglas completas de asignación de equipos, puntaje y repartición del premio.
+**Páginas públicas**
+
+- **Portada**: el juego destacado de la semana (el de horario prime, en vivo o el próximo, con las mascotas de los dos equipos enfrentadas, su récord y una cuenta regresiva) y los juegos de la semana, con los que están en vivo primero. Con sesión muestra además la tabla de posiciones del grupo y qué participante tiene cada equipo.
+- **Juegos de la semana**: calendario por semana con la hora, el marcador final o, mientras el juego está en curso, el marcador parcial con un letrero "En vivo" y el cuarto que se está jugando; se actualiza solo. Con sesión muestra qué participante del grupo tiene cada equipo.
+- **Equipos → Fixture**: standings de temporada regular por conferencia y división, con el récord (Ganados-Perdidos-Empatados) y el orden oficial de la NFL; una franja de color marca la clasificación a playoffs (amarillo: semilla 1, azul: otros campeones de división, rojo: wild cards).
+- **Equipos → Ranking inicial**: el ranking de la temporada anterior con el que se hizo la asignación inicial, agrupado según hasta dónde llegó cada equipo en los playoffs.
+- **Reglamento**: reglas de asignación de equipos, puntaje y repartición del premio. El valor de la apuesta (regla 22) depende del grupo y solo se ve con sesión.
+
+**Páginas de cada grupo (requieren sesión)**
+
+- **Tabla de puntajes**: posiciones del grupo, con los equipos de cada participante agrupados por etapa, su récord y los puntos que aportaron.
+- **Equipos → En competición**: qué participante del grupo tiene cada equipo en cada etapa y cuántos puntos le dio.
+
+**Panel de administración** (solo super usuario y administradores de grupo)
+
+- **Asignación**: un cuadro por etapa (Temporada Regular, Wild Card, Ronda Divisional, Final de Conferencia y Super Bowl). Cada pestaña tiene "Auto-asignar", que aplica el reglamento: la temporada regular por el ranking, y cada ronda de playoffs por puntaje, con los resultados de la ronda anterior. Si la ronda anterior todavía no termina, la confirmación lo avisa.
+- **Participantes**: personas inscritas en el grupo; el orden de selección se reparte con el botón "Sortear números".
+- **Ingresar Juego**: calendario y resultados (la sincronización con ESPN los mantiene al día; aquí se pueden corregir a mano).
+- **Nuevo Usuario / Usuarios**: alta de usuarios en un grupo y gestión de roles, grupos y apuestas.
+
+**Roles**
+
+- **Super usuario**: hace todo, en todos los grupos.
+- **Administrador** (de un grupo): ve el panel, usa "Auto-asignar" y crea usuarios de solo lectura en su grupo.
+- **Solo lectura**: no entra al panel; inicia sesión para ver la tabla, los equipos y la apuesta de su grupo (pensado como una cuenta compartida por grupo).
+
+Un mismo usuario puede pertenecer a varios grupos, con un rol distinto en cada uno. Los datos de cada grupo (participantes, asignaciones, apuesta) son privados: la base de datos solo se los muestra a sus miembros.
 
 Para más detalle de la arquitectura interna, ver [CLAUDE.md](CLAUDE.md).
