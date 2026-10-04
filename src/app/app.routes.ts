@@ -5,6 +5,7 @@ import { TablaPuntajes } from './components/tabla-puntajes/tabla-puntajes';
 import { Reglamento } from './components/reglamento/reglamento';
 import { Juegos } from './components/juegos/juegos';
 import { Fixture } from './components/fixture/fixture';
+import { Ranking } from './components/ranking/ranking';
 import { Login } from './components/login/login';
 import { Admin } from './components/admin/admin';
 import { NuevoUsuario } from './components/nuevo-usuario/nuevo-usuario';
@@ -22,6 +23,7 @@ export const routes: Routes = [
   { path: 'equipos', component: Equipos },
   { path: 'juegos', component: Juegos },
   { path: 'fixture', component: Fixture },
+  { path: 'ranking', component: Ranking },
   { path: 'reglamento', component: Reglamento },
   
   { path: 'login', component: Login, canActivate: [guestGuard] },

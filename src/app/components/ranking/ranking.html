@@ -1,0 +1,52 @@
+<div class="ranking-container">
+  <div class="ranking">
+    <section class="tarjeta intro">
+      <h1>Ranking global @if (temporada()) { {{ temporada() }} }</h1>
+      <p>
+        Este es el orden con el que se hizo la asignación inicial de equipos de la temporada regular
+        (<a routerLink="/reglamento">reglamento</a>, reglas 4 a 10). Primero va el campeón del Super Bowl
+        y al final el equipo con peor récord de la temporada anterior: es el orden del Draft de la NFL, al revés.
+      </p>
+      <p class="nota">
+        Dentro de cada grupo, los equipos van de mejor a peor récord de temporada regular; los empates se
+        desempatan por fortaleza del calendario.
+      </p>
+    </section>
+
+    @if (cargando()) {
+      <div class="estado">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Cargando ranking...</p>
+      </div>
+    } @else if (error()) {
+      <div class="estado">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error() }}</p>
+      </div>
+    } @else {
+      @for (n of niveles(); track n.desde) {
+        <section class="tarjeta nivel">
+          <h2>
+            <span>{{ n.titulo }}</span>
+            <span class="rango">{{ n.desde === n.hasta ? n.desde : n.desde + '–' + n.hasta }}</span>
+          </h2>
+          @for (e of n.equipos; track e.id) {
+            <div class="fila" [class.campeon]="e.ranking === 1">
+              <span class="puesto">{{ e.ranking }}</span>
+              <img [src]="e.logo" [alt]="e.nombre" width="40" height="40" class="logo">
+              <span class="nombre">{{ e.ciudad }} {{ e.nombre }}</span>
+              <span class="division" [class.afc]="conferencia(e.division) === 'AFC'" [class.nfc]="conferencia(e.division) === 'NFC'">
+                {{ e.division }}
+              </span>
+            </div>
+          }
+        </section>
+      } @empty {
+        <div class="estado">
+          <mat-icon>info_outline</mat-icon>
+          <p>Todavía no hay ranking cargado.</p>
+        </div>
+      }
+    }
+  </div>
+</div>

@@ -1,0 +1,151 @@
+.ranking-container {
+  padding: 80px 16px 24px;
+  background-color: #003B73;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.ranking {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tarjeta {
+  background: #fff;
+  color: #1a1a1a;
+  border-radius: 14px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.intro h1 {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  color: #013369;
+}
+
+.intro p {
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.intro a {
+  color: #013369;
+  font-weight: 600;
+}
+
+.intro .nota {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.nivel h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: #013369;
+}
+
+.rango {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #777;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 32px 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px;
+  border-top: 1px solid #eee;
+}
+
+.fila.campeon {
+  background: rgba(255, 181, 71, 0.18);
+  border-radius: 8px;
+}
+
+.puesto {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #013369;
+  text-align: center;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.nombre {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.division {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.division.afc {
+  color: #a30808;
+  background: rgba(213, 10, 10, 0.08);
+}
+
+.division.nfc {
+  color: #013369;
+  background: rgba(1, 51, 105, 0.08);
+}
+
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  color: white;
+}
+
+.estado p {
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .tarjeta {
+    padding: 12px;
+  }
+
+  .fila {
+    grid-template-columns: 26px 32px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* En celular la división va debajo del nombre. */
+  .division {
+    grid-column: 3;
+    justify-self: start;
+    margin-top: -4px;
+  }
+}

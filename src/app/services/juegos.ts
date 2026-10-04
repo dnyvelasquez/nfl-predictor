@@ -47,6 +47,19 @@ export class JuegosService {
     );
   }
 
+  /** Año en que empieza la temporada cargada (el de la primera semana), o null si no hay semanas. */
+  getAnioTemporada(): Observable<number | null> {
+    return from(
+      this.supabaseClient.from('semana').select('inicio').order('id', { ascending: true }).limit(1)
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        const anio = parseInt(String(data?.[0]?.inicio ?? '').slice(0, 4), 10);
+        return Number.isFinite(anio) ? anio : null;
+      })
+    );
+  }
+
   /**
    * true cuando ya no queda ningún juego de temporada regular programado ni en
    * vivo (los pospuestos no bloquean: si se reprograman, la sincronización los

@@ -38,6 +38,15 @@ export interface EquipoStanding {
   ties: number;
 }
 
+export interface EquipoRanking {
+  id: string;
+  nombre: string;
+  ciudad: string;
+  division: string;
+  logo: string;
+  ranking: number;
+}
+
 export interface DivisionStanding {
   division: string;
   equipos: EquipoStanding[];
@@ -244,6 +253,25 @@ export class EquiposService {
    * división le falta esa posición, se ordena por porcentaje de victorias
    * (empate = media victoria) sin desempates.
    */
+  /**
+   * Ranking global de la temporada anterior (`equipos.ranking`, 1 = campeón del
+   * Super Bowl), con el que se hace la asignación de temporada regular.
+   */
+  getRanking(): Observable<EquipoRanking[]> {
+    return from(
+      this.supabaseClient
+        .from('equipos')
+        .select('id,nombre,ciudad,division,logo,ranking')
+        .not('ranking', 'is', null)
+        .order('ranking', { ascending: true })
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return (data ?? []) as EquipoRanking[];
+      })
+    );
+  }
+
   getStandingsTemporadaRegular(): Observable<ConferenciaStanding[]> {
     return forkJoin({
       equiposRes: from(
