@@ -281,7 +281,14 @@ export class JuegosService {
     ).pipe(map((r: any) => r.data?.[0]?.id ?? null));
   }
 
-  getJuegosPorSemanaId(semId: number): Observable<Juego[]> {
+  /**
+   * Juegos de una semana con logos y el participante que tiene cada equipo.
+   * Con `grupoId`, el participante es el de ese grupo; sin él se juntan todos
+   * los grupos (páginas públicas, donde el grupo aún no aplica).
+   */
+  getJuegosPorSemanaId(semId: number, grupoId?: string): Observable<Juego[]> {
+    let asignQuery = this.supabaseClient.from('asignacion').select('equipo_id,participante,etapa');
+    if (grupoId) asignQuery = asignQuery.eq('grupo_id', grupoId);
     return forkJoin({
       juegos: from(
         this.supabaseClient
@@ -293,7 +300,7 @@ export class JuegosService {
       ).pipe(map((res: any) => res.data || [])),
       equipos: from(this.supabaseClient.from('equipos').select('id,nombre'))
                 .pipe(map((res: any) => res.data || [])),
-      asign: from(this.supabaseClient.from('asignacion').select('equipo_id,participante,etapa'))
+      asign: from(asignQuery)
               .pipe(map((res: any) => res.data || []))
     }).pipe(
       map(({ juegos, equipos, asign }: any) => this.enrichJuegos(juegos, equipos, asign))

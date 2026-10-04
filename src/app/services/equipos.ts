@@ -200,13 +200,14 @@ export class EquiposService {
     );
   }
 
-  getEquiposDeTodasEtapas(nombre: string): Observable<(Equipo & { etapa: Etapa })[]> {
-    return from(
-      this.supabaseClient
-        .from('asignacion')
-        .select('equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division)')
-        .eq('participante', nombre)
-    ).pipe(
+  /** Sin `grupoId` busca en todos los grupos (páginas públicas, donde el grupo aún no aplica). */
+  getEquiposDeTodasEtapas(nombre: string, grupoId?: string): Observable<(Equipo & { etapa: Etapa })[]> {
+    let query = this.supabaseClient
+      .from('asignacion')
+      .select('equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division)')
+      .eq('participante', nombre);
+    if (grupoId) query = query.eq('grupo_id', grupoId);
+    return from(query).pipe(
       map(({ data, error }: any) => {
         if (error) throw error;
         return (data ?? []).map((row: any) => ({

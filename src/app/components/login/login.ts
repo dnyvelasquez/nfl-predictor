@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { supabase } from '../../core/supabase.client';
 
 @Component({
@@ -62,7 +63,10 @@ export class Login {
         const { data } = await supabase.auth.getSession();
         console.log('[after login] session?', !!data.session);
 
-        const redirect = this.route.snapshot.queryParamMap.get('redirect') || '/admin';
+        // Sin destino pedido: quien administra algo va a /admin; los usuarios de
+        // solo lectura (p. ej. la cuenta compartida de un grupo) van a la portada.
+        const esAdmin = await firstValueFrom(this.authService.esAdministrador$());
+        const redirect = this.route.snapshot.queryParamMap.get('redirect') || (esAdmin ? '/admin' : '/');
         this.router.navigateByUrl(redirect, { replaceUrl: true });
       },
       error: () => this.errorMsg = 'Correo o contraseña incorrectos'

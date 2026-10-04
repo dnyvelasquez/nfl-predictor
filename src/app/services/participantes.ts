@@ -54,16 +54,17 @@ export class ParticipantesService {
     );
   }
 
-  getParticipantesConPuntaje(): Observable<(Participante & {
+  /** Sin `grupoId` mezcla todos los grupos (páginas públicas, donde el grupo aún no aplica). */
+  getParticipantesConPuntaje(grupoId?: string): Observable<(Participante & {
   })[]> {
     return forkJoin({
-      participantes: this.getParticipantes(),
+      participantes: this.getParticipantes(grupoId),
       juegos: this.juegosService.getJuegosConResultado(),
     }).pipe(
       switchMap(({ participantes, juegos }) =>
         forkJoin(
           participantes.map(p =>
-            this.equiposService.getEquiposDeTodasEtapas(p.nombre).pipe(
+            this.equiposService.getEquiposDeTodasEtapas(p.nombre, grupoId).pipe(
               map(equiposTodasEtapas => {
                 const equiposPorEtapa = ETAPAS
                   .map(e => ({

@@ -45,9 +45,15 @@
     <button class="menu-button desktop-2" mat-button routerLink="/reglamento">
       <mat-icon class="icon">gavel</mat-icon> Reglamento
     </button>
-    <button class="menu-button desktop-2" mat-button routerLink="/admin">
-      <mat-icon class="icon">admin_panel_settings</mat-icon> Admin
-    </button>
+    @if (acceso() === 'lectura') {
+      <button class="menu-button desktop-2" mat-button (click)="cerrarSesion()">
+        <mat-icon class="icon">logout</mat-icon> Cerrar sesión
+      </button>
+    } @else {
+      <button class="menu-button desktop-2" mat-button routerLink="/admin">
+        <mat-icon class="icon">admin_panel_settings</mat-icon> Admin
+      </button>
+    }
   </nav>
 
   <!-- Menú hamburguesa en móvil -->
@@ -87,9 +93,16 @@
     <mat-icon>gavel</mat-icon>
     <span>Reglamento</span>
   </button>
-  <button mat-menu-item routerLink="/admin">
-    <mat-icon>admin_panel_settings</mat-icon>
-    <span>Admin</span>
-  </button>
+  @if (acceso() === 'lectura') {
+    <button mat-menu-item (click)="cerrarSesion()">
+      <mat-icon>logout</mat-icon>
+      <span>Cerrar sesión</span>
+    </button>
+  } @else {
+    <button mat-menu-item routerLink="/admin">
+      <mat-icon>admin_panel_settings</mat-icon>
+      <span>Admin</span>
+    </button>
+  }
 </mat-menu>
 

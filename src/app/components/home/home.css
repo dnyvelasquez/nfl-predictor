@@ -1,253 +1,420 @@
 .home-container {
-  padding-top: 50px;
-  padding-bottom: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
+  padding: 90px 16px 32px;
   background-color: #003B73;
+  box-sizing: border-box;
 }
 
-.welcome-card {
-  margin-top: 32px;
-  padding: 20px;
-  text-align: center;
-  max-width: 90%;
-  will-change: transform;
+/* Colores sobre las tarjetas oscuras del tema (Material dark). */
+.portada {
+  --texto: #ffffff;
+  --texto-suave: rgba(255, 255, 255, 0.72);
+  --texto-tenue: rgba(255, 255, 255, 0.55);
+  --acento: #7fd3f7;
+  --participante: #74d99a;
+  --en-vivo: #ff6b6b;
+  --linea: rgba(255, 255, 255, 0.12);
 }
 
-.header {
+.portada {
+  max-width: 1080px;
+  margin: 0 auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.logo {
-  width: 50px;
-  height: auto;
-  content-visibility: auto;
-}
-
-.subtitle {
-  margin: 20px 0;
-  font-weight: bold;
-  color: white;
-}
-
-.loading-container,
-.error-container,
-.empty-container {
+.estado-carga {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px;
-  gap: 16px;
+  gap: 12px;
+  padding: 32px;
   color: white;
 }
 
-.loading-container p,
-.error-container p,
-.empty-container p {
+.estado-carga.oscuro {
+  color: inherit;
+  padding: 16px;
+}
+
+.estado-carga p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.9);
 }
 
-.error-container {
-  background-color: rgba(220, 53, 69, 0.1);
-  border-radius: 8px;
+/* Juego destacado */
+
+.destacado {
+  padding: 16px 20px 24px;
 }
 
-/* Iconos */
+.destacado-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.destacado-titulo {
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+
+.chip-prime {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: #fdf0d5;
+  color: #7a4a00;
+}
+
+.destacado-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.equipo {
+  text-align: center;
+  min-width: 0;
+}
+
+.mascota-grande {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+.equipo p {
+  margin: 0;
+}
+
+.equipo-nombre {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.equipo-detalle {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.equipo-participante {
+  margin-top: 4px !important;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--participante);
+}
+
+.centro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 110px;
+  text-align: center;
+}
+
+.arroba {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--acento);
+}
+
+.marcador {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.detalle {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.detalle.fuerte {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.cuenta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.cuenta mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.en-vivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--en-vivo);
+}
+
+.punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--en-vivo);
+  animation: en-vivo-pulso 1.4s ease-in-out infinite;
+}
+
+@keyframes en-vivo-pulso {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* Semana + posiciones */
+
+.columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.semana,
+.posiciones {
+  padding: 12px 16px 16px;
+}
+
+.tarjeta-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.tarjeta-encabezado h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--acento);
+}
+
+.fila-juego {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--linea);
+}
+
+.fila-juego:last-child {
+  border-bottom: none;
+}
+
+.mascota-chica {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.fila-equipo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 0.95rem;
+  color: var(--texto);
+}
+
+.fila-equipo span,
+.fila-equipo small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fila-equipo small {
+  font-size: 0.75rem;
+  color: var(--participante);
+}
+
+.fila-equipo.derecha {
+  text-align: right;
+}
+
+.fila-centro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 84px;
+  text-align: center;
+}
+
+.fila-marcador {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.vacio {
+  margin: 16px 0 4px;
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+.invitacion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 8px;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+.invitacion p {
+  margin: 0;
+}
+
+.selector-grupo {
+  max-width: 200px;
+}
+
+.fila-participante {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 8px;
+  border: none;
+  border-bottom: 1px solid var(--linea);
+  border-radius: 0;
+  background: none;
+  color: var(--texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fila-participante:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.fila-participante .posicion {
+  width: 20px;
+  color: var(--texto-tenue);
+}
+
+.fila-participante .nombre {
+  flex: 1;
+  min-width: 0;
+}
+
+.fila-participante .puntaje {
+  font-weight: 700;
+  color: var(--acento);
+}
+
+.fila-participante.primer-lugar {
+  background: rgba(255, 165, 0, 0.14);
+}
+
+.fila-participante.segundo-lugar {
+  background: rgba(127, 211, 247, 0.12);
+}
+
 .icono-trofeo {
-  color: darkorange;
-  margin-left: 6px;
+  color: #ffb547;
 }
 
 .icono-medalla {
-  color: steelblue;
-  margin-left: 6px;
+  color: var(--acento);
 }
 
-.with-icon {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.one-column-view {
-  display: none;
-}
-
-.participants-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.participant-row {
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  will-change: transform;
-}
-
-.participant-row:hover {
-  transform: translateX(4px);
-}
-
-.participant-info-simple {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 16px;
-}
-
-.participant-name {
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.participant-score-chip {
-  display: inline-block;
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-weight: bold;
-  font-size: 1rem;
-  min-width: 40px;
-  text-align: center;
-}
-
-.two-columns-view {
-  display: none;
-}
-
-.participants-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 4px;
-  margin-top: 12px;
-}
-
-.participant-card {
-  background-color: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  will-change: transform;
-}
-
-.participant-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.participant-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-}
-
-.participant-score {
-  font-size: 1.25rem;
-  font-weight: bold;
-  background-color: rgba(0,0,0,0.05);
-  padding: 4px 12px;
-  border-radius: 20px;
-  margin-left: 8px;
-  min-width: 50px;
-  text-align: center;
-}
-
-/* Estilos por posición */
-.primer-lugar {
-  background-color: #0b2d5c !important;
-  color: white;
-}
-
-.segundo-lugar {
-  background-color: #D50A0A !important;
-  color: white;
-}
-
-.otro-lugar {
-  background-color: #101414 !important;
-  color: white;
-}
-
-.primer-lugar .participant-score-chip,
-.segundo-lugar .participant-score-chip,
-.otro-lugar .participant-score-chip {
-  background-color: rgba(255, 255, 255, 0.25);
-}
-
-.primer-lugar .participant-score,
-.segundo-lugar .participant-score,
-.otro-lugar .participant-score {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-@media (max-width: 768px) {
-  .one-column-view {
-    display: block;
+@media (max-width: 760px) {
+  .home-container {
+    padding-top: 76px;
   }
 
-  .two-columns-view {
-    display: none;
+  .columnas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* En celular la tabla va antes que la lista de juegos. */
+  .posiciones {
+    order: -1;
+  }
+
+  .marcador {
+    font-size: 1.6rem;
+  }
+
+  .centro {
+    min-width: 88px;
+  }
+
+  .fila-juego {
+    grid-template-columns: 36px minmax(0, 1fr) auto minmax(0, 1fr) 36px;
+    gap: 6px;
+  }
+
+  .mascota-chica {
+    width: 36px;
+    height: 36px;
   }
 }
 
-@media (min-width: 769px) {
-  .one-column-view {
-    display: none;
-  }
-
-  .two-columns-view {
-    display: block;
-  }
-}
-
+/* Celulares angostos (~375 px): que entren "Commanders" o "Buccaneers" sin cortarse. */
 @media (max-width: 480px) {
-  .participant-info-simple {
-    padding: 8px 12px;
+  .home-container {
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
-  .participant-name {
-    font-size: 0.9rem;
+  .destacado {
+    padding: 12px 12px 18px;
   }
 
-  .participant-score-chip {
-    padding: 3px 10px;
-    font-size: 0.9rem;
-  }
-}
-
-::ng-deep .participante-dialog-panel {
-  max-width: 90vw !important;
-  border-radius: 16px !important;
-}
-
-::ng-deep .participante-dialog-panel .mat-mdc-dialog-container {
-  padding: 0 !important;
-  border-radius: 16px !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .participant-row,
-  .participant-card {
-    transition: none;
+  .semana,
+  .posiciones {
+    padding: 10px 10px 12px;
   }
 
-  .participant-row:hover,
-  .participant-card:hover {
-    transform: none;
+  .equipo-nombre {
+    font-size: 1rem;
+  }
+
+  .centro {
+    min-width: 72px;
+  }
+
+  .fila-juego {
+    grid-template-columns: 32px minmax(0, 1fr) auto minmax(0, 1fr) 32px;
+    gap: 4px;
+  }
+
+  .mascota-chica {
+    width: 32px;
+    height: 32px;
+  }
+
+  .fila-equipo {
+    font-size: 0.85rem;
+  }
+
+  .fila-centro {
+    min-width: 64px;
   }
 }

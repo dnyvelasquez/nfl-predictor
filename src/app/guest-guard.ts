@@ -7,5 +7,8 @@ export const guestGuard: CanActivateFn = async (): Promise<boolean | UrlTree> =>
   const router = inject(Router);
   const svc = inject(AuthService);
   const isAuth = await firstValueFrom(svc.isAuthenticated$());
-  return isAuth ? router.createUrlTree(['/admin']) : true;
+  if (!isAuth) return true;
+  // Ya hay sesión: admin a /admin, solo lectura a la portada.
+  const esAdmin = await firstValueFrom(svc.esAdministrador$());
+  return router.createUrlTree([esAdmin ? '/admin' : '/']);
 };

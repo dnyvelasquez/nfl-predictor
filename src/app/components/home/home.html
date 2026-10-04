@@ -1,94 +1,184 @@
 <div class="home-container">
-  <mat-card class="welcome-card">
-    <div class="header">
-      <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo" loading="lazy">
-      <h1>NFL Predictor 2026-2027</h1>
-      <h1> 🏈</h1>
-    </div>
-    <mat-divider></mat-divider>
+  <div class="portada">
 
-    <h2 class="subtitle">Clasificación de Participantes</h2>
-
-    @if (loading$ | async) {
-      <div class="loading-container">
+    @if (cargando()) {
+      <div class="estado-carga">
         <mat-spinner diameter="40"></mat-spinner>
-        <p>Cargando participantes...</p>
+        <p>Cargando la semana...</p>
       </div>
-    }
-
-    @if (error$ | async; as error) {
-      <div class="error-container">
+    } @else if (error()) {
+      <div class="estado-carga">
         <mat-icon>error_outline</mat-icon>
-        <p>{{ error }}</p>
-        <button mat-button (click)="refreshData()">Reintentar</button>
+        <p>{{ error() }}</p>
       </div>
     }
 
-    @if ((participantes$ | async); as participantes) {
-      @if (participantes.length === 0) {
-        <div class="empty-container">
-          <mat-icon>people_outline</mat-icon>
-          <p>No hay participantes registrados</p>
-        </div>
-      } @else {
-        <div class="one-column-view">
-          <div class="participants-list">
-            @for (p of participantes; track p.id; let i = $index) {
-              <div class="participant-row"
-                   [class.primer-lugar]="p.max"
-                   [class.segundo-lugar]="p.second"
-                   [class.otro-lugar]="!p.max && !p.second"
-                   (click)="abrirDetalleParticipante(p)">
-                <div class="participant-info-simple">
-                  <div class="participant-name with-icon">
-                    <span>{{i + 1}}. {{p.nombre}}</span>
-                    @if (p.puntaje !== 0) {
-                      @if (p.max) {
-                        <mat-icon class="icono-trofeo" aria-label="Primer lugar">emoji_events</mat-icon>
-                      }
-                      @else if (p.second) {
-                        <mat-icon class="icono-medalla" aria-label="Segundo lugar">military_tech</mat-icon>
-                      }
-                    }
-                  </div>
-                  <div class="participant-score-chip">
-                    {{p.puntaje}}
-                  </div>
-                </div>
-              </div>
+    @if (destacado(); as j) {
+      <mat-card class="destacado">
+        <div class="destacado-encabezado">
+          <span class="destacado-titulo">
+            @switch (estado(j)) {
+              @case ('en_vivo') { Juego destacado · en vivo }
+              @case ('final') { Último juego }
+              @default { Próximo juego destacado }
             }
-          </div>
+          </span>
+          @if (etiquetaPrime(j); as prime) {
+            <span class="chip-prime">{{ prime }}</span>
+          }
         </div>
 
-        <div class="two-columns-view">
-          <div class="participants-grid">
-            @for (p of participantes; track p.id; let i = $index) {
-              <div class="participant-card"
-                   [class.primer-lugar]="p.max"
-                   [class.segundo-lugar]="p.second"
-                   [class.otro-lugar]="!p.max && !p.second"
-                   (click)="abrirDetalleParticipante(p)">
-                <div class="participant-info">
-                  <div class="participant-name with-icon">
-                    <span>{{i + 1}}. {{p.nombre}}</span>
-                    @if (p.puntaje !== 0) {
-                      @if (p.max) {
-                        <mat-icon class="icono-trofeo" aria-label="Primer lugar">emoji_events</mat-icon>
-                      }
-                      @else if (p.second) {
-                        <mat-icon class="icono-medalla" aria-label="Segundo lugar">military_tech</mat-icon>
-                      }
-                    }
-                  </div>
-                  <div class="participant-score">
-                    {{p.puntaje}}
-                  </div>
-                </div>
-              </div>
+        <div class="destacado-cuerpo">
+          <div class="equipo">
+            <img [src]="mascotaIzquierda(j.visitante, 'masc')" [alt]="j.visitante"
+                 width="640" height="640" fetchpriority="high" class="mascota-grande">
+            <p class="equipo-nombre">{{ j.visitante }}</p>
+            <p class="equipo-detalle">
+              @if (record(j.visitante)) { {{ record(j.visitante) }} · }visitante
+            </p>
+            @if (logueado() && j.participanteVisitante) {
+              <p class="equipo-participante">{{ j.participanteVisitante }}</p>
+            }
+          </div>
+
+          <div class="centro">
+            @switch (estado(j)) {
+              @case ('en_vivo') {
+                <span class="en-vivo"><span class="punto"></span>En vivo</span>
+                <span class="marcador">{{ j.resultado_visitante ?? 0 }} - {{ j.resultado_local ?? 0 }}</span>
+                @if (j.periodo) { <span class="detalle">{{ j.periodo }}</span> }
+              }
+              @case ('final') {
+                <span class="detalle">Final</span>
+                <span class="marcador">{{ j.resultado_visitante }} - {{ j.resultado_local }}</span>
+                <span class="detalle">{{ fechaCorta(j) }}</span>
+              }
+              @default {
+                <span class="arroba">&#64;</span>
+                <span class="detalle fuerte">{{ fechaCorta(j) }}</span>
+                <span class="detalle fuerte">{{ j.hora }}</span>
+                @if (estado(j) === 'pospuesto') {
+                  <span class="detalle">Pospuesto</span>
+                } @else if (cuentaRegresiva(j); as falta) {
+                  <span class="cuenta"><mat-icon>schedule</mat-icon>{{ falta }}</span>
+                }
+              }
+            }
+          </div>
+
+          <div class="equipo">
+            <img [src]="mascotaDerecha(j.local, 'masc')" [alt]="j.local"
+                 width="640" height="640" fetchpriority="high" class="mascota-grande">
+            <p class="equipo-nombre">{{ j.local }}</p>
+            <p class="equipo-detalle">
+              @if (record(j.local)) { {{ record(j.local) }} · }local
+            </p>
+            @if (logueado() && j.participanteLocal) {
+              <p class="equipo-participante">{{ j.participanteLocal }}</p>
             }
           </div>
         </div>
-      }
+      </mat-card>
     }
-  </mat-card>
+
+    @if (!cargando()) {
+      <div class="columnas">
+
+        <mat-card class="semana">
+          <div class="tarjeta-encabezado">
+            <h2>Juegos de la semana @if (semanaId()) { {{ semanaId() }} }</h2>
+            <a mat-button routerLink="/juegos">Ver todos</a>
+          </div>
+
+          @for (j of listaSemana(); track j.id) {
+            <div class="fila-juego">
+              <img [src]="j.logoVisitante" [alt]="j.visitante" width="44" height="44" loading="lazy" class="mascota-chica">
+              <div class="fila-equipo">
+                <span>{{ j.visitante }}</span>
+                @if (logueado() && j.participanteVisitante) { <small>{{ j.participanteVisitante }}</small> }
+              </div>
+
+              <div class="fila-centro">
+                @switch (estado(j)) {
+                  @case ('en_vivo') {
+                    <span class="en-vivo"><span class="punto"></span>{{ j.periodo || 'En vivo' }}</span>
+                    <span class="fila-marcador">{{ j.resultado_visitante ?? 0 }} - {{ j.resultado_local ?? 0 }}</span>
+                  }
+                  @case ('final') {
+                    <span class="detalle">Final</span>
+                    <span class="fila-marcador">{{ j.resultado_visitante }} - {{ j.resultado_local }}</span>
+                  }
+                  @case ('pospuesto') {
+                    <span class="detalle">Pospuesto</span>
+                  }
+                  @default {
+                    <span class="detalle">{{ fechaCorta(j) }}</span>
+                    <span class="detalle fuerte">{{ j.hora }}</span>
+                  }
+                }
+              </div>
+
+              <div class="fila-equipo derecha">
+                <span>{{ j.local }}</span>
+                @if (logueado() && j.participanteLocal) { <small>{{ j.participanteLocal }}</small> }
+              </div>
+              <img [src]="j.logoLocal" [alt]="j.local" width="44" height="44" loading="lazy" class="mascota-chica">
+            </div>
+          } @empty {
+            <p class="vacio">No hay juegos programados esta semana.</p>
+          }
+        </mat-card>
+
+        <mat-card class="posiciones">
+          @if (!logueado()) {
+            <div class="invitacion">
+              <mat-icon>lock</mat-icon>
+              <p>Inicia sesión para ver la tabla de posiciones de tu grupo y quién tiene cada equipo.</p>
+              <a mat-flat-button color="primary" routerLink="/login" [queryParams]="{ redirect: '/' }">Iniciar sesión</a>
+            </div>
+          } @else if (grupos().length === 0) {
+            <div class="invitacion">
+              <mat-icon>group_off</mat-icon>
+              <p>Tu usuario todavía no pertenece a ningún grupo.</p>
+            </div>
+          } @else {
+            <div class="tarjeta-encabezado">
+              <h2>Posiciones</h2>
+              @if (grupos().length > 1) {
+                <mat-select class="selector-grupo" [value]="grupoId()" (selectionChange)="cambiarGrupo($event.value)" aria-label="Grupo">
+                  @for (g of grupos(); track g.id) {
+                    <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
+                  }
+                </mat-select>
+              } @else {
+                <span class="detalle">{{ nombreGrupo() }}</span>
+              }
+            </div>
+
+            @if (cargandoTabla()) {
+              <div class="estado-carga oscuro"><mat-spinner diameter="32"></mat-spinner></div>
+            } @else {
+              @for (p of participantes() ?? []; track p.id; let i = $index) {
+                <button type="button" class="fila-participante"
+                        [class.primer-lugar]="p.max" [class.segundo-lugar]="p.second"
+                        (click)="abrirDetalleParticipante(p)">
+                  <span class="posicion">{{ i + 1 }}</span>
+                  <span class="nombre">{{ p.nombre }}</span>
+                  @if (p.puntaje !== 0 && p.max) {
+                    <mat-icon class="icono-trofeo" aria-label="Primer lugar">emoji_events</mat-icon>
+                  } @else if (p.puntaje !== 0 && p.second) {
+                    <mat-icon class="icono-medalla" aria-label="Segundo lugar">military_tech</mat-icon>
+                  }
+                  <span class="puntaje">{{ p.puntaje }}</span>
+                </button>
+              } @empty {
+                <p class="vacio">Este grupo todavía no tiene participantes.</p>
+              }
+            }
+          }
+        </mat-card>
+
+      </div>
+    }
+  </div>
 </div>

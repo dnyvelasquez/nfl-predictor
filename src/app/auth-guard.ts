@@ -31,10 +31,14 @@ export const authGuard: CanActivateFn = async (_route, state): Promise<boolean |
 };
 
 // Va después de authGuard. 'superusuario': solo el super usuario.
-// 'administrador': super usuario o administrador de al menos un grupo. El resto va a /admin.
+// 'administrador': super usuario o administrador de al menos un grupo.
+// Quien no cumple va a /admin si administra algo, o a la portada si es solo
+// lectura (los usuarios de solo lectura no entran a ninguna página de admin).
 export const rolGuard = (minimo: 'superusuario' | 'administrador'): CanActivateFn => async () => {
   const router = inject(Router);
   const auth = inject(AuthService);
-  const permitido = await firstValueFrom(minimo === 'superusuario' ? auth.esSuperusuario$() : auth.esAdministrador$());
-  return permitido ? true : router.createUrlTree(['/admin']);
+  const esAdmin = await firstValueFrom(auth.esAdministrador$());
+  const permitido = minimo === 'superusuario' ? await firstValueFrom(auth.esSuperusuario$()) : esAdmin;
+  if (permitido) return true;
+  return router.createUrlTree([esAdmin ? '/admin' : '/']);
 };
