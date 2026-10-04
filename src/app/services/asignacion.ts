@@ -99,13 +99,14 @@ export class AsignacionService {
   }
 
   /**
-   * Asigna una ronda eliminatoria con equipos compartidos ('divisional' o
-   * 'conferencia') de un grupo (reglamento, reglas 11-16): conserva los
-   * ganadores de la ronda anterior y completa de menor a mayor puntaje,
-   * compartiendo equipos de forma pareja. Lógica en Neon:
-   * `calcular_auto_asignacion_eliminatoria()` / `auto_asignar_eliminatoria()`.
+   * Asigna una ronda eliminatoria de un grupo (reglamento, reglas 11-16):
+   * 'divisional' y 'conferencia' (un equipo por conferencia, compartidos de
+   * forma pareja) o 'superbowl' (un solo equipo por participante, repartidos
+   * de forma pareja entre los dos finalistas). Lógica en Neon:
+   * `calcular_auto_asignacion_eliminatoria()` / `calcular_auto_asignacion_superbowl()`,
+   * aplicadas por `auto_asignar_eliminatoria()`.
    */
-  autoAsignarEliminatoria(grupoId: string, etapa: 'divisional' | 'conferencia') {
+  autoAsignarEliminatoria(grupoId: string, etapa: 'divisional' | 'conferencia' | 'superbowl') {
     return from(
       this.supabaseClient.getClient().rpc('auto_asignar_eliminatoria', { p_grupo: grupoId, p_etapa: etapa })
     ).pipe(

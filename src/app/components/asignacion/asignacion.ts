@@ -49,13 +49,13 @@ export class Asignacion implements OnInit {
   private gruposService = inject(GruposService);
   private juegosService = inject(JuegosService);
 
-  // Etapas con asignación automática: temporada regular (por ranking) y las
-  // rondas de playoffs hasta la final de conferencia (por puntaje).
-  readonly etapasAutomaticas: Etapa[] = ['regular', 'wildcard', 'divisional', 'conferencia'];
+  // Etapas con asignación automática: temporada regular (por ranking) y todas
+  // las rondas de playoffs (por puntaje).
+  readonly etapasAutomaticas: Etapa[] = ['regular', 'wildcard', 'divisional', 'conferencia', 'superbowl'];
 
   // Ronda cuyo cierre arma cada ronda de playoffs.
   private static readonly RONDA_ANTERIOR: Partial<Record<Etapa, Etapa>> = {
-    wildcard: 'regular', divisional: 'wildcard', conferencia: 'divisional',
+    wildcard: 'regular', divisional: 'wildcard', conferencia: 'divisional', superbowl: 'conferencia',
   };
 
   // Solo el super usuario edita a mano (RLS también rechaza la escritura de los demás roles).
@@ -252,7 +252,7 @@ export class Asignacion implements OnInit {
 
     const op = etapa === 'regular' ? this.svc.autoAsignarTemporadaRegular(grupoId)
       : etapa === 'wildcard' ? this.svc.autoAsignarWildcard(grupoId)
-      : this.svc.autoAsignarEliminatoria(grupoId, etapa as 'divisional' | 'conferencia');
+      : this.svc.autoAsignarEliminatoria(grupoId, etapa as 'divisional' | 'conferencia' | 'superbowl');
     op.subscribe({
       next: ({ asignados }) => {
         this.okMsg.set(etapa === 'regular'
