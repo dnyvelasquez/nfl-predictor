@@ -54,6 +54,18 @@ export class JuegosService {
     );
   }
 
+  /** Juegos de playoffs (todas las etapas menos 'regular'), incluidos los "TBD" que ESPN crea por adelantado. */
+  getJuegosPostemporada(): Observable<Juego[]> {
+    return from(
+      this.supabaseClient.from('juegos').select('*').neq('etapa', 'regular').order('fecha', { ascending: true })
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return (data ?? []) as Juego[];
+      })
+    );
+  }
+
   /** Año en que empieza la temporada cargada (el de la primera semana), o null si no hay semanas. */
   getAnioTemporada(): Observable<number | null> {
     return from(

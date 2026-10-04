@@ -18,6 +18,8 @@
   /* Sin esto el contenedor crece hasta el flex-basis de 520 px de las
      conferencias y en celular se salen por la derecha. */
   min-width: 0;
+  /* Centrado dentro de la pestaña. */
+  margin: 16px auto 0;
 }
 
 .conferencia {
@@ -193,5 +195,254 @@
 
   .conferencia-header h2 {
     font-size: 0.95rem;
+  }
+}
+
+/* ===== Pestañas ===== */
+
+.fixture-tabs {
+  width: 100%;
+  max-width: 1400px;
+  min-width: 0;
+}
+
+/* ===== Postemporada ===== */
+
+.postemporada {
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.post-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.chip-provisional {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: #fdf0d5;
+  color: #7a4a00;
+}
+
+.post-nota {
+  margin: 12px 16px 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.bracket {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+}
+
+.columna {
+  --conf: #013369;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.col-afc { --conf: #D50A0A; }
+.col-nfc { --conf: #013369; }
+.col-sb { --conf: #c9a227; }
+
+.columna-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 8px;
+  color: #fff;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.columna-logo {
+  width: 28px;
+  height: 28px;
+  padding: 3px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.columna-trofeo {
+  color: #ffd479;
+  flex-shrink: 0;
+}
+
+.col-sb .columna-header strong {
+  color: #ffd479;
+}
+
+.columna-fechas {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* En escritorio las rondas posteriores quedan centradas respecto a las anteriores. */
+.cruces {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 10px;
+}
+
+.cruce {
+  background: #fff;
+  color: #222;
+  border-radius: 10px;
+  border-left: 4px solid var(--conf);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cruce.proyectado {
+  border-left-style: dashed;
+}
+
+.cruce-equipo {
+  display: grid;
+  grid-template-columns: 16px 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.cruce-equipo + .cruce-equipo {
+  border-top: 1px solid #f0f0f0;
+}
+
+.seed {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #888;
+  text-align: center;
+}
+
+.cruce-logo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.cruce-logo.vacio {
+  display: inline-block;
+  border-radius: 50%;
+  background: #eee;
+}
+
+.cruce-nombre {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cruce-nombre.por-definir {
+  font-weight: 500;
+  font-style: italic;
+  color: #999;
+}
+
+.cruce-puntos {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cruce-equipo.ganador .cruce-nombre,
+.cruce-equipo.ganador .cruce-puntos {
+  font-weight: 800;
+  color: #000;
+}
+
+.cruce-equipo.perdedor {
+  opacity: 0.5;
+}
+
+.cruce-estado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  color: #555;
+  background: #f5f5f5;
+}
+
+.cruce.en-vivo .cruce-estado {
+  color: #d32f2f;
+  font-weight: 700;
+}
+
+.punto-vivo {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d32f2f;
+  animation: punto-vivo 1.4s ease-in-out infinite;
+}
+
+@keyframes punto-vivo {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.cruce.descanso .cruce-estado {
+  color: #7a4a00;
+  background: #fdf0d5;
+}
+
+/* Tablet y celular: las rondas se apilan (AFC, NFC y al final el Super Bowl). */
+@media (max-width: 1100px) {
+  .bracket {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .columna {
+    order: var(--orden);
+  }
+
+  .columna-header {
+    min-height: 0;
+    font-size: 0.95rem;
+  }
+
+  .cruces {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
+    align-items: start;
+  }
+}
+
+@media (max-width: 600px) {
+  .bracket {
+    padding: 10px;
   }
 }

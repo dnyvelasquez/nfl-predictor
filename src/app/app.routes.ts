@@ -1,11 +1,7 @@
 import { Routes } from '@angular/router';
 import { Home } from './components/home/home';
-import { Equipos } from './components/equipos/equipos';
 import { TablaPuntajes } from './components/tabla-puntajes/tabla-puntajes';
-import { Reglamento } from './components/reglamento/reglamento';
 import { Juegos } from './components/juegos/juegos';
-import { Fixture } from './components/fixture/fixture';
-import { Ranking } from './components/ranking/ranking';
 import { authGuard, rolGuard } from '../app/auth-guard';
 import { guestGuard } from './guest-guard';
 
@@ -13,14 +9,15 @@ export const routes: Routes = [
 
   { path: '', component: Home, pathMatch: 'full' },
   { path: 'tabla-puntajes', component: TablaPuntajes },
-  { path: 'equipos', component: Equipos },
+  { path: 'equipos', loadComponent: () => import('./components/equipos/equipos').then(m => m.Equipos) },
   { path: 'juegos', component: Juegos },
-  { path: 'fixture', component: Fixture },
-  { path: 'ranking', component: Ranking },
-  { path: 'reglamento', component: Reglamento },
+  { path: 'fixture', loadComponent: () => import('./components/fixture/fixture').then(m => m.Fixture) },
+  { path: 'ranking', loadComponent: () => import('./components/ranking/ranking').then(m => m.Ranking) },
+  { path: 'reglamento', loadComponent: () => import('./components/reglamento/reglamento').then(m => m.Reglamento) },
 
-  // Login y páginas de admin se cargan solo al abrirlas (lazy loading): la
-  // mayoría de visitas son a las páginas públicas y no necesitan este código.
+  // Login, páginas de admin y las públicas menos visitadas (equipos, fixture,
+  // ranking, reglamento) se cargan solo al abrirlas (lazy loading), para que la
+  // carga inicial quede en lo que usa la portada.
   { path: 'login', loadComponent: () => import('./components/login/login').then(m => m.Login), canActivate: [guestGuard] },
 
   { path: 'admin', loadComponent: () => import('./components/admin/admin').then(m => m.Admin), canActivate: [authGuard, rolGuard('administrador')] },

@@ -10,34 +10,114 @@
       <p>{{ error }}</p>
     </div>
   } @else {
-    <div class="conferencias">
-      @for (conf of conferencias; track conf.conferencia) {
-        <mat-card class="conferencia" [ngClass]="conf.conferencia === 'AFC' ? 'conf-afc' : 'conf-nfc'">
-          <div class="conferencia-header">
-            <img [src]="logosConferencia[conf.conferencia]" [alt]="conf.conferencia" class="conferencia-logo">
-            <h2>{{ conf.conferencia === 'AFC' ? 'American Football Conference' : 'National Football Conference' }}</h2>
-          </div>
+    <mat-tab-group class="fixture-tabs" [(selectedIndex)]="pestana" animationDuration="0ms" mat-stretch-tabs="false">
+      <mat-tab label="Temporada regular">
+        <div class="conferencias">
+          @for (conf of conferencias; track conf.conferencia) {
+            <mat-card class="conferencia" [ngClass]="conf.conferencia === 'AFC' ? 'conf-afc' : 'conf-nfc'">
+              <div class="conferencia-header">
+                <img [src]="logosConferencia[conf.conferencia]" [alt]="conf.conferencia" class="conferencia-logo">
+                <h2>{{ conf.conferencia === 'AFC' ? 'American Football Conference' : 'National Football Conference' }}</h2>
+              </div>
 
-          <div class="divisiones">
-            @for (div of conf.divisiones; track div.division) {
-              <div class="division-card">
-                <div class="division-header">
-                  <span class="division-conf">{{ conf.conferencia }}</span>
-                  <strong>{{ nombreDivision(div.division) }}</strong>
-                  <span class="division-col">G-P-E</span>
-                </div>
-                @for (e of div.equipos; track e.id) {
-                  <div class="equipo-row" [ngClass]="claseFila(e)">
-                    <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo">
-                    <span class="equipo-nombre">{{ e.ciudad }} {{ e.nombre }}</span>
-                    <span class="equipo-record">{{ e.wins }}-{{ e.losses }}-{{ e.ties }}</span>
+              <div class="divisiones">
+                @for (div of conf.divisiones; track div.division) {
+                  <div class="division-card">
+                    <div class="division-header">
+                      <span class="division-conf">{{ conf.conferencia }}</span>
+                      <strong>{{ nombreDivision(div.division) }}</strong>
+                      <span class="division-col">G-P-E</span>
+                    </div>
+                    @for (e of div.equipos; track e.id) {
+                      <div class="equipo-row" [ngClass]="claseFila(e)">
+                        <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo">
+                        <span class="equipo-nombre">{{ e.ciudad }} {{ e.nombre }}</span>
+                        <span class="equipo-record">{{ e.wins }}-{{ e.losses }}-{{ e.ties }}</span>
+                      </div>
+                    }
                   </div>
                 }
               </div>
+            </mat-card>
+          }
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Postemporada">
+        @if (postemporada) {
+          <mat-card class="postemporada">
+            <div class="post-header">
+              <h2>Postemporada</h2>
+              @if (provisional) {
+                <span class="chip-provisional">Clasificación provisional</span>
+              }
+            </div>
+            @if (provisional) {
+              <p class="post-nota">Los cruces se proyectan con las semillas actuales y cambian hasta que termine la temporada regular.</p>
             }
-          </div>
-        </mat-card>
-      }
-    </div>
+
+            <div class="bracket">
+              @for (col of columnas; track col.clave) {
+                <section class="columna" [class.col-afc]="col.conf === 'AFC'" [class.col-nfc]="col.conf === 'NFC'"
+                         [class.col-sb]="!col.conf" [style.--orden]="col.orden">
+                  <header class="columna-header">
+                    @if (col.conf) {
+                      <img [src]="logosConferencia[col.conf]" [alt]="col.conf" class="columna-logo">
+                    } @else {
+                      <mat-icon class="columna-trofeo">emoji_events</mat-icon>
+                    }
+                    <div>
+                      <strong>{{ col.ronda.titulo }}</strong>
+                      @if (col.ronda.fechas) { <span class="columna-fechas">{{ col.ronda.fechas }}</span> }
+                    </div>
+                  </header>
+
+                  <div class="cruces">
+                    @for (c of col.ronda.cruces; track $index) {
+                      <ng-container *ngTemplateOutlet="tarjeta; context: { $implicit: c }"></ng-container>
+                    }
+                    @if (col.ronda.descansa; as d) {
+                      <div class="cruce descanso">
+                        <div class="cruce-equipo ganador">
+                          <span class="seed">{{ d.seed }}</span>
+                          <img [src]="d.logo" [alt]="d.nombre" class="cruce-logo">
+                          <span class="cruce-nombre">{{ d.nombre }}</span>
+                        </div>
+                        <div class="cruce-estado">Descansa · pasa directo</div>
+                      </div>
+                    }
+                  </div>
+                </section>
+              }
+            </div>
+          </mat-card>
+        }
+      </mat-tab>
+    </mat-tab-group>
   }
 </div>
+
+<ng-template #tarjeta let-c>
+  <div class="cruce" [class.en-vivo]="c.estado === 'en_vivo'" [class.proyectado]="c.estado === 'proyectado' || c.estado === 'por_definir'">
+    @for (e of [c.local, c.visitante]; track $index) {
+      <div class="cruce-equipo" [class.ganador]="c.ganador && e && c.ganador.id === e.id" [class.perdedor]="esPerdedor(c, e)">
+        @if (e) {
+          <span class="seed">{{ e.seed }}</span>
+          <img [src]="e.logo" [alt]="e.nombre" class="cruce-logo">
+          <span class="cruce-nombre">{{ e.nombre }}</span>
+          @if (c.estado === 'final' || c.estado === 'en_vivo') {
+            <span class="cruce-puntos">{{ $index === 0 ? c.puntosLocal : c.puntosVisitante }}</span>
+          }
+        } @else {
+          <span class="seed">–</span>
+          <span class="cruce-logo vacio"></span>
+          <span class="cruce-nombre por-definir">Por definir</span>
+        }
+      </div>
+    }
+    <div class="cruce-estado">
+      @if (c.estado === 'en_vivo') { <span class="punto-vivo"></span> }
+      {{ estadoCruce(c) }}
+    </div>
+  </div>
+</ng-template>
