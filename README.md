@@ -84,13 +84,15 @@ También tiene una GitHub Action (`.github/workflows/sync-ranking.yml`) que corr
 
 - **Portada**: el juego destacado de la semana (el de horario prime, en vivo o el próximo, con las mascotas de los dos equipos enfrentadas, su récord y una cuenta regresiva) y los juegos de la semana, con los que están en vivo primero. Con sesión muestra además la tabla de posiciones del grupo y qué participante tiene cada equipo.
 - **Juegos de la semana**: calendario por semana con la hora, el marcador final o, mientras el juego está en curso, el marcador parcial con un letrero "En vivo" y el cuarto que se está jugando; se actualiza solo. Con sesión muestra qué participante del grupo tiene cada equipo.
-- **Equipos → Fixture**: standings de temporada regular por conferencia y división, con el récord (Ganados-Perdidos-Empatados) y el orden oficial de la NFL; una franja de color marca la clasificación a playoffs (amarillo: semilla 1, azul: otros campeones de división, rojo: wild cards).
+- **Equipos → Fixture**: dos pestañas.
+  - *Temporada regular*: standings por conferencia y división, con el récord (Ganados-Perdidos-Empatados) y el orden oficial de la NFL; una franja de color marca la clasificación a playoffs (amarillo: semilla 1, azul: otros campeones de división, rojo: wild cards).
+  - *Postemporada*: el cuadro de playoffs (AFC, Super Bowl y NFC). Antes de los playoffs muestra los cruces proyectados con las semillas actuales; luego, los juegos reales con fecha, marcador en vivo y ganador. Se abre sola en esta pestaña cuando empiezan los playoffs.
 - **Equipos → Ranking inicial**: el ranking de la temporada anterior con el que se hizo la asignación inicial, agrupado según hasta dónde llegó cada equipo en los playoffs.
 - **Reglamento**: reglas de asignación de equipos, puntaje y repartición del premio. El valor de la apuesta (regla 22) depende del grupo y solo se ve con sesión.
 
 **Páginas de cada grupo (requieren sesión)**
 
-- **Tabla de puntajes**: posiciones del grupo, con los equipos de cada participante agrupados por etapa, su récord y los puntos que aportaron.
+- **Tabla de puntajes**: posiciones del grupo, con los equipos de cada participante agrupados por etapa, su récord y los puntos que aportaron. Los puntos solo cuentan juegos terminados: un marcador en vivo no mueve la tabla hasta que el juego acaba.
 - **Equipos → En competición**: qué participante del grupo tiene cada equipo en cada etapa y cuántos puntos le dio.
 
 **Panel de administración** (solo super usuario y administradores de grupo)
