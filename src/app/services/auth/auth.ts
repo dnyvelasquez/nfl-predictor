@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, from, map, catchError, of, switchMap, shareReplay, forkJoin, tap } from 'rxjs';
 import { SupabaseClientService } from '../core/supabase-client';
 import { environment } from '../../../environments/environment';
-import { olvidarSesionDataApi } from '../../core/supabase.client';
+import { olvidarSesionDataApi, notarSesionDataApi } from '../../core/supabase.client';
 
 // Acceso de un usuario autenticado:
 // - `roles_usuario`: solo marca al super usuario (global, opera sobre todos los grupos).
@@ -60,7 +60,9 @@ export class AuthService {
 
   getSession$() {
     return from(this.supabaseClient.auth().getSession()).pipe(
-      map(({ data }: any) => data.session ?? null)
+      map(({ data }: any) => data.session ?? null),
+      // La sesión que decide "logueado" también autoriza las consultas al Data API.
+      tap((s: any) => notarSesionDataApi(s))
     );
   }
 

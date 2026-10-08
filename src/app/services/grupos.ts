@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, forkJoin, from, map, of, switchMap, catchError } from 'rxjs';
+import { Observable, forkJoin, from, map, of, switchMap, catchError, timer } from 'rxjs';
 import { SupabaseClientService } from './core/supabase-client';
 import { AuthService, RolEnGrupo } from './auth/auth';
 
@@ -132,7 +132,11 @@ export class GruposService {
   contexto$(): Observable<{ logueado: boolean; grupos: GrupoDisponible[]; seleccionado: string | null }> {
     return this.authService.isAuthenticated$().pipe(
       switchMap((logueado) => logueado
-        ? this.gruposDisponibles$().pipe(map((d) => ({ logueado, ...d })))
+        ? this.gruposDisponibles$().pipe(
+            // Sin grupos con sesión suele ser una consulta que salió sin el token
+            // del usuario: se reintenta una vez antes de mostrar "no perteneces a ningún grupo".
+            switchMap((d) => d.grupos.length > 0 ? of(d) : timer(800).pipe(switchMap(() => this.gruposDisponibles$()))),
+            map((d) => ({ logueado, ...d })))
         : of({ logueado, grupos: [] as GrupoDisponible[], seleccionado: null })),
       catchError(() => of({ logueado: false, grupos: [] as GrupoDisponible[], seleccionado: null }))
     );

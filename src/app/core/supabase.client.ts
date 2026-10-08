@@ -49,6 +49,18 @@ function jwtVigente(): string | null {
   return jwtUsuario && jwtUsuario.exp * 1000 - 30_000 > Date.now() ? jwtUsuario.token : null;
 }
 
+/**
+ * La app vio la sesión del usuario (AuthService.getSession$): si trae su JWT,
+ * queda guardado para las consultas; si no, al menos se marca que hay sesión
+ * para que la búsqueda del token reintente en vez de rendirse.
+ */
+export function notarSesionDataApi(session: any) {
+  if (!session) return;
+  if (esJwtDeUsuario(session.access_token)) guardar(session.access_token);
+  else marcarSesion(true);
+  sinSesionHasta = 0;
+}
+
 /** Olvida el JWT guardado (login, logout). */
 export function olvidarSesionDataApi(cerroSesion = false) {
   jwtUsuario = null;
@@ -87,11 +99,13 @@ function buscarJwtUsuario(): Promise<string | null> {
       } catch { /* reintento */ }
       if (i < intentos - 1) await esperar(250 * (i + 1));
     }
+    // La marca no se borra aquí (solo al cerrar sesión): si se borrara, una sola
+    // falla dejaba las cargas siguientes sin reintentos.
     if (intentos > 1) {
       console.error('[neon] Había sesión en este navegador pero no se pudo obtener su token: la consulta va como anónima.');
-      marcarSesion(false);
+    } else {
+      sinSesionHasta = Date.now() + 30_000;
     }
-    sinSesionHasta = Date.now() + 30_000;
     return null;
   })().finally(() => { busquedaEnCurso = null; });
   return busquedaEnCurso;
