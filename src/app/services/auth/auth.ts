@@ -89,11 +89,20 @@ export class AuthService {
               this.supabaseClient.from('miembros_grupo').select('grupo_id,rol').eq('user_id', userId)
             ),
           }).pipe(
-            map(({ superusuario, membresias }: any) => ({
-              esSuperusuario: superusuario.data?.rol === 'superusuario',
-              membresias: (membresias.data ?? []) as Membresia[],
-            })),
-            catchError(() => of({ esSuperusuario: false, membresias: [] })),
+            map(({ superusuario, membresias }: any) => {
+              // Un error aquí antes se convertía en silencio en "sin grupos".
+              if (superusuario.error || membresias.error) {
+                console.error('[perfil] No se pudo leer el perfil del usuario', superusuario.error ?? membresias.error);
+              }
+              return {
+                esSuperusuario: superusuario.data?.rol === 'superusuario',
+                membresias: (membresias.data ?? []) as Membresia[],
+              };
+            }),
+            catchError((e) => {
+              console.error('[perfil] No se pudo leer el perfil del usuario', e);
+              return of({ esSuperusuario: false, membresias: [] });
+            }),
             // Un perfil vacío (sin grupos ni super usuario) no se deja en caché: puede venir
             // de una consulta que salió sin el token del usuario, y quedaría así toda la sesión.
             tap((p: Perfil) => {

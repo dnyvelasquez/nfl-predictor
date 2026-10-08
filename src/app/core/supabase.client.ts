@@ -19,6 +19,24 @@ function esJwtDeUsuario(token: string | null | undefined): token is string {
   return !!claims && claims['sub'] !== 'anonymous' && claims['role'] !== 'anonymous';
 }
 
+/** Vencimiento (ms) de un JWT, o 0 si no se puede leer. */
+function vence(token: string): number {
+  return Number(claimsJwt(token)?.['exp'] ?? 0) * 1000;
+}
+
+/** JWT de usuario que todavía sirve (no vence en los próximos 30 s). */
+function esJwtVigente(token: string | null | undefined): token is string {
+  return esJwtDeUsuario(token) && vence(token) - 30_000 > Date.now();
+}
+
+// Lo que llevó la última consulta al Data API, para el diagnóstico en consola.
+let ultimaConsulta: { sub: string | null; role: string | null; venceEn: string; status?: number } | null = null;
+
+/** Resumen del token de la última consulta (sin el token mismo). */
+export function diagnosticoDataApi() {
+  return ultimaConsulta;
+}
+
 // --- JWT del usuario guardado por la app -----------------------------------
 // Una vez obtenido, se reutiliza hasta 30 s antes de vencer, así las consultas
 // no dependen de que la librería consiga la sesión en cada una.
@@ -41,8 +59,10 @@ function huboSesion(): boolean {
 }
 
 function guardar(token: string) {
-  jwtUsuario = { token, exp: Number(claimsJwt(token)?.['exp'] ?? 0) };
+  // Se queda el que vence más tarde: la librería puede traer uno más viejo.
   marcarSesion(true);
+  if (jwtUsuario && vence(token) <= jwtUsuario.exp * 1000) return;
+  jwtUsuario = { token, exp: vence(token) / 1000 };
 }
 
 function jwtVigente(): string | null {
@@ -56,9 +76,27 @@ function jwtVigente(): string | null {
  */
 export function notarSesionDataApi(session: any) {
   if (!session) return;
-  if (esJwtDeUsuario(session.access_token)) guardar(session.access_token);
+  if (esJwtVigente(session.access_token)) guardar(session.access_token);
   else marcarSesion(true);
   sinSesionHasta = 0;
+}
+
+/**
+ * Pide al servidor un JWT nuevo para el usuario con sesión (sin pasar por la
+ * caché de sesión de la librería) y lo deja para las consultas siguientes.
+ */
+export async function refrescarTokenDataApi(): Promise<boolean> {
+  try {
+    const res = await supabase.auth.getBetterAuthInstance().token();
+    const jwt = res?.data?.token;
+    if (esJwtVigente(jwt)) {
+      jwtUsuario = null;
+      guardar(jwt);
+      sinSesionHasta = 0;
+      return true;
+    }
+  } catch { /* quien llama decide qué hacer */ }
+  return false;
 }
 
 /** Olvida el JWT guardado (login, logout). */
@@ -76,12 +114,12 @@ async function tokenDeUsuario(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
   const session = data?.session;
   if (!session) return null;
-  if (esJwtDeUsuario(session.access_token)) return session.access_token;
+  if (esJwtVigente(session.access_token)) return session.access_token;
   // Hay sesión pero su token no es un JWT (p. ej. el token opaco de Better Auth):
   // se pide el JWT directamente.
   const res = await supabase.auth.getBetterAuthInstance().token();
   const jwt = res?.data?.token;
-  return esJwtDeUsuario(jwt) ? jwt : null;
+  return esJwtVigente(jwt) ? jwt : null;
 }
 
 // Busca el JWT del usuario (una sola búsqueda a la vez); si en este navegador
@@ -123,16 +161,38 @@ function buscarJwtUsuario(): Promise<string | null> {
 async function fetchDataApi(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers);
   const actual = (headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
-  if (esJwtDeUsuario(actual)) {
-    guardar(actual);
-  } else {
-    const token = jwtVigente() ?? (Date.now() < sinSesionHasta ? null : await buscarJwtUsuario());
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
-      console.warn('[neon] La consulta iba sin token de usuario pese a haber sesión: se corrigió.');
+  if (esJwtVigente(actual)) guardar(actual);
+  // Se usa el JWT de usuario vigente que venza más tarde (el de la librería o
+  // el guardado); si no hay ninguno, se busca el de la sesión.
+  const token = jwtVigente() ?? (Date.now() < sinSesionHasta ? null : await buscarJwtUsuario());
+  if (token && token !== actual) {
+    headers.set('Authorization', `Bearer ${token}`);
+    if (!esJwtVigente(actual)) {
+      console.warn(esJwtDeUsuario(actual)
+        ? '[neon] La consulta llevaba un token de usuario vencido: se cambió por uno vigente.'
+        : '[neon] La consulta iba sin token de usuario pese a haber sesión: se corrigió.');
     }
   }
-  return fetch(input, { ...init, headers });
+
+  const usado = (headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+  const claims = claimsJwt(usado);
+  const respuesta = await fetch(input, { ...init, headers });
+  ultimaConsulta = {
+    sub: claims?.['sub'] ?? null,
+    role: claims?.['role'] ?? null,
+    venceEn: claims?.['exp'] ? Math.round((claims['exp'] * 1000 - Date.now()) / 1000) + ' s' : '—',
+    status: respuesta.status,
+  };
+  // Token rechazado (p. ej. vencido): se pide uno nuevo al servidor y se repite una vez.
+  if (respuesta.status === 401 && esJwtDeUsuario(usado)) {
+    console.warn('[neon] El Data API rechazó el token del usuario (401): se pide uno nuevo y se repite la consulta.');
+    jwtUsuario = null;
+    if (await refrescarTokenDataApi()) {
+      headers.set('Authorization', 'Bearer ' + jwtVigente());
+      return fetch(input, { ...init, headers });
+    }
+  }
+  return respuesta;
 }
 
 export const supabase: any = createClient({

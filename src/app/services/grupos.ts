@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, forkJoin, from, map, of, switchMap, catchError, timer } from 'rxjs';
+import { refrescarTokenDataApi, diagnosticoDataApi } from '../core/supabase.client';
 import { SupabaseClientService } from './core/supabase-client';
 import { AuthService, RolEnGrupo } from './auth/auth';
 
@@ -105,10 +106,31 @@ export class GruposService {
               const m = perfil?.membresias.find((x) => x.grupo_id === g.id);
               return m ? [{ ...g, rol: m.rol }] : [];
             });
+        if (perfil && disponibles.length === 0) {
+          console.warn('[grupos] Sin grupos disponibles', {
+            superusuario: perfil.esSuperusuario, membresias: perfil.membresias.length, gruposVisibles: grupos.length,
+          });
+        }
         const seleccionado = disponibles.find((g) => g.id === this.ultimoGrupoId)?.id
           ?? disponibles[0]?.id
           ?? null;
         return { grupos: disponibles, seleccionado };
+      })
+    );
+  }
+
+  private reintentarGrupos(intento: number): Observable<{ grupos: GrupoDisponible[]; seleccionado: string | null }> {
+    return timer(600 * intento).pipe(
+      switchMap(() => from(refrescarTokenDataApi())),
+      switchMap(() => this.gruposDisponibles$()),
+      switchMap((d) => {
+        if (d.grupos.length > 0) {
+          console.warn('[grupos] Con sesión no llegaron grupos; aparecieron en el reintento ' + intento + '.');
+          return of(d);
+        }
+        if (intento < 2) return this.reintentarGrupos(intento + 1);
+        console.warn('[grupos] Con sesión pero sin grupos tras reintentar.', diagnosticoDataApi());
+        return of(d);
       })
     );
   }
@@ -133,9 +155,10 @@ export class GruposService {
     return this.authService.isAuthenticated$().pipe(
       switchMap((logueado) => logueado
         ? this.gruposDisponibles$().pipe(
-            // Sin grupos con sesión suele ser una consulta que salió sin el token
-            // del usuario: se reintenta una vez antes de mostrar "no perteneces a ningún grupo".
-            switchMap((d) => d.grupos.length > 0 ? of(d) : timer(800).pipe(switchMap(() => this.gruposDisponibles$()))),
+            // Sin grupos con sesión suele ser una consulta que salió con un token
+            // malo: antes de mostrar "no perteneces a ningún grupo" se pide un JWT
+            // nuevo al servidor y se reintenta (hasta 2 veces, con espera creciente).
+            switchMap((d) => d.grupos.length > 0 ? of(d) : this.reintentarGrupos(1)),
             map((d) => ({ logueado, ...d })))
         : of({ logueado, grupos: [] as GrupoDisponible[], seleccionado: null })),
       catchError(() => of({ logueado: false, grupos: [] as GrupoDisponible[], seleccionado: null }))
