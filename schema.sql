@@ -1026,3 +1026,35 @@ END $$;
 
 REVOKE ALL ON FUNCTION sortear_numeros(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION sortear_numeros(uuid) TO authenticated;
+
+-- 2026-10-10: las reglas de lectura de grupos/participantes/asignacion y las de
+-- escritura del superusuario comparan auth.user_id() directamente, en vez de pasar
+-- por es_superusuario()/rol_en_grupo() (SECURITY DEFINER): dentro de esas funciones
+-- auth.user_id() a veces respondía vacío y la consulta devolvía 0 filas sin error
+-- (reproducido: el superusuario vio 0 grupos y, segundos después, 1). Las reglas de
+-- roles_usuario y miembros_grupo (lectura) no cambian: ya comparan su propia fila
+-- directamente, y una subconsulta a la misma tabla en su regla sería recursiva.
+ALTER POLICY "Miembros ven sus grupos" ON grupos USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario') OR EXISTS (SELECT 1 FROM public.miembros_grupo m WHERE m.grupo_id = grupos.id AND m.user_id::text = auth.user_id()));
+ALTER POLICY "Miembros ven participantes de sus grupos" ON participantes USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario') OR EXISTS (SELECT 1 FROM public.miembros_grupo m WHERE m.grupo_id = participantes.grupo_id AND m.user_id::text = auth.user_id()));
+ALTER POLICY "Miembros ven asignaciones de sus grupos" ON asignacion USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario') OR EXISTS (SELECT 1 FROM public.miembros_grupo m WHERE m.grupo_id = asignacion.grupo_id AND m.user_id::text = auth.user_id()));
+ALTER POLICY "Superusuario puede eliminar asignacion" ON asignacion USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede insertar asignacion" ON asignacion WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede actualizar asignacion" ON asignacion USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario')) WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede eliminar equipos" ON equipos USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede insertar equipos" ON equipos WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede actualizar equipos" ON equipos USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario')) WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede eliminar grupos" ON grupos USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede insertar grupos" ON grupos WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede actualizar grupos" ON grupos USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario')) WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede eliminar juegos" ON juegos USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede insertar juegos" ON juegos WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede actualizar juegos" ON juegos USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario')) WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede eliminar participantes" ON participantes USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede insertar participantes" ON participantes WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede actualizar participantes" ON participantes USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario')) WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede eliminar semana" ON semana USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede insertar semana" ON semana WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario puede actualizar semana" ON semana USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario')) WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario elimina membresias" ON miembros_grupo USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario inserta membresias" ON miembros_grupo WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+ALTER POLICY "Superusuario actualiza membresias" ON miembros_grupo USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario')) WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
