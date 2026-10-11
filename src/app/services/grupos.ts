@@ -96,8 +96,20 @@ export class GruposService {
    * Grupos sobre los que el usuario en sesión opera en las páginas de admin,
    * con su rol en cada uno: todos para el super usuario, aquellos de los que
    * es miembro para el resto. `seleccionado` es el grupo con el que arranca la página.
+   *
+   * Con sesión y sin grupos se reintenta antes de responder (lo usan la portada
+   * y las páginas de admin directamente, no solo contexto$()): a veces la consulta
+   * de grupos vuelve vacía aunque el perfil sí llegue (p. ej. superusuario con
+   * 0 grupos visibles), y al recargar aparece.
    */
   gruposDisponibles$(): Observable<{ grupos: GrupoDisponible[]; seleccionado: string | null }> {
+    return this.cargarDisponibles$().pipe(
+      switchMap((d) => d.conSesion && d.grupos.length === 0 ? this.reintentarGrupos(1) : of(d)),
+      map(({ grupos, seleccionado }) => ({ grupos, seleccionado }))
+    );
+  }
+
+  private cargarDisponibles$(): Observable<{ grupos: GrupoDisponible[]; seleccionado: string | null; conSesion: boolean }> {
     return forkJoin({ perfil: this.authService.getPerfil$(), grupos: this.getGrupos() }).pipe(
       map(({ perfil, grupos }) => {
         const disponibles: GrupoDisponible[] = perfil?.esSuperusuario
@@ -114,21 +126,22 @@ export class GruposService {
         const seleccionado = disponibles.find((g) => g.id === this.ultimoGrupoId)?.id
           ?? disponibles[0]?.id
           ?? null;
-        return { grupos: disponibles, seleccionado };
+        return { grupos: disponibles, seleccionado, conSesion: !!perfil };
       })
     );
   }
 
-  private reintentarGrupos(intento: number): Observable<{ grupos: GrupoDisponible[]; seleccionado: string | null }> {
+  // Hasta 3 reintentos (0,6 s, 1,2 s y 1,8 s), cada uno con un JWT nuevo del servidor.
+  private reintentarGrupos(intento: number): Observable<{ grupos: GrupoDisponible[]; seleccionado: string | null; conSesion: boolean }> {
     return timer(600 * intento).pipe(
       switchMap(() => from(refrescarTokenDataApi())),
-      switchMap(() => this.gruposDisponibles$()),
+      switchMap(() => this.cargarDisponibles$()),
       switchMap((d) => {
         if (d.grupos.length > 0) {
           console.warn('[grupos] Con sesión no llegaron grupos; aparecieron en el reintento ' + intento + '.');
           return of(d);
         }
-        if (intento < 2) return this.reintentarGrupos(intento + 1);
+        if (intento < 3) return this.reintentarGrupos(intento + 1);
         console.warn('[grupos] Con sesión pero sin grupos tras reintentar.', diagnosticoDataApi());
         return of(d);
       })
@@ -154,12 +167,7 @@ export class GruposService {
   contexto$(): Observable<{ logueado: boolean; grupos: GrupoDisponible[]; seleccionado: string | null }> {
     return this.authService.isAuthenticated$().pipe(
       switchMap((logueado) => logueado
-        ? this.gruposDisponibles$().pipe(
-            // Sin grupos con sesión suele ser una consulta que salió con un token
-            // malo: antes de mostrar "no perteneces a ningún grupo" se pide un JWT
-            // nuevo al servidor y se reintenta (hasta 2 veces, con espera creciente).
-            switchMap((d) => d.grupos.length > 0 ? of(d) : this.reintentarGrupos(1)),
-            map((d) => ({ logueado, ...d })))
+        ? this.gruposDisponibles$().pipe(map((d) => ({ logueado, ...d })))
         : of({ logueado, grupos: [] as GrupoDisponible[], seleccionado: null })),
       catchError(() => of({ logueado: false, grupos: [] as GrupoDisponible[], seleccionado: null }))
     );
