@@ -1058,3 +1058,192 @@ ALTER POLICY "Superusuario puede actualizar semana" ON semana USING (EXISTS (SEL
 ALTER POLICY "Superusuario elimina membresias" ON miembros_grupo USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
 ALTER POLICY "Superusuario inserta membresias" ON miembros_grupo WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
 ALTER POLICY "Superusuario actualiza membresias" ON miembros_grupo USING (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario')) WITH CHECK (EXISTS (SELECT 1 FROM public.roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario'));
+
+-- 2026-10-11: las funciones que llama la app (auto-asignar, sorteo, agregar
+-- miembro, usuarios visibles) también fallaban de vez en cuando con "No
+-- autorizado": comprobaban el rol con rol_en_grupo()/es_superusuario(), y dentro
+-- de SECURITY DEFINER auth.user_id() a veces responde vacío. Ahora cada una es una
+-- envoltura SECURITY INVOKER en public (la que expone el Data API) que lee
+-- auth.user_id() en el contexto del usuario y se lo pasa a su núcleo SECURITY
+-- DEFINER en el esquema `privado`. El Data API solo expone `public`, así que nadie
+-- puede llamar el núcleo pasando el id de otro usuario. Las envolturas usan cuerpo
+-- SQL estándar (BEGIN ATOMIC): se guarda ya analizado, como una regla RLS, porque
+-- `authenticated` no tiene USAGE sobre el esquema `auth`.
+CREATE SCHEMA IF NOT EXISTS privado;
+REVOKE ALL ON SCHEMA privado FROM PUBLIC;
+GRANT USAGE ON SCHEMA privado TO authenticated;
+
+CREATE OR REPLACE FUNCTION privado.es_superusuario_de(p_uid text) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.roles_usuario WHERE user_id::text = p_uid AND rol = 'superusuario')
+$$;
+
+CREATE OR REPLACE FUNCTION privado.rol_en_grupo_de(p_grupo uuid, p_uid text) RETURNS text
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT CASE WHEN privado.es_superusuario_de(p_uid) THEN 'superusuario'
+    ELSE (SELECT rol FROM public.miembros_grupo WHERE user_id::text = p_uid AND grupo_id = p_grupo) END
+$$;
+
+CREATE OR REPLACE FUNCTION privado.auto_asignar_temporada_regular(p_grupo uuid, p_uid text) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  asignados int;
+BEGIN
+  IF p_grupo IS NULL THEN
+    RAISE EXCEPTION 'Grupo requerido' USING ERRCODE = '22023';
+  END IF;
+  IF coalesce(privado.rol_en_grupo_de(p_grupo, p_uid), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para auto-asignar este grupo' USING ERRCODE = '42501';
+  END IF;
+  DELETE FROM asignacion WHERE etapa = 'regular' AND grupo_id = p_grupo;
+  INSERT INTO asignacion (equipo_id, participante, etapa, grupo_id)
+    SELECT c.equipo_id, c.participante, 'regular', p_grupo FROM calcular_auto_asignacion_regular(p_grupo) c;
+  GET DIAGNOSTICS asignados = ROW_COUNT;
+  RETURN asignados;
+END $$;
+
+CREATE OR REPLACE FUNCTION privado.auto_asignar_wildcard(p_grupo uuid, p_uid text) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  asignados int;
+BEGIN
+  IF p_grupo IS NULL THEN
+    RAISE EXCEPTION 'Grupo requerido' USING ERRCODE = '22023';
+  END IF;
+  IF coalesce(privado.rol_en_grupo_de(p_grupo, p_uid), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para auto-asignar este grupo' USING ERRCODE = '42501';
+  END IF;
+  DELETE FROM asignacion WHERE etapa = 'wildcard' AND grupo_id = p_grupo;
+  INSERT INTO asignacion (equipo_id, participante, etapa, grupo_id)
+    SELECT c.equipo_id, c.participante, 'wildcard', p_grupo FROM calcular_auto_asignacion_wildcard(p_grupo) c;
+  GET DIAGNOSTICS asignados = ROW_COUNT;
+  RETURN asignados;
+END $$;
+
+CREATE OR REPLACE FUNCTION privado.auto_asignar_eliminatoria(p_grupo uuid, p_etapa text, p_uid text) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  asignados int;
+BEGIN
+  IF p_grupo IS NULL THEN
+    RAISE EXCEPTION 'Grupo requerido' USING ERRCODE = '22023';
+  END IF;
+  IF p_etapa NOT IN ('divisional', 'conferencia', 'superbowl') THEN
+    RAISE EXCEPTION 'Etapa no soportada: %', p_etapa USING ERRCODE = '22023';
+  END IF;
+  IF coalesce(privado.rol_en_grupo_de(p_grupo, p_uid), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para auto-asignar este grupo' USING ERRCODE = '42501';
+  END IF;
+  DELETE FROM asignacion WHERE etapa = p_etapa AND grupo_id = p_grupo;
+  IF p_etapa = 'superbowl' THEN
+    INSERT INTO asignacion (equipo_id, participante, etapa, grupo_id)
+      SELECT c.equipo_id, c.participante, p_etapa, p_grupo FROM calcular_auto_asignacion_superbowl(p_grupo) c;
+  ELSE
+    INSERT INTO asignacion (equipo_id, participante, etapa, grupo_id)
+      SELECT c.equipo_id, c.participante, p_etapa, p_grupo FROM calcular_auto_asignacion_eliminatoria(p_grupo, p_etapa) c;
+  END IF;
+  GET DIAGNOSTICS asignados = ROW_COUNT;
+  RETURN asignados;
+END $$;
+
+CREATE OR REPLACE FUNCTION privado.sortear_numeros(p_grupo uuid, p_uid text) RETURNS TABLE (id uuid, nombre text, numero numeric)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF p_grupo IS NULL THEN
+    RAISE EXCEPTION 'Grupo requerido' USING ERRCODE = '22023';
+  END IF;
+  IF coalesce(privado.rol_en_grupo_de(p_grupo, p_uid), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para sortear los números de este grupo' USING ERRCODE = '42501';
+  END IF;
+  UPDATE participantes p SET numero = s.n
+    FROM (SELECT x.id, row_number() OVER (ORDER BY random()) AS n FROM participantes x WHERE x.grupo_id = p_grupo) s
+    WHERE p.id = s.id;
+  RETURN QUERY SELECT p.id, p.nombre, p.numero FROM participantes p WHERE p.grupo_id = p_grupo ORDER BY p.numero;
+END $$;
+
+CREATE OR REPLACE FUNCTION privado.agregar_miembro(p_email text, p_grupo uuid, p_rol text, p_uid text) RETURNS uuid
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+-- Superusuario: cualquier grupo y rol. Administrador: solo 'lectura' en grupos que administra.
+-- Si ya era miembro no cambia su rol.
+DECLARE
+  uid uuid;
+  rol_caller text := privado.rol_en_grupo_de(p_grupo, p_uid);
+BEGIN
+  IF p_rol NOT IN ('administrador', 'lectura') THEN
+    RAISE EXCEPTION 'Rol invalido' USING ERRCODE = '22023';
+  END IF;
+  IF NOT (rol_caller = 'superusuario' OR (rol_caller = 'administrador' AND p_rol = 'lectura')) THEN
+    RAISE EXCEPTION 'No autorizado para agregar miembros a este grupo' USING ERRCODE = '42501';
+  END IF;
+  SELECT u.id INTO uid FROM neon_auth."user" u WHERE lower(u.email) = lower(trim(p_email));
+  IF uid IS NULL THEN
+    RAISE EXCEPTION 'No existe un usuario con ese email' USING ERRCODE = 'P0002';
+  END IF;
+  INSERT INTO miembros_grupo (user_id, grupo_id, rol) VALUES (uid, p_grupo, p_rol)
+    ON CONFLICT (user_id, grupo_id) DO NOTHING;
+  RETURN uid;
+END $$;
+
+CREATE OR REPLACE FUNCTION privado.usuarios_visibles(p_uid text)
+RETURNS TABLE (user_id uuid, email text, es_superusuario boolean, grupo_id uuid, grupo text, rol text)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  -- Una fila por (usuario, grupo); usuarios sin grupos salen una vez con grupo NULL.
+  -- Superusuario: todos. Administrador: miembros de los grupos que administra.
+  SELECT u.id, u.email, (r.user_id IS NOT NULL), m.grupo_id, g.nombre, m.rol
+  FROM neon_auth."user" u
+  LEFT JOIN public.roles_usuario r ON r.user_id = u.id
+  LEFT JOIN public.miembros_grupo m ON m.user_id = u.id
+  LEFT JOIN public.grupos g ON g.id = m.grupo_id
+  WHERE privado.es_superusuario_de(p_uid)
+     OR (m.grupo_id IS NOT NULL AND privado.rol_en_grupo_de(m.grupo_id, p_uid) = 'administrador')
+  ORDER BY u.email, g.nombre
+$$;
+
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA privado FROM PUBLIC;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA privado TO authenticated;
+
+-- Envolturas públicas (mismas firmas que antes; el frontend no cambia).
+CREATE OR REPLACE FUNCTION public.auto_asignar_temporada_regular(p_grupo uuid) RETURNS integer
+LANGUAGE sql SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT privado.auto_asignar_temporada_regular(p_grupo, auth.user_id());
+END;
+
+CREATE OR REPLACE FUNCTION public.auto_asignar_wildcard(p_grupo uuid) RETURNS integer
+LANGUAGE sql SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT privado.auto_asignar_wildcard(p_grupo, auth.user_id());
+END;
+
+CREATE OR REPLACE FUNCTION public.auto_asignar_eliminatoria(p_grupo uuid, p_etapa text) RETURNS integer
+LANGUAGE sql SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT privado.auto_asignar_eliminatoria(p_grupo, p_etapa, auth.user_id());
+END;
+
+CREATE OR REPLACE FUNCTION public.auto_asignar_divisional(p_grupo uuid) RETURNS integer
+LANGUAGE sql SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT privado.auto_asignar_eliminatoria(p_grupo, 'divisional', auth.user_id());
+END;
+
+CREATE OR REPLACE FUNCTION public.sortear_numeros(p_grupo uuid) RETURNS TABLE (id uuid, nombre text, numero numeric)
+LANGUAGE sql SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT s.id, s.nombre, s.numero FROM privado.sortear_numeros(p_grupo, auth.user_id()) s;
+END;
+
+CREATE OR REPLACE FUNCTION public.agregar_miembro(p_email text, p_grupo uuid, p_rol text DEFAULT 'lectura') RETURNS uuid
+LANGUAGE sql SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT privado.agregar_miembro(p_email, p_grupo, p_rol, auth.user_id());
+END;
+
+CREATE OR REPLACE FUNCTION public.usuarios_visibles()
+RETURNS TABLE (user_id uuid, email text, es_superusuario boolean, grupo_id uuid, grupo text, rol text)
+LANGUAGE sql STABLE SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT v.user_id, v.email, v.es_superusuario, v.grupo_id, v.grupo, v.rol FROM privado.usuarios_visibles(auth.user_id()) v;
+END;
+
+NOTIFY pgrst, 'reload schema';
