@@ -134,13 +134,14 @@
 
 .equipo-item {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 8px;
-    padding: 12px;
+    gap: 16px;
+    padding: 12px 20px;
     background-color: #f5f5f5;
     border-radius: 12px;
-    min-width: 100px;
+    max-width: 100%;
+    box-sizing: border-box;
     transition: all 0.2s;
 }
 
@@ -157,9 +158,19 @@
 }
 
 .equipo-nombre {
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-weight: bold;
     text-align: center;
+    margin: 0;
     color: #003B73;
+}
+
+.equipo-info-derecha {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
 }
 
 .equipo-logo {
@@ -208,59 +219,6 @@
     .tabla-puntajes-card-dialog {
     max-width: 700px;
     }
-
-    .equipos-lista {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    gap: 24px;
-    }
-
-    .equipo-item {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    gap: 20px;
-    min-width: 80px;
-    padding: 16px 24px;
-    }
-
-    .equipo-logo-nombre {
-    justify-content: space-between;
-    }
-
-    .equipo-info-derecha {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-    flex: 1;
-    }
-
-    .equipo-nombre {
-    font-size: 1.1rem;
-    font-weight: bold;
-    text-align: center;
-    margin: 0;
-    color: #003B73;
-    }
-
-    .equipo-puntaje {
-    font-size: 0.95rem;
-    display: inline-block;
-    background-color: rgba(0, 51, 102, 0.1);
-    }
-
-    .equipo-record {
-    font-size: 0.85rem;
-    }
-
-    .chip-afc,
-    .chip-nfc {
-    font-size: 0.75rem;
-    display: inline-block;
-    }
 }
 
 @media (max-width: 768px) {
@@ -287,41 +245,8 @@
     text-align: center;
     }
 
-    .equipos-lista {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    }
-
     .equipo-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    max-width: 160px;
-    padding: 12px;
-    }
-
-    .equipo-nombre {
-    font-size: 1rem;
-    font-weight: bold;
-    }
-
-    .equipo-puntaje {
-    font-size: 0.9rem;
-    }
-
-    .chip-afc,
-    .chip-nfc {
-    font-size: 0.75rem;
-    }
-
-    .equipo-info-derecha {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
+    gap: 12px;
+    padding: 10px 14px;
     }
 }
