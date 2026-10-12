@@ -77,6 +77,8 @@
 
 .participante {
     display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     align-items: center;
     justify-content: space-between;
     font-size: 1.1rem;
@@ -237,12 +239,6 @@
 
     .logo {
     width: 45px;
-    }
-
-    .participante {
-    flex-direction: column;
-    gap: 8px;
-    text-align: center;
     }
 
     .equipo-item {
