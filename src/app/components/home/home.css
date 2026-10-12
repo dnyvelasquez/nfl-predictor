@@ -1,3 +1,7 @@
+:host {
+  display: block; /* el ResizeObserver de los logos no mide elementos inline */
+}
+
 .home-container {
   min-height: 100vh;
   padding: 90px 16px 32px;
@@ -318,8 +322,34 @@
 }
 
 .fila-participante .nombre {
-  flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.equipos-fase {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.logos-en-dos-renglones .equipos-fase {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.pareja-logos {
+  display: flex;
+  gap: 6px;
+}
+
+.equipos-fase img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 .fila-participante .puntaje {

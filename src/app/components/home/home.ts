@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, ChangeDetectionStrategy, ElementRef, afterRenderEffect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -13,7 +13,7 @@ import { ParticipantesService, Participante } from '../../services/participantes
 import { JuegosService, Juego } from '../../services/juegos';
 import { AuthService } from '../../services/auth/auth';
 import { GruposService, GrupoDisponible } from '../../services/grupos';
-import { registroEquipoEnEtapa } from '../../services/core/etapas';
+import { registroEquipoEnEtapa, ETAPAS } from '../../services/core/etapas';
 import { mascotaIzquierda, mascotaDerecha } from '../../services/core/mascotas';
 import { elegirDestacado, etiquetaPrime, cuentaRegresiva, fechaCorta, ordenarSemana, estadoVisible } from './portada';
 
@@ -67,6 +67,23 @@ export class Home implements OnInit, OnDestroy {
   participantes = signal<Participante[] | null>(null);
   cargandoTabla = signal(false);
 
+  /** Fase actual = la etapa más avanzada que ya tiene asignaciones en el grupo. */
+  private faseActual = computed(() => {
+    const conAsignacion = new Set(
+      (this.participantes() ?? []).flatMap((p) => (p.equiposPorEtapa ?? []).map((g) => g.etapa))
+    );
+    return [...ETAPAS].reverse().find((e) => conAsignacion.has(e.value))?.value ?? null;
+  });
+
+  /** En parejas: si no caben en un renglón, bajan de a dos (2 + 2, no 3 + 1). */
+  equiposEnFase(p: Participante) {
+    const equipos = (p.equiposPorEtapa?.find((g) => g.etapa === this.faseActual())?.equipos ?? [])
+      .filter((item) => item.equipo.logo);
+    const parejas = [];
+    for (let i = 0; i < equipos.length; i += 2) parejas.push(equipos.slice(i, i + 2));
+    return parejas;
+  }
+
   ahora = signal(Date.now());
 
   destacado = computed(() => elegirDestacado([...this.juegosSemana(), ...this.juegosSiguiente()]));
@@ -82,8 +99,24 @@ export class Home implements OnInit, OnDestroy {
 
   private refresco?: ReturnType<typeof setTimeout>;
   private reloj?: ReturnType<typeof setInterval>;
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private observadorAncho?: ResizeObserver;
+
+  constructor() {
+    // Al cambiar la tabla se vuelve a decidir si los logos van en uno o dos renglones.
+    afterRenderEffect(() => {
+      this.participantes();
+      this.cargando();
+      this.cargandoTabla();
+      this.ajustarRenglonesLogos();
+    });
+  }
 
   ngOnInit(): void {
+    if (typeof ResizeObserver !== 'undefined') {
+      this.observadorAncho = new ResizeObserver(() => this.ajustarRenglonesLogos());
+      this.observadorAncho.observe(this.host.nativeElement);
+    }
     this.reloj = setInterval(() => this.ahora.set(Date.now()), TICK_RELOJ_MS);
 
     this.authService.isAuthenticated$().pipe(
@@ -103,6 +136,23 @@ export class Home implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     clearTimeout(this.refresco);
     clearInterval(this.reloj);
+    this.observadorAncho?.disconnect();
+  }
+
+  /**
+   * Si en alguna fila los logos no caben en un renglón, todas las filas los
+   * muestran en dos (de a dos). Se mide con el diseño natural (sin la clase)
+   * y se aplica directo sobre el DOM, antes de pintar, para que no parpadee.
+   */
+  private ajustarRenglonesLogos(): void {
+    const card = this.host.nativeElement.querySelector('.posiciones');
+    if (!card) return;
+    card.classList.remove('logos-en-dos-renglones');
+    const algunaPartida = Array.from(card.querySelectorAll('.equipos-fase')).some((fila) => {
+      const parejas = Array.from(fila.children) as HTMLElement[];
+      return parejas.some((pareja) => pareja.offsetTop !== parejas[0].offsetTop);
+    });
+    card.classList.toggle('logos-en-dos-renglones', algunaPartida);
   }
 
   cambiarGrupo(grupoId: string): void {

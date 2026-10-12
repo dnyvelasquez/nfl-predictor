@@ -164,6 +164,15 @@
                         (click)="abrirDetalleParticipante(p)">
                   <span class="posicion">{{ i + 1 }}</span>
                   <span class="nombre">{{ p.nombre }}</span>
+                  <span class="equipos-fase">
+                    @for (pareja of equiposEnFase(p); track $index) {
+                      <span class="pareja-logos">
+                        @for (item of pareja; track item.equipo.id) {
+                          <img [src]="item.equipo.logo" [alt]="item.equipo.nombre" [title]="item.equipo.nombre" />
+                        }
+                      </span>
+                    }
+                  </span>
                   @if (p.puntaje !== 0 && p.max) {
                     <mat-icon class="icono-trofeo" aria-label="Primer lugar">emoji_events</mat-icon>
                   } @else if (p.puntaje !== 0 && p.second) {

@@ -24,6 +24,8 @@ export interface Equipo {
   ranking?: number | null;
   /** Mascota ilustrada (256 px), derivada del nombre: ver core/mascotas.ts. */
   mascota: string;
+  /** Logo oficial (NFL.com); solo lo traen las consultas de asignación. */
+  logo?: string | null;
   participante?: string;
 }
 
@@ -240,7 +242,7 @@ export class EquiposService {
   }
 
   private static readonly COLUMNAS_ASIGNACION =
-    'equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,seed_conferencia)';
+    'equipo_id, participante, etapa, equipos!inner(id,nombre,pg,pe,pp,pw,pd,pc,sb,division,seed_conferencia,logo)';
 
   private filasAsignacion({ data, error }: any): (Equipo & { etapa: Etapa })[] {
     if (error) throw error;
@@ -257,6 +259,7 @@ export class EquiposService {
       pc: row.equipos.pc,
       sb: row.equipos.sb,
       seed_conferencia: row.equipos.seed_conferencia,
+      logo: row.equipos.logo,
       participante: row.participante,
       etapa: row.etapa,
     })) as (Equipo & { etapa: Etapa })[];
