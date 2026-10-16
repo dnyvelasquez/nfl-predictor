@@ -42,10 +42,8 @@
 //
 // Dependencias: solo "pg" (npm i pg). Node >= 18 (usa fetch nativo).
 
-import pg from "pg";
+import { crearCliente } from "./conexion.mjs";
 import fs from "node:fs";
-
-const { Client } = pg;
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const SEASON_YEAR = process.env.SEASON_YEAR || "2026";
@@ -416,7 +414,7 @@ async function runFull(client) {
 }
 
 async function main() {
-  const client = new Client({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const client = crearCliente(DATABASE_URL);
   await client.connect();
 
   try {
