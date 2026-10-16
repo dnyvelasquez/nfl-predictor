@@ -1,0 +1,8 @@
+{
+  "name": "nfl-predictor-scripts",
+  "private": true,
+  "description": "Dependencias de los scripts de sincronización (CI instala solo esto, no el árbol de Angular)",
+  "dependencies": {
+    "pg": "^8.23.0"
+  }
+}

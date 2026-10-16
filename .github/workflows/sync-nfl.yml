@@ -54,15 +54,18 @@ jobs:
       actions: write # necesario para que el paso "Reencadenar" dispare la siguiente corrida
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configurar Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "22"
 
+      # Solo las dependencias de scripts/ (pg), con su propio lockfile:
+      # instalar en la raíz arrastraba todo el árbol de Angular (~900
+      # paquetes) y dejó de funcionar el 2026-10-15 sin cambios en el repo.
       - name: Instalar dependencias
-        run: npm install pg
+        run: npm ci --prefix scripts --no-audit --no-fund
 
       - name: Determinar modo
         id: modo

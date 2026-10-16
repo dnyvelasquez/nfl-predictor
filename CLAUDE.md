@@ -99,7 +99,7 @@ Run manually with Node ≥18 (uses native `fetch`) and the `pg` dependency (alre
 $env:DATABASE_URL="postgres://..."; $env:SEASON_YEAR="2026"; $env:MODE="full"; node scripts/sync-nfl.mjs
 ```
 
-`DATABASE_URL` is the Neon connection string (required); `SEASON_YEAR` defaults to `2026`, `MODE` defaults to `full` if omitted.
+In CI both sync workflows install only `scripts/package.json` (`npm ci --prefix scripts`, its own lockfile, just `pg`) — since 2026-10-16, after `npm install pg` at the repo root (which pulled the whole Angular tree) started failing on the runner on 2026-10-15 with no repo change. Locally the root `node_modules` also works. `DATABASE_URL` is the Neon connection string (required); `SEASON_YEAR` defaults to `2026`, `MODE` defaults to `full` if omitted.
 
 `.github/workflows/sync-nfl.yml` runs on this repo's unlimited public-repo Actions minutes, with two `schedule` triggers: `*/5 * * * *` (every 5 minutes, every day, all day — the shortest interval GitHub cron allows) runs in `MODE=quick`; `0 6 * * 2` (Tuesday 06:00 UTC = 01:00 Bogotá, after Monday Night Football has ended) runs in `MODE=full`. A "Determinar modo" step picks `MODE` from which cron fired the run (`full` only on the `0 6 * * 2` schedule, `quick` on every other scheduled tick) or from the chosen input when triggered manually — `workflow_dispatch` exposes a `mode` dropdown (`quick`/`full`, defaulting to `quick`) for on-demand runs from the Actions tab. It reads the Neon connection string from the repo secret `DATABASE_URL` (Settings → Secrets and variables → Actions) — never hardcoded — and pins `SEASON_YEAR` to `"2026"` in the workflow itself (update it there for the next season).
 
