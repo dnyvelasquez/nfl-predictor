@@ -13,16 +13,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Use Node.js 22
+      - name: Use Node.js 24
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       # npm ci instala exactamente lo que dice package-lock.json. Con
       # npm install, una versión nueva de una dependencia (como
       # @better-auth/core 1.7.1 el 2026-10-15) puede romper el build sin
-      # cambios en el repo.
+      # cambios en el repo. Node 24 trae npm 11, el mismo que genera el
+      # lockfile en local (el npm 10 de Node 22 lo rechaza como desincronizado).
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 

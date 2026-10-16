@@ -23,7 +23,7 @@ jobs:
       - name: Configurar Node
         uses: actions/setup-node@v5
         with:
-          node-version: "22"
+          node-version: "24"
 
       # Solo las dependencias de scripts/ (pg), con su propio lockfile:
       # instalar en la raíz arrastraba todo el árbol de Angular (~900
