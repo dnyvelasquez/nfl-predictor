@@ -4,7 +4,6 @@ import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSelectModule } from '@angular/material/select';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin, of, switchMap, catchError, map } from 'rxjs';
@@ -35,7 +34,6 @@ const TICK_RELOJ_MS = 30_000;
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatSelectModule,
     MatDialogModule,
     MatProgressSpinnerModule
   ],
@@ -66,6 +64,11 @@ export class Home implements OnInit, OnDestroy {
 
   participantes = signal<Participante[] | null>(null);
   cargandoTabla = signal(false);
+
+  /** Con varios grupos (o el superusuario), cada tabla es plegable y solo una va abierta. */
+  variosGrupos = computed(() => this.grupos().length > 1);
+  /** Grupo con la tabla desplegada; null = todas plegadas (así arranca la portada). */
+  abierto = signal<string | null>(null);
 
   /** Fase actual = la etapa más avanzada que ya tiene asignaciones en el grupo. */
   private faseActual = computed(() => {
@@ -106,6 +109,7 @@ export class Home implements OnInit, OnDestroy {
     // Al cambiar la tabla se vuelve a decidir si los logos van en uno o dos renglones.
     afterRenderEffect(() => {
       this.participantes();
+      this.abierto();
       this.cargando();
       this.cargandoTabla();
       this.ajustarRenglonesLogos();
@@ -155,11 +159,24 @@ export class Home implements OnInit, OnDestroy {
     card.classList.toggle('logos-en-dos-renglones', algunaPartida);
   }
 
-  cambiarGrupo(grupoId: string): void {
-    this.grupoId.set(grupoId);
-    this.gruposService.recordarGrupo(grupoId);
-    this.cargarJuegos();
-    this.cargarTabla();
+  /**
+   * Abre la tabla de un grupo (plegando la que estuviera abierta) o la pliega
+   * si ya estaba abierta. El grupo abierto pasa a ser el elegido: también
+   * define qué participante se muestra en cada equipo de los juegos.
+   */
+  alternarGrupo(grupoId: string): void {
+    if (this.abierto() === grupoId) {
+      this.abierto.set(null);
+      return;
+    }
+    this.abierto.set(grupoId);
+    if (grupoId !== this.grupoId()) {
+      this.grupoId.set(grupoId);
+      this.gruposService.recordarGrupo(grupoId);
+      this.participantes.set(null);
+      this.cargarJuegos();
+    }
+    if (this.participantes() === null) this.cargarTabla();
   }
 
   cuentaRegresiva(j: Juego): string | null {
@@ -236,7 +253,8 @@ export class Home implements OnInit, OnDestroy {
 
   private cargarTabla(): void {
     const grupoId = this.grupoId();
-    if (!this.logueado() || !grupoId) {
+    // Con varios grupos la tabla se carga al abrirla (ver `alternarGrupo`).
+    if (!this.logueado() || !grupoId || (this.variosGrupos() && this.abierto() !== grupoId)) {
       this.participantes.set(null);
       return;
     }
@@ -244,6 +262,7 @@ export class Home implements OnInit, OnDestroy {
     this.participantesService.getParticipantesConPuntaje(grupoId).pipe(
       catchError(() => of([] as Participante[]))
     ).subscribe((lista) => {
+      if (grupoId !== this.grupoId()) return; // se abrió otro grupo mientras cargaba
       this.participantes.set(lista);
       this.cargandoTabla.set(false);
     });

@@ -144,46 +144,64 @@
           } @else {
             <div class="tarjeta-encabezado">
               <h2>Posiciones</h2>
-              @if (grupos().length > 1) {
-                <mat-select class="selector-grupo" [value]="grupoId()" (selectionChange)="cambiarGrupo($event.value)" aria-label="Grupo">
-                  @for (g of grupos(); track g.id) {
-                    <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
-                  }
-                </mat-select>
-              } @else {
+              @if (!variosGrupos()) {
                 <span class="detalle">{{ nombreGrupo() }}</span>
               }
             </div>
 
-            @if (cargandoTabla()) {
-              <div class="estado-carga oscuro"><mat-spinner diameter="32"></mat-spinner></div>
-            } @else {
-              @for (p of participantes() ?? []; track p.id; let i = $index) {
-                <button type="button" class="fila-participante"
-                        [class.primer-lugar]="p.max" [class.segundo-lugar]="p.second"
-                        (click)="abrirDetalleParticipante(p)">
-                  <span class="posicion">{{ i + 1 }}</span>
-                  <span class="nombre">{{ p.nombre }}</span>
-                  <span class="equipos-fase">
-                    @for (pareja of equiposEnFase(p); track $index) {
-                      <span class="pareja-logos">
-                        @for (item of pareja; track item.equipo.id) {
-                          <img [src]="item.equipo.logo" [alt]="item.equipo.nombre" [title]="item.equipo.nombre" />
-                        }
-                      </span>
-                    }
-                  </span>
-                  @if (p.puntaje !== 0 && p.max) {
-                    <mat-icon class="icono-trofeo" aria-label="Primer lugar">emoji_events</mat-icon>
-                  } @else if (p.puntaje !== 0 && p.second) {
-                    <mat-icon class="icono-medalla" aria-label="Segundo lugar">military_tech</mat-icon>
+            @if (variosGrupos()) {
+              <!-- Varios grupos: cada uno plegable, solo uno abierto a la vez. -->
+              @for (g of grupos(); track g.id) {
+                <div class="grupo-plegable" [class.abierto]="abierto() === g.id">
+                  <button type="button" class="encabezado-grupo"
+                          [attr.aria-expanded]="abierto() === g.id"
+                          [attr.aria-controls]="'tabla-grupo-' + g.id"
+                          (click)="alternarGrupo(g.id)">
+                    <span class="nombre-grupo">{{ g.nombre }}</span>
+                    <mat-icon class="chevron">expand_more</mat-icon>
+                  </button>
+                  @if (abierto() === g.id) {
+                    <div class="tabla-grupo" [id]="'tabla-grupo-' + g.id">
+                      <ng-container *ngTemplateOutlet="tablaPosiciones"></ng-container>
+                    </div>
                   }
-                  <span class="puntaje">{{ p.puntaje }}</span>
-                </button>
-              } @empty {
-                <p class="vacio">Este grupo todavía no tiene participantes.</p>
+                </div>
               }
+            } @else {
+              <ng-container *ngTemplateOutlet="tablaPosiciones"></ng-container>
             }
+
+            <ng-template #tablaPosiciones>
+              @if (cargandoTabla()) {
+                <div class="estado-carga oscuro"><mat-spinner diameter="32"></mat-spinner></div>
+              } @else {
+                @for (p of participantes() ?? []; track p.id; let i = $index) {
+                  <button type="button" class="fila-participante"
+                          [class.primer-lugar]="p.max" [class.segundo-lugar]="p.second"
+                          (click)="abrirDetalleParticipante(p)">
+                    <span class="posicion">{{ i + 1 }}</span>
+                    <span class="nombre">{{ p.nombre }}</span>
+                    <span class="equipos-fase">
+                      @for (pareja of equiposEnFase(p); track $index) {
+                        <span class="pareja-logos">
+                          @for (item of pareja; track item.equipo.id) {
+                            <img [src]="item.equipo.logo" [alt]="item.equipo.nombre" [title]="item.equipo.nombre" />
+                          }
+                        </span>
+                      }
+                    </span>
+                    @if (p.puntaje !== 0 && p.max) {
+                      <mat-icon class="icono-trofeo" aria-label="Primer lugar">emoji_events</mat-icon>
+                    } @else if (p.puntaje !== 0 && p.second) {
+                      <mat-icon class="icono-medalla" aria-label="Segundo lugar">military_tech</mat-icon>
+                    }
+                    <span class="puntaje">{{ p.puntaje }}</span>
+                  </button>
+                } @empty {
+                  <p class="vacio">Este grupo todavía no tiene participantes.</p>
+                }
+              }
+            </ng-template>
           }
         </mat-card>
 
