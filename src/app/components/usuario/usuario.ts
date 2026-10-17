@@ -10,14 +10,14 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService, ROLES_GRUPO, RolGrupo, UsuarioVisible, MembresiaVisible } from '../../services/auth/auth';
-import { GruposService, Grupo } from '../../services/grupos';
+import { GruposService, Grupo, ModoGrupo, MODOS_GRUPO, etiquetaModo } from '../../services/grupos';
 import { Router, RouterModule } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
 
 const POR_PAGINA = 20;
 
 @Component({
-  selector: 'app-borrar-usuario',
+  selector: 'app-usuario',
   standalone: true,
   imports: [
     ReactiveFormsModule,
@@ -32,10 +32,10 @@ const POR_PAGINA = 20;
     MatMenuModule,
     RouterModule
   ],
-  templateUrl: './borrar-usuario.html',
-  styleUrls: ['./borrar-usuario.css']
+  templateUrl: './usuario.html',
+  styleUrls: ['./usuario.css']
 })
-export class BorrarUsuario implements OnInit {
+export class Usuario implements OnInit {
 
   private svc = inject(AuthService);
   private gruposService = inject(GruposService);
@@ -54,6 +54,8 @@ export class BorrarUsuario implements OnInit {
   hayMas = false;
 
   roles = ROLES_GRUPO;
+  modos = MODOS_GRUPO;
+  etiquetaModo = etiquetaModo;
   grupos: Grupo[] = [];
   // El usuario en sesión no puede quitarse el super usuario ni borrarse (evita quedarse sin super usuario).
   miUserId: string | null = null;
@@ -61,6 +63,7 @@ export class BorrarUsuario implements OnInit {
   search = this.fb.control('');
   nuevoGrupo = this.fb.control('', [Validators.required, Validators.minLength(2)]);
   nuevaApuesta = this.fb.control<number | null>(null, [Validators.min(0)]);
+  nuevoModo = this.fb.control<ModoGrupo | null>(null, [Validators.required]);
 
 
   ngOnInit(): void {
@@ -144,14 +147,20 @@ export class BorrarUsuario implements OnInit {
 
   crearGrupo() {
     const nombre = this.nuevoGrupo.value?.trim();
-    if (!nombre || this.nuevoGrupo.invalid) { this.nuevoGrupo.markAsTouched(); return; }
+    const modo = this.nuevoModo.value;
+    if (!nombre || this.nuevoGrupo.invalid || !modo) {
+      this.nuevoGrupo.markAsTouched();
+      this.nuevoModo.markAsTouched();
+      return;
+    }
     this.loading = true; this.errorMsg = this.okMsg = null;
-    this.gruposService.crearGrupo(nombre, this.leerApuesta(this.nuevaApuesta.value)).subscribe({
+    this.gruposService.crearGrupo(nombre, modo, this.leerApuesta(this.nuevaApuesta.value)).subscribe({
       next: (g) => {
         this.grupos = [...this.grupos, g].sort((a, b) => a.nombre.localeCompare(b.nombre));
         this.nuevoGrupo.reset('');
         this.nuevaApuesta.reset(null);
-        this.okMsg = `Grupo "${g.nombre}" creado.`;
+        this.nuevoModo.reset(null);
+        this.okMsg = `Grupo "${g.nombre}" creado en ${etiquetaModo(g.modo)}.`;
         this.loading = false;
       },
       error: (e) => {

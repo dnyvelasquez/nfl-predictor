@@ -4,9 +4,26 @@ import { refrescarTokenDataApi, diagnosticoDataApi } from '../core/supabase.clie
 import { SupabaseClientService } from './core/supabase-client';
 import { AuthService, RolEnGrupo } from './auth/auth';
 
+/**
+ * Modo de juego de un grupo (uno solo por grupo; un usuario puede estar en
+ * grupos de distintos modos). Equipos: a cada participante le tocan equipos y
+ * suma con sus resultados. Pronóstico: cada participante pronostica los partidos.
+ */
+export type ModoGrupo = 'equipos' | 'pronostico';
+
+export const MODOS_GRUPO: { value: ModoGrupo; label: string }[] = [
+  { value: 'equipos', label: 'Modo Equipos' },
+  { value: 'pronostico', label: 'Modo Pronóstico' },
+];
+
+export function etiquetaModo(modo: ModoGrupo): string {
+  return MODOS_GRUPO.find((m) => m.value === modo)?.label ?? modo;
+}
+
 export interface Grupo {
   id: string;
   nombre: string;
+  modo: ModoGrupo;
   /** Valor de la apuesta por participante (null = sin definir). */
   apuesta: number | null;
   moneda: string;
@@ -17,7 +34,7 @@ export interface GrupoDisponible extends Grupo {
   rol: RolEnGrupo;
 }
 
-const COLUMNAS = 'id,nombre,apuesta,moneda';
+const COLUMNAS = 'id,nombre,modo,apuesta,moneda';
 
 /** "$50.000 COP", o null si el grupo no tiene apuesta definida. */
 export function formatearApuesta(g: Pick<Grupo, 'apuesta' | 'moneda'>): string | null {
@@ -58,9 +75,10 @@ export class GruposService {
     );
   }
 
-  crearGrupo(nombre: string, apuesta: number | null): Observable<Grupo> {
+  /** El modo se elige al crear el grupo y no se cambia después. */
+  crearGrupo(nombre: string, modo: ModoGrupo, apuesta: number | null): Observable<Grupo> {
     return from(
-      this.supabaseClient.from('grupos').insert({ nombre, apuesta }).select(COLUMNAS).single()
+      this.supabaseClient.from('grupos').insert({ nombre, modo, apuesta }).select(COLUMNAS).single()
     ).pipe(
       map(({ data, error }: any) => {
         if (error) throw error;

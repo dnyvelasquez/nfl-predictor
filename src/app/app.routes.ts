@@ -22,7 +22,9 @@ export const routes: Routes = [
 
   { path: 'admin', loadComponent: () => import('./components/admin/admin').then(m => m.Admin), canActivate: [authGuard, rolGuard('administrador')] },
   { path: 'nuevo-usuario', loadComponent: () => import('./components/nuevo-usuario/nuevo-usuario').then(m => m.NuevoUsuario), canActivate: [authGuard, rolGuard('administrador')] },
-  { path: 'borrar-usuario', loadComponent: () => import('./components/borrar-usuario/borrar-usuario').then(m => m.BorrarUsuario), canActivate: [authGuard, rolGuard('superusuario')] },
+  { path: 'usuario', loadComponent: () => import('./components/usuario/usuario').then(m => m.Usuario), canActivate: [authGuard, rolGuard('superusuario')] },
+  // Ruta anterior de la página de usuarios, por si quedó en marcadores o enlaces.
+  { path: 'borrar-usuario', redirectTo: 'usuario', pathMatch: 'full' },
   { path: 'ingresar-juego', loadComponent: () => import('./components/ingresar-juego/ingresar-juego').then(m => m.IngresarJuego), canActivate: [authGuard, rolGuard('administrador')] },
   { path: 'participantes', loadComponent: () => import('./components/participantes/participantes').then(m => m.Participantes), canActivate: [authGuard, rolGuard('administrador')] },
   { path: 'asignacion', loadComponent: () => import('./components/asignacion/asignacion').then(m => m.Asignacion), canActivate: [authGuard, rolGuard('administrador')] },

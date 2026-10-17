@@ -1247,3 +1247,16 @@ BEGIN ATOMIC
 END;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- 2026-10-17 — Modo de juego por grupo.
+-- Cada grupo juega en un solo modo: 'equipos' (se reparten equipos a los
+-- participantes; todo lo que existía) o 'pronostico' (cada participante
+-- pronostica los partidos). Se elige al crear el grupo y la app no lo cambia
+-- después. Un usuario puede pertenecer a grupos de distintos modos.
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.grupos
+  ADD COLUMN IF NOT EXISTS modo text NOT NULL DEFAULT 'equipos'
+  CONSTRAINT grupos_modo_valido CHECK (modo IN ('equipos', 'pronostico'));
+COMMENT ON COLUMN public.grupos.modo IS 'Modo de juego del grupo: equipos (se reparten equipos) o pronostico (se pronostica cada partido). Un grupo tiene un solo modo.';
+NOTIFY pgrst, 'reload schema';
