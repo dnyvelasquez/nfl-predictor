@@ -1260,3 +1260,132 @@ ALTER TABLE public.grupos
   CONSTRAINT grupos_modo_valido CHECK (modo IN ('equipos', 'pronostico'));
 COMMENT ON COLUMN public.grupos.modo IS 'Modo de juego del grupo: equipos (se reparten equipos) o pronostico (se pronostica cada partido). Un grupo tiene un solo modo.';
 NOTIFY pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- 2026-10-17 — Participantes enlazados a usuarios (Modo Pronóstico).
+-- En Modo Pronóstico cada participante es un usuario: tiene su cuenta y
+-- registrará sus propios pronósticos. El nombre de participante se da al
+-- agregar el usuario al grupo (agregar_miembro con p_participante). Al sacar
+-- al usuario del grupo, su participante se borra (trigger). Estos grupos no
+-- tienen sorteo de números: `numero` queda como orden de inscripción.
+-- En Modo Equipos nada cambia (participantes sin cuenta, user_id NULL).
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.participantes
+  ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES neon_auth."user"(id) ON DELETE CASCADE;
+CREATE UNIQUE INDEX IF NOT EXISTS participantes_usuario_unico_por_grupo
+  ON public.participantes (grupo_id, user_id) WHERE user_id IS NOT NULL;
+COMMENT ON COLUMN public.participantes.user_id IS 'Cuenta del participante en grupos de Modo Pronóstico (NULL en Modo Equipos).';
+
+-- Sacar a un usuario de un grupo borra su participante en ese grupo.
+CREATE OR REPLACE FUNCTION privado.borrar_participante_de_miembro() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  DELETE FROM participantes WHERE grupo_id = OLD.grupo_id AND user_id = OLD.user_id;
+  RETURN OLD;
+END $$;
+REVOKE ALL ON FUNCTION privado.borrar_participante_de_miembro() FROM PUBLIC, authenticated;
+DROP TRIGGER IF EXISTS miembro_sale_borra_participante ON public.miembros_grupo;
+CREATE TRIGGER miembro_sale_borra_participante
+  AFTER DELETE ON public.miembros_grupo
+  FOR EACH ROW EXECUTE FUNCTION privado.borrar_participante_de_miembro();
+
+-- agregar_miembro gana p_participante (obligatorio en Modo Pronóstico, ignorado en Modo Equipos).
+DROP FUNCTION IF EXISTS public.agregar_miembro(text, uuid, text);
+DROP FUNCTION IF EXISTS privado.agregar_miembro(text, uuid, text, text);
+
+CREATE FUNCTION privado.agregar_miembro(p_email text, p_grupo uuid, p_rol text, p_participante text, p_uid text) RETURNS uuid
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+-- Superusuario: cualquier grupo y rol. Administrador: solo 'lectura' en grupos que administra.
+-- Si ya era miembro no cambia su rol. En Modo Pronóstico crea su participante
+-- (si no lo tenía) con el nombre dado, único dentro del grupo.
+DECLARE
+  uid uuid;
+  rol_caller text := privado.rol_en_grupo_de(p_grupo, p_uid);
+  modo_grupo text;
+  v_nombre text := nullif(trim(coalesce(p_participante, '')), '');
+BEGIN
+  IF p_rol NOT IN ('administrador', 'lectura') THEN
+    RAISE EXCEPTION 'Rol invalido' USING ERRCODE = '22023';
+  END IF;
+  IF NOT (rol_caller = 'superusuario' OR (rol_caller = 'administrador' AND p_rol = 'lectura')) THEN
+    RAISE EXCEPTION 'No autorizado para agregar miembros a este grupo' USING ERRCODE = '42501';
+  END IF;
+  SELECT g.modo INTO modo_grupo FROM grupos g WHERE g.id = p_grupo;
+  SELECT u.id INTO uid FROM neon_auth."user" u WHERE lower(u.email) = lower(trim(p_email));
+  IF uid IS NULL THEN
+    RAISE EXCEPTION 'No existe un usuario con ese email' USING ERRCODE = 'P0002';
+  END IF;
+
+  IF modo_grupo = 'pronostico'
+     AND NOT EXISTS (SELECT 1 FROM participantes p WHERE p.grupo_id = p_grupo AND p.user_id = uid) THEN
+    IF v_nombre IS NULL THEN
+      RAISE EXCEPTION 'En Modo Pronóstico hay que dar el nombre de participante' USING ERRCODE = '22023';
+    END IF;
+    IF EXISTS (SELECT 1 FROM participantes p WHERE p.grupo_id = p_grupo AND lower(p.nombre) = lower(v_nombre)) THEN
+      RAISE EXCEPTION 'Ya hay un participante llamado "%" en este grupo', v_nombre USING ERRCODE = '23505';
+    END IF;
+    INSERT INTO participantes (numero, nombre, grupo_id, user_id)
+      SELECT coalesce(max(p.numero), 0) + 1, v_nombre, p_grupo, uid FROM participantes p WHERE p.grupo_id = p_grupo;
+  END IF;
+
+  INSERT INTO miembros_grupo (user_id, grupo_id, rol) VALUES (uid, p_grupo, p_rol)
+    ON CONFLICT (user_id, grupo_id) DO NOTHING;
+  RETURN uid;
+END $$;
+
+CREATE FUNCTION public.agregar_miembro(p_email text, p_grupo uuid, p_rol text DEFAULT 'lectura', p_participante text DEFAULT NULL) RETURNS uuid
+LANGUAGE sql SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT privado.agregar_miembro(p_email, p_grupo, p_rol, p_participante, auth.user_id());
+END;
+
+-- El sorteo de números no aplica en Modo Pronóstico.
+CREATE OR REPLACE FUNCTION privado.sortear_numeros(p_grupo uuid, p_uid text) RETURNS TABLE (id uuid, nombre text, numero numeric)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF p_grupo IS NULL THEN
+    RAISE EXCEPTION 'Grupo requerido' USING ERRCODE = '22023';
+  END IF;
+  IF coalesce(privado.rol_en_grupo_de(p_grupo, p_uid), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para sortear los números de este grupo' USING ERRCODE = '42501';
+  END IF;
+  IF (SELECT g.modo FROM grupos g WHERE g.id = p_grupo) = 'pronostico' THEN
+    RAISE EXCEPTION 'Los grupos en Modo Pronóstico no tienen sorteo de números' USING ERRCODE = '22023';
+  END IF;
+  UPDATE participantes p SET numero = s.n
+    FROM (SELECT x.id, row_number() OVER (ORDER BY random()) AS n FROM participantes x WHERE x.grupo_id = p_grupo) s
+    WHERE p.id = s.id;
+  RETURN QUERY SELECT p.id, p.nombre, p.numero FROM participantes p WHERE p.grupo_id = p_grupo ORDER BY p.numero;
+END $$;
+
+-- usuarios_visibles devuelve también el nombre de participante (Modo Pronóstico).
+DROP FUNCTION IF EXISTS public.usuarios_visibles();
+DROP FUNCTION IF EXISTS privado.usuarios_visibles(text);
+CREATE FUNCTION privado.usuarios_visibles(p_uid text)
+RETURNS TABLE (user_id uuid, email text, es_superusuario boolean, grupo_id uuid, grupo text, rol text, participante text)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  -- Una fila por (usuario, grupo); usuarios sin grupos salen una vez con grupo NULL.
+  -- Superusuario: todos. Administrador: miembros de los grupos que administra.
+  SELECT u.id, u.email, (r.user_id IS NOT NULL), m.grupo_id, g.nombre, m.rol, p.nombre
+  FROM neon_auth."user" u
+  LEFT JOIN public.roles_usuario r ON r.user_id = u.id
+  LEFT JOIN public.miembros_grupo m ON m.user_id = u.id
+  LEFT JOIN public.grupos g ON g.id = m.grupo_id
+  LEFT JOIN public.participantes p ON p.grupo_id = m.grupo_id AND p.user_id = u.id
+  WHERE privado.es_superusuario_de(p_uid)
+     OR (m.grupo_id IS NOT NULL AND privado.rol_en_grupo_de(m.grupo_id, p_uid) = 'administrador')
+  ORDER BY u.email, g.nombre
+$$;
+CREATE FUNCTION public.usuarios_visibles()
+RETURNS TABLE (user_id uuid, email text, es_superusuario boolean, grupo_id uuid, grupo text, rol text, participante text)
+LANGUAGE sql STABLE SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT v.user_id, v.email, v.es_superusuario, v.grupo_id, v.grupo, v.rol, v.participante FROM privado.usuarios_visibles(auth.user_id()) v;
+END;
+
+REVOKE ALL ON FUNCTION privado.agregar_miembro(text, uuid, text, text, text), privado.usuarios_visibles(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION privado.agregar_miembro(text, uuid, text, text, text), privado.usuarios_visibles(text) TO authenticated;
+REVOKE ALL ON FUNCTION public.agregar_miembro(text, uuid, text, text), public.usuarios_visibles() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.agregar_miembro(text, uuid, text, text), public.usuarios_visibles() TO authenticated;
+
+NOTIFY pgrst, 'reload schema';

@@ -59,7 +59,7 @@
                 <td>
                     @for (m of u.membresias; track m.grupo_id) {
                         <div class="membresia">
-                            <span>{{ m.grupo }}</span>
+                            <span>{{ m.grupo }}@if (m.participante) { <small class="participante"> · {{ m.participante }}</small> }</span>
                             <mat-select [value]="m.rol" (selectionChange)="cambiarRolEnGrupo(u, m, $event.value)"
                                 [disabled]="loading" [attr.aria-label]="'Rol en ' + m.grupo">
                             @for (r of roles; track r.value) {

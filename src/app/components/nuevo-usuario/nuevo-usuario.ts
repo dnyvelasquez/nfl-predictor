@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { FormsModule, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, ROLES_GRUPO, RolGrupo } from '../../services/auth/auth';
-import { GruposService, GrupoDisponible } from '../../services/grupos';
+import { GruposService, GrupoDisponible, etiquetaModo } from '../../services/grupos';
 
 @Component({
   selector: 'app-nuevo-usuario',
@@ -47,12 +47,16 @@ export class NuevoUsuario implements OnInit {
   // el super usuario elige el rol. Hacer super usuario a alguien se hace en "Usuarios".
   roles = ROLES_GRUPO;
   grupos: GrupoDisponible[] = [];
+  etiquetaModo = etiquetaModo;
+  // En Modo Pronóstico cada usuario es un participante: se pide su nombre.
+  esPronostico = false;
 
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     grupoId: [null as string | null, Validators.required],
     rol: ['lectura' as RolGrupo, Validators.required],
+    participante: [{ value: '', disabled: true }, [Validators.required, Validators.maxLength(40)]],
   });
 
   get f() { return this.form.controls; }
@@ -71,6 +75,8 @@ export class NuevoUsuario implements OnInit {
 
   ajustarRol() {
     const grupo = this.grupos.find((g) => g.id === this.form.getRawValue().grupoId);
+    this.esPronostico = grupo?.modo === 'pronostico';
+    if (this.esPronostico) this.f.participante.enable(); else this.f.participante.disable();
     if (grupo?.rol === 'superusuario') {
       this.f.rol.enable();
     } else {
@@ -84,17 +90,18 @@ export class NuevoUsuario implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    const { email, password, grupoId, rol } = this.form.getRawValue();
+    const { email, password, grupoId, rol, participante } = this.form.getRawValue();
     this.loading = true;
     this.errorMsg = this.okMsg = null;
 
-    this.authService.crearUsuario(String(email), String(password), String(grupoId), rol as RolGrupo)
+    this.authService.crearUsuario(String(email), String(password), String(grupoId), rol as RolGrupo,
+      this.esPronostico ? String(participante) : undefined)
       .subscribe({
         next: ({ yaExistia }) => {
           this.okMsg = yaExistia
             ? 'El usuario ya existía: se agregó al grupo (su contraseña no cambió)'
             : 'Usuario creado correctamente';
-          this.form.reset({ grupoId, rol: 'lectura' });
+          this.form.reset({ grupoId, rol: 'lectura', participante: '' });
           this.ajustarRol();
           this.loading = false;
         },

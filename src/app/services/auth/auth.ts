@@ -36,6 +36,8 @@ export interface Perfil {
 
 export interface MembresiaVisible extends Membresia {
   grupo: string;
+  /** Nombre de participante del usuario en el grupo (solo Modo Pronóstico). */
+  participante: string | null;
 }
 
 export interface UsuarioVisible {
@@ -167,7 +169,7 @@ export class AuthService {
    * toca. La membresía se crea con `agregar_miembro()`, que solo le permite al
    * administrador agregar 'lectura' a grupos que administra.
    */
-  crearUsuario(email: string, password: string, grupoId: string, rol: RolGrupo): Observable<{ yaExistia: boolean }> {
+  crearUsuario(email: string, password: string, grupoId: string, rol: RolGrupo, participante?: string): Observable<{ yaExistia: boolean }> {
     return this.esSuperusuario$().pipe(
       switchMap((esSuper) =>
         (esSuper ? this.crearConAdmin(email, password) : this.registrar(email, password)).pipe(
@@ -179,7 +181,7 @@ export class AuthService {
         )
       ),
       switchMap((yaExistia) =>
-        this.agregarMiembro(email, grupoId, rol).pipe(map(() => ({ yaExistia })))
+        this.agregarMiembro(email, grupoId, rol, participante).pipe(map(() => ({ yaExistia })))
       )
     );
   }
@@ -218,9 +220,15 @@ export class AuthService {
     );
   }
 
-  agregarMiembro(email: string, grupoId: string, rol: RolGrupo): Observable<string> {
+  /**
+   * En grupos de Modo Pronóstico `participante` es obligatorio: la base crea el
+   * participante del usuario con ese nombre (único en el grupo). En Modo Equipos se ignora.
+   */
+  agregarMiembro(email: string, grupoId: string, rol: RolGrupo, participante?: string): Observable<string> {
     return from(
-      this.supabaseClient.getClient().rpc('agregar_miembro', { p_email: email, p_grupo: grupoId, p_rol: rol })
+      this.supabaseClient.getClient().rpc('agregar_miembro', {
+        p_email: email, p_grupo: grupoId, p_rol: rol, p_participante: participante?.trim() || null
+      })
     ).pipe(
       map(({ data, error }: any) => {
         if (error) throw error;
@@ -290,7 +298,9 @@ export class AuthService {
             porUsuario.set(fila.user_id, u);
           }
           if (fila.grupo_id) {
-            u.membresias.push({ grupo_id: fila.grupo_id, grupo: fila.grupo, rol: fila.rol as RolGrupo });
+            u.membresias.push({
+              grupo_id: fila.grupo_id, grupo: fila.grupo, rol: fila.rol as RolGrupo, participante: fila.participante ?? null
+            });
           }
         }
         return [...porUsuario.values()];

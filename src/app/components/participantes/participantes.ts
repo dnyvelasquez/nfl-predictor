@@ -11,7 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ParticipantesService } from '../../services/participantes';
-import { GruposService, GrupoDisponible } from '../../services/grupos';
+import { GruposService, GrupoDisponible, etiquetaModo } from '../../services/grupos';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth/auth';
 import { CommonModule } from '@angular/common';
@@ -61,11 +61,22 @@ export class Participantes implements OnInit, OnDestroy {
   participantes: Row[] = [];
 
   grupos: GrupoDisponible[] = [];
+  etiquetaModo = etiquetaModo;
 
   // El sorteo (con su animación) lo pueden hacer también los administradores del grupo elegido.
+  // En Modo Pronóstico no hay sorteo.
   get puedeSortear(): boolean {
     const rol = this.grupos.find(g => g.id === this.grupoId)?.rol;
-    return rol === 'superusuario' || rol === 'administrador';
+    return !this.esPronostico && (rol === 'superusuario' || rol === 'administrador');
+  }
+
+  /**
+   * En Modo Pronóstico cada participante es un usuario: se crean al agregar
+   * usuarios al grupo ("Nuevo usuario" / "Usuarios") y se borran al sacarlos,
+   * así que aquí no se agregan ni se eliminan a mano.
+   */
+  get esPronostico(): boolean {
+    return this.grupos.find(g => g.id === this.grupoId)?.modo === 'pronostico';
   }
   grupoId: string | null = null;
 

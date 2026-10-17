@@ -323,3 +323,13 @@ mat-form-field.tight.numero input {
     right: 16px;
   }
 }
+
+.nota-pronostico {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid #764ba2;
+  background: rgba(118, 75, 162, 0.15);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}

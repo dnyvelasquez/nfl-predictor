@@ -118,14 +118,22 @@ export class Usuario implements OnInit {
   }
 
   quitarDeGrupo(u: UsuarioVisible, m: MembresiaVisible) {
-    if (!confirm(`¿Sacar a ${u.email} del grupo "${m.grupo}"?`)) return;
+    const aviso = m.participante ? ` También se borrará su participante "${m.participante}" del grupo.` : '';
+    if (!confirm(`¿Sacar a ${u.email} del grupo "${m.grupo}"?${aviso}`)) return;
     this.ejecutar(this.svc.quitarDeGrupo(u.id, m.grupo_id), `${u.email} salió de "${m.grupo}".`,
       () => u.membresias = u.membresias.filter((x) => x.grupo_id !== m.grupo_id));
   }
 
   agregarAGrupo(u: UsuarioVisible, g: Grupo) {
-    this.ejecutar(this.svc.agregarMiembro(u.email, g.id, 'lectura'), `${u.email} agregado a "${g.nombre}" como solo lectura.`,
-      () => u.membresias = [...u.membresias, { grupo_id: g.id, grupo: g.nombre, rol: 'lectura' as RolGrupo }]
+    // En Modo Pronóstico el usuario entra como participante: hace falta su nombre.
+    let participante: string | null = null;
+    if (g.modo === 'pronostico') {
+      participante = prompt(`Nombre de participante de ${u.email} en "${g.nombre}":`)?.trim() || null;
+      if (!participante) return;
+    }
+    this.ejecutar(this.svc.agregarMiembro(u.email, g.id, 'lectura', participante ?? undefined),
+      `${u.email} agregado a "${g.nombre}" como solo lectura${participante ? ` (participante "${participante}")` : ''}.`,
+      () => u.membresias = [...u.membresias, { grupo_id: g.id, grupo: g.nombre, rol: 'lectura' as RolGrupo, participante }]
         .sort((a, b) => a.grupo.localeCompare(b.grupo)));
   }
 

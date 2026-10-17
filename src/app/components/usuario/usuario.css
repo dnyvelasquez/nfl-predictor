@@ -90,3 +90,7 @@ button mat-icon {
 .modo-grupo.pronostico {
   background: rgba(118, 75, 162, 0.35);
 }
+
+.membresia .participante {
+  opacity: 0.75;
+}

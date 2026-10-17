@@ -22,17 +22,25 @@
         <mat-label>Grupo</mat-label>
         <mat-select [value]="grupoId" (selectionChange)="cambiarGrupo($event.value)">
           @for (g of grupos; track g.id) {
-            <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
+            <mat-option [value]="g.id">{{ g.nombre }} · {{ etiquetaModo(g.modo) }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
     } @else if (grupos.length === 1) {
-      <p class="grupo-label">Grupo: {{ grupos[0].nombre }}</p>
+      <p class="grupo-label">Grupo: {{ grupos[0].nombre }} · {{ etiquetaModo(grupos[0].modo) }}</p>
     }
 
     <div class="table-container">
 
-      @if (esSuperusuario()) {
+      @if (esPronostico) {
+        <p class="nota-pronostico">
+          En Modo Pronóstico cada participante es un usuario. Se agregan desde "Nuevo usuario" o "Usuarios"
+          (con su nombre de participante) y se eliminan al sacarlos del grupo. No hay sorteo de números:
+          el N° es el orden de inscripción.
+        </p>
+      }
+
+      @if (esSuperusuario() && !esPronostico) {
       <form [formGroup]="addForm" (ngSubmit)="add()" class="add">
         <mat-form-field appearance="fill" class="w">
           <mat-label>Nombre</mat-label>
@@ -95,7 +103,9 @@
                 @if (esSuperusuario()) {
                 <div class="cell a">
                   <button mat-stroked-button (click)="startEdit(p)" [disabled]="loading">Editar</button>
-                  <button mat-button color="warn" (click)="remove(p)" [disabled]="loading">Eliminar</button>
+                  @if (!esPronostico) {
+                    <button mat-button color="warn" (click)="remove(p)" [disabled]="loading">Eliminar</button>
+                  }
                 </div>
                 }
               </div>

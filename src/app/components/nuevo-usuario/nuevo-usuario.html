@@ -35,10 +35,19 @@
         <mat-label>Grupo</mat-label>
         <mat-select formControlName="grupoId" (selectionChange)="ajustarRol()">
           @for (g of grupos; track g.id) {
-            <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
+            <mat-option [value]="g.id">{{ g.nombre }} · {{ etiquetaModo(g.modo) }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
+
+      @if (esPronostico) {
+        <mat-form-field appearance="fill" class="box">
+          <mat-label>Nombre de participante</mat-label>
+          <input matInput formControlName="participante" maxlength="40" />
+          <mat-hint>Así aparecerá en la tabla del grupo</mat-hint>
+          @if (f.participante.touched && f.participante.hasError('required')) { <mat-error>El nombre es requerido</mat-error> }
+        </mat-form-field>
+      }
 
       <mat-form-field appearance="fill" class="box">
         <mat-label>Rol en el grupo</mat-label>
@@ -48,7 +57,8 @@
           }
         </mat-select>
       </mat-form-field>
-      <p class="nota">Si el email ya tiene cuenta, se agrega al grupo y la contraseña no cambia.</p>
+      <p class="nota">Si el email ya tiene cuenta, se agrega al grupo y la contraseña no cambia.
+        @if (esPronostico) { Si ya era participante del grupo, conserva su nombre. }</p>
 
       <div>
         <button mat-raised-button type="submit" [disabled]="form.invalid || loading">
