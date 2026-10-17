@@ -1,32 +1,19 @@
 .borrar-container {
-  padding-top: 50px;
-  padding-bottom: 20px;
+  padding: 50px 16px 20px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   min-height: 100vh;
   background-color: #003B73;
+  box-sizing: border-box;
 }
 
 .borrar-card {
   margin-top: 10px;
   padding: 20px;
-  text-align: center;
-  max-width: 90%;
-}
-
-.borrar-table {
-    width:100%; 
-    border-collapse: collapse;
-}
-
-.borrar-table th {
-    text-align:center;
-    padding:8px;
-}
-
-.borrar-table td {
-    padding:8px;
+  width: 100%;
+  max-width: 900px;
+  box-sizing: border-box;
 }
 
 .header {
@@ -40,43 +27,152 @@
   width: 50px;
 }
 
-.box {
-  width: 280px;
-}
-
 .button-container {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  width: 100%;
   margin-bottom: 20px;
 }
 
-.left {
-  flex: 1 1 150px !important;
-  max-width: 200px !important;
+h2 {
+  text-align: center;
 }
 
-.right {
-  flex: 1 1 150px !important;
-  max-width: 200px !important;
-  justify-content: end;
+/* Buscador */
+
+.buscador {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-button mat-icon {
-    padding-left: 12px;
+.campo-buscar {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Usuarios: una tarjeta por usuario */
+
+.lista-usuarios {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tarjeta-usuario {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.usuario-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.email {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.membresias {
+  display: flex;
+  flex-direction: column;
 }
 
 .membresia {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px 40px;
+  grid-template-columns: minmax(0, 1fr) 150px 40px;
+  grid-template-areas: "grupo rol quitar";
   align-items: center;
   gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.membresia-grupo {
+  grid-area: grupo;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.membresia-rol { grid-area: rol; }
+.membresia-quitar { grid-area: quitar; }
+
+.membresia .participante {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.sin-grupo {
+  margin: 0;
+  opacity: 0.75;
 }
 
 .agregar-grupo {
-  max-width: 200px;
-  margin-top: 4px;
+  max-width: 280px;
+}
+
+.paginacion {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.separador {
+  margin: 20px 0 !important;
+}
+
+/* Grupos */
+
+.lista-grupos {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tarjeta-grupo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+
+.grupo-encabezado {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nombre-grupo {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.grupo-acciones {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .modo-grupo {
@@ -91,6 +187,83 @@ button mat-icon {
   background: rgba(118, 75, 162, 0.35);
 }
 
-.membresia .participante {
-  opacity: 0.75;
+.campo-apuesta {
+  width: 180px;
+}
+
+/* Nuevo grupo */
+
+.nuevo-grupo {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.campo-nombre {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.campo-modo {
+  width: 200px;
+}
+
+.boton-crear {
+  margin-top: 8px;
+}
+
+/* Pantallas pequeñas: todo en una columna */
+
+@media (max-width: 600px) {
+  .borrar-card {
+    padding: 16px 12px;
+  }
+
+  .header {
+    gap: 8px;
+  }
+
+  .header h1 {
+    font-size: 1.6rem;
+  }
+
+  /* Grupo y botón de sacar arriba; el rol abajo, a todo el ancho. */
+  .membresia {
+    grid-template-columns: minmax(0, 1fr) 40px;
+    grid-template-areas:
+      "grupo quitar"
+      "rol   rol";
+    row-gap: 2px;
+  }
+
+  .agregar-grupo {
+    max-width: none;
+  }
+
+  .tarjeta-grupo {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .grupo-acciones .campo-apuesta {
+    flex: 1;
+    width: auto;
+  }
+
+  .nuevo-grupo {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .campo-nombre,
+  .campo-modo,
+  .campo-apuesta {
+    flex: none;
+    width: 100%;
+  }
+
+  .boton-crear {
+    margin-top: 0;
+  }
 }
