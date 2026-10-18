@@ -93,7 +93,7 @@ Las fechas y horas de los juegos se muestran en la zona horaria de cada usuario 
   - *Temporada regular*: standings por conferencia y división, con el récord (Ganados-Perdidos-Empatados) y el orden oficial de la NFL; una franja de color marca la clasificación a playoffs (amarillo: semilla 1, azul: otros campeones de división, rojo: wild cards).
   - *Postemporada*: el cuadro de playoffs (AFC, Super Bowl y NFC). Antes de los playoffs muestra los cruces proyectados con las semillas actuales; luego, los juegos reales con fecha, marcador en vivo y ganador. Se abre sola en esta pestaña cuando empiezan los playoffs.
 - **Equipos → Ranking inicial**: el ranking de la temporada anterior con el que se hizo la asignación inicial, agrupado según hasta dónde llegó cada equipo en los playoffs.
-- **Reglamento**: reglas de asignación de equipos, puntaje y repartición del premio. El valor de la apuesta (regla 22) depende del grupo y solo se ve con sesión.
+- **Reglamento**: uno por modo de juego, con un selector para leer el otro (abre en el modo del grupo elegido). Modo Equipos: sorteo, asignación de equipos, puntos y premios; Modo Pronóstico: participantes, cómo y hasta cuándo se pronostica, puntos (incluido el bono por diferencia) y premios. El valor de la apuesta depende del grupo y solo se ve con sesión.
 
 **Páginas de cada grupo (requieren sesión)**
 

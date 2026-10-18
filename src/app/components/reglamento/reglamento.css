@@ -72,3 +72,17 @@ li::marker {
   flex-wrap: wrap;
   margin: 12px 0 4px;
 }
+
+.modo-reglamento {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 16px;
+}
+
+.nota-modo {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  text-align: center;
+}

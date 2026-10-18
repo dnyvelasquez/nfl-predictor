@@ -10,10 +10,49 @@
     @if (grupos().length > 0) {
       <div class="grupo-reglamento">
         <span>Reglamento del grupo</span>
-        <app-selector-grupo [grupos]="grupos()" [grupoId]="grupoId()" (cambio)="grupoId.set($event)"></app-selector-grupo>
+        <app-selector-grupo [grupos]="grupos()" [grupoId]="grupoId()" (cambio)="cambiarGrupo($event)"></app-selector-grupo>
       </div>
     }
 
+    <div class="modo-reglamento">
+      <mat-button-toggle-group [value]="modo()" (change)="modoElegido.set($event.value)" aria-label="Modo de juego" hideSingleSelectionIndicator>
+        @for (m of modos; track m.value) {
+          <mat-button-toggle [value]="m.value">{{ m.label }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+      @if (grupo(); as g) {
+        <span class="nota-modo">
+          @if (g.modo === modo()) {
+            {{ g.nombre }} juega en este modo.
+          } @else {
+            {{ g.nombre }} juega en {{ etiquetaModo(g.modo) }}; este reglamento no le aplica.
+          }
+        </span>
+      }
+    </div>
+
+    <ng-template #reglaApuesta>
+      @if (!cargado()) {
+        El valor de la apuesta se está cargando…
+      } @else if (!logueado()) {
+        El valor de la apuesta lo define cada grupo. <a routerLink="/login" [queryParams]="{ redirect: '/reglamento' }">Inicia sesión</a> para ver el de tu grupo.
+      } @else if (!grupo()) {
+        El valor de la apuesta lo define cada grupo; tu usuario todavía no pertenece a ninguno.
+      } @else if (apuesta()) {
+        El valor de la apuesta lo define cada grupo; en {{ grupo()!.nombre }} es de {{ apuesta() }}.
+      } @else {
+        El valor de la apuesta lo define cada grupo; {{ grupo()!.nombre }} todavía no lo ha definido.
+      }
+    </ng-template>
+
+    <ng-template #reglasPremios>
+      <li>Quien tenga más puntos al terminar el Super Bowl recibe el 70&nbsp;% del recaudo.</li>
+      <li>Quien quede de segundo en puntos recibe el 30&nbsp;% del recaudo.</li>
+      <li>Si hay empate en el primer lugar, el recaudo completo se reparte en partes iguales entre los empatados, y no hay premio de segundo lugar.</li>
+      <li>Si hay empate en el segundo lugar, el 30&nbsp;% del recaudo se reparte en partes iguales entre los empatados.</li>
+    </ng-template>
+
+    @if (modo() === 'equipos') {
     <div class="container">
       <h3>Sorteo</h3>
       <ol start="1">
@@ -63,25 +102,53 @@
 
       <h3>Apuesta y premios</h3>
       <ol start="22">
-        <li>
-          @if (!cargado()) {
-            El valor de la apuesta se está cargando…
-          } @else if (!logueado()) {
-            El valor de la apuesta lo define cada grupo. <a routerLink="/login" [queryParams]="{ redirect: '/reglamento' }">Inicia sesión</a> para ver el de tu grupo.
-          } @else if (!grupo()) {
-            El valor de la apuesta lo define cada grupo; tu usuario todavía no pertenece a ninguno.
-          } @else if (apuesta()) {
-            El valor de la apuesta lo define cada grupo; en {{ grupo()!.nombre }} es de {{ apuesta() }}.
-          } @else {
-            El valor de la apuesta lo define cada grupo; {{ grupo()!.nombre }} todavía no lo ha definido.
-          }
-        </li>
-        <li>Quien tenga más puntos al terminar el Super Bowl recibe el 70&nbsp;% del recaudo.</li>
-        <li>Quien quede de segundo en puntos recibe el 30&nbsp;% del recaudo.</li>
-        <li>Si hay empate en el primer lugar, el recaudo completo se reparte en partes iguales entre los empatados, y no hay premio de segundo lugar.</li>
-        <li>Si hay empate en el segundo lugar, el 30&nbsp;% del recaudo se reparte en partes iguales entre los empatados.</li>
+        <li><ng-container [ngTemplateOutlet]="reglaApuesta"></ng-container></li>
+        <ng-container [ngTemplateOutlet]="reglasPremios"></ng-container>
       </ol>
     </div>
+    } @else {
+    <div class="container">
+      <h3>Participantes</h3>
+      <ol start="1">
+        <li>Cada participante es un usuario de la plataforma. Lo inscribe el administrador del grupo con un nombre de participante, que no se puede repetir dentro del grupo.</li>
+        <li>No hay sorteo ni reparto de equipos: todos los participantes pronostican todos los juegos.</li>
+        <li>Quien se inscriba con la temporada empezada participa desde ese momento. Los juegos que ya cerraron antes de su inscripción le cuentan 0 puntos.</li>
+      </ol>
+
+      <h3>Pronósticos</h3>
+      <ol start="4">
+        <li>En cada juego de la temporada regular y de los playoffs, el participante elige qué equipo gana. En temporada regular también puede elegir empate; en playoffs no hay empates.</li>
+        <li>Además, si quiere, puede pronosticar la diferencia de puntos entre los dos equipos (de 1 a 99). Si elige empate no hay diferencia que pronosticar.</li>
+        <li>Se puede pronosticar, y cambiar el pronóstico, hasta 5 minutos antes de la hora de inicio del juego. Desde ese momento el juego queda cerrado y no se aceptan cambios. La hora de cierre aparece en cada juego, y la que vale es la de la plataforma.</li>
+        <li>Un juego de playoffs se puede pronosticar solo cuando sus dos equipos están definidos. Un juego aplazado queda cerrado; si se reprograma, se vuelve a abrir hasta 5 minutos antes de su nuevo inicio y los pronósticos que ya existían se mantienen.</li>
+        <li>Los pronósticos de cada participante son privados mientras el juego está abierto. Cuando cierra, todos los miembros del grupo pueden verlos.</li>
+        <li>Quien no pronostique un juego suma 0 puntos en ese juego.</li>
+      </ol>
+
+      <h3>Puntos</h3>
+      <ol start="10">
+        <li>
+          Acertar el resultado del juego (el ganador o, en temporada regular, el empate) suma puntos según la ronda:
+          <ul>
+            <li>Temporada regular: 10 puntos</li>
+            <li>Ronda de comodines: 20 puntos</li>
+            <li>Ronda divisional: 30 puntos</li>
+            <li>Final de conferencia: 40 puntos</li>
+            <li>Super Bowl: 50 puntos</li>
+          </ul>
+        </li>
+        <li>Acertar la diferencia de puntos exacta suma esa misma cantidad de puntos, con un máximo de 14, sin importar qué equipo ganó, y se suma a los puntos de la regla 10. Por ejemplo, quien pronostica que un equipo gana por 7 suma 7 puntos de bono si el juego termina con 7 puntos de diferencia, aunque haya ganado el otro equipo; si además acertó el ganador, suma también los puntos del resultado.</li>
+        <li>Un pronóstico equivocado no resta puntos.</li>
+        <li>Solo cuentan los juegos terminados, con su marcador final. Un marcador en vivo no mueve la tabla hasta que el juego acaba.</li>
+      </ol>
+
+      <h3>Apuesta y premios</h3>
+      <ol start="14">
+        <li><ng-container [ngTemplateOutlet]="reglaApuesta"></ng-container></li>
+        <ng-container [ngTemplateOutlet]="reglasPremios"></ng-container>
+      </ol>
+    </div>
+    }
   </mat-card>
 </div>
 
