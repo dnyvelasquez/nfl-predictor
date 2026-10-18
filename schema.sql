@@ -1484,3 +1484,71 @@ REVOKE ALL ON FUNCTION privado.pronosticar(uuid, smallint, text, text), public.p
 GRANT EXECUTE ON FUNCTION privado.pronosticar(uuid, smallint, text, text), public.pronosticar(uuid, smallint, text) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- 2026-10-18 — Diferencia de puntos (Modo Pronóstico).
+-- Además del ganador, el participante puede pronosticar (opcional) la
+-- diferencia de puntos del juego. Si acierta la diferencia exacta suma esa
+-- misma cantidad de puntos, con tope de 14, sin importar quién gane (el cálculo
+-- lo hace el frontend). Con 'empate' no aplica (la diferencia sería 0).
+-- Mismo cierre y misma privacidad que el ganador.
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.pronosticos
+  ADD COLUMN IF NOT EXISTS diferencia smallint
+  CONSTRAINT pronosticos_diferencia_valida CHECK (diferencia BETWEEN 1 AND 99);
+ALTER TABLE public.pronosticos DROP CONSTRAINT IF EXISTS pronosticos_diferencia_sin_empate;
+ALTER TABLE public.pronosticos ADD CONSTRAINT pronosticos_diferencia_sin_empate
+  CHECK (eleccion <> 'empate' OR diferencia IS NULL);
+
+DROP FUNCTION IF EXISTS public.pronosticar(uuid, smallint, text);
+DROP FUNCTION IF EXISTS privado.pronosticar(uuid, smallint, text, text);
+
+CREATE FUNCTION privado.pronosticar(p_grupo uuid, p_juego smallint, p_eleccion text, p_diferencia smallint, p_uid text) RETURNS text
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_participante uuid;
+  v_etapa text;
+BEGIN
+  IF p_eleccion NOT IN ('local', 'visitante', 'empate') THEN
+    RAISE EXCEPTION 'Pronóstico inválido' USING ERRCODE = '22023';
+  END IF;
+  IF p_diferencia IS NOT NULL AND p_eleccion = 'empate' THEN
+    RAISE EXCEPTION 'Con empate no hay diferencia de puntos' USING ERRCODE = '22023';
+  END IF;
+  IF p_diferencia IS NOT NULL AND p_diferencia NOT BETWEEN 1 AND 99 THEN
+    RAISE EXCEPTION 'La diferencia debe estar entre 1 y 99' USING ERRCODE = '22023';
+  END IF;
+  IF (SELECT g.modo FROM grupos g WHERE g.id = p_grupo) IS DISTINCT FROM 'pronostico' THEN
+    RAISE EXCEPTION 'Este grupo no está en Modo Pronóstico' USING ERRCODE = '22023';
+  END IF;
+  SELECT p.id INTO v_participante FROM participantes p WHERE p.grupo_id = p_grupo AND p.user_id::text = p_uid;
+  IF v_participante IS NULL THEN
+    RAISE EXCEPTION 'No eres participante de este grupo' USING ERRCODE = '42501';
+  END IF;
+  SELECT j.etapa INTO v_etapa FROM juegos j WHERE j.id = p_juego;
+  IF v_etapa IS NULL THEN
+    RAISE EXCEPTION 'El juego no existe' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_eleccion = 'empate' AND v_etapa <> 'regular' THEN
+    RAISE EXCEPTION 'En playoffs no hay empate' USING ERRCODE = '22023';
+  END IF;
+  IF public.juego_cerrado(p_juego) THEN
+    RAISE EXCEPTION 'Los pronósticos de este juego ya cerraron' USING ERRCODE = '22023';
+  END IF;
+  INSERT INTO pronosticos (participante_id, juego_id, grupo_id, eleccion, diferencia)
+    VALUES (v_participante, p_juego, p_grupo, p_eleccion, p_diferencia)
+    ON CONFLICT (participante_id, juego_id) DO UPDATE
+      SET eleccion = EXCLUDED.eleccion, diferencia = EXCLUDED.diferencia, actualizado_en = now();
+  RETURN p_eleccion;
+END $$;
+
+CREATE FUNCTION public.pronosticar(p_grupo uuid, p_juego smallint, p_eleccion text, p_diferencia smallint DEFAULT NULL) RETURNS text
+LANGUAGE sql SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT privado.pronosticar(p_grupo, p_juego, p_eleccion, p_diferencia, auth.user_id());
+END;
+
+REVOKE ALL ON FUNCTION privado.pronosticar(uuid, smallint, text, smallint, text), public.pronosticar(uuid, smallint, text, smallint) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION privado.pronosticar(uuid, smallint, text, smallint, text), public.pronosticar(uuid, smallint, text, smallint) TO authenticated;
+
+NOTIFY pgrst, 'reload schema';

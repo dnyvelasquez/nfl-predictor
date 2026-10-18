@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, map, of, switchMap, forkJoin } from 'rxjs';
 import { SupabaseClientService } from './core/supabase-client';
-import { Etapa, ETAPAS, registroEquipoEnEtapa, puntosPorAcierto, resultadoComoEleccion } from './core/etapas';
+import { Etapa, ETAPAS, registroEquipoEnEtapa, puntosPorAcierto, resultadoComoEleccion, bonoDiferencia } from './core/etapas';
 import { PronosticosService } from './pronosticos';
 import { EquiposService, Equipo } from './equipos';
 import { JuegosService } from './juegos';
@@ -35,6 +35,9 @@ export interface ResumenPronosticoEtapa {
   aciertos: number;
   /** Juegos terminados que el participante pronosticó. */
   pronosticados: number;
+  /** Diferencias de puntos acertadas y lo que sumaron (ya incluido en `puntos`). */
+  diferencias: number;
+  puntosDiferencia: number;
   puntos: number;
 }
 
@@ -85,7 +88,8 @@ export class ParticipantesService {
 
   /**
    * Modo Pronóstico: cada acierto (ganador o empate) en un juego terminado suma
-   * los puntos de su etapa. Los pronósticos de juegos sin terminar no cuentan.
+   * los puntos de su etapa, y acertar la diferencia exacta suma esa diferencia
+   * (máx. 14). Los pronósticos de juegos sin terminar no cuentan.
    */
   private puntajeModoPronostico(grupoId: string): Observable<Participante[]> {
     return forkJoin({
@@ -97,7 +101,7 @@ export class ParticipantesService {
         const porId = new Map(juegos.map(j => [Number(j.id), j]));
         const lista = participantes.map(p => {
           const pronosticosPorEtapa: ResumenPronosticoEtapa[] = ETAPAS.map(e => ({
-            etapa: e.value, label: e.label, aciertos: 0, pronosticados: 0, puntos: 0,
+            etapa: e.value, label: e.label, aciertos: 0, pronosticados: 0, diferencias: 0, puntosDiferencia: 0, puntos: 0,
           }));
           for (const pr of pronosticos) {
             if (pr.participante_id !== p.id) continue;
@@ -109,6 +113,13 @@ export class ParticipantesService {
             if (resultado === pr.eleccion) {
               resumen.aciertos++;
               resumen.puntos += puntosPorAcierto(juego.etapa);
+            }
+            // La diferencia se premia aparte, sin importar quién ganó.
+            const bono = bonoDiferencia(pr.diferencia, juego);
+            if (bono > 0) {
+              resumen.diferencias++;
+              resumen.puntosDiferencia += bono;
+              resumen.puntos += bono;
             }
           }
           const conJuegos = pronosticosPorEtapa.filter(r => r.pronosticados > 0);

@@ -24,7 +24,10 @@
 
     @if (esPronostico && !loading) {
       @if (miParticipanteId) {
-        <p class="aviso-pronostico">Elige quién gana cada juego. Puedes cambiarlo hasta 5 minutos antes del inicio.</p>
+        <p class="aviso-pronostico">
+          Elige quién gana cada juego y, si quieres, la diferencia de puntos: si la aciertas exacta, sumas esos puntos
+          (máximo {{ topeDiferencia }}) sin importar quién gane. Puedes cambiarlo hasta 5 minutos antes del inicio.
+        </p>
       } @else {
         <p class="aviso-pronostico">Solo los participantes de este grupo pueden pronosticar.</p>
       }
@@ -124,11 +127,30 @@
                               [attr.aria-pressed]="miPronostico(j) === 'local'"
                               [disabled]="!abierto(j) || guardando.has(+j.id)" (click)="elegir(j, 'local')">{{ j.local }}</button>
                     </div>
+                    <label class="diferencia" [class.inactiva]="!miPronostico(j) || miPronostico(j) === 'empate'">
+                      <span>Dif.</span>
+                      <input #dif type="number" inputmode="numeric" min="1" max="99" step="1" placeholder="–"
+                             [value]="miDiferencia(j) ?? ''"
+                             [disabled]="!abierto(j) || !miPronostico(j) || miPronostico(j) === 'empate' || guardando.has(+j.id)"
+                             [title]="miPronostico(j) === 'empate' ? 'Con empate no hay diferencia' : (!miPronostico(j) ? 'Primero elige el ganador' : 'Diferencia de puntos')"
+                             [attr.aria-label]="'Diferencia de puntos ' + j.visitante + ' vs ' + j.local"
+                             (change)="cambiarDiferencia(j, dif)"
+                             (keyup.enter)="dif.blur()" />
+                    </label>
                     <span class="pronostico-estado">
-                      @if (puntosPronostico(j); as puntos) {
-                        <span class="acierto">✓ +{{ puntos }}</span>
-                      } @else if (puntosPronostico(j) === 0) {
-                        <span class="fallo">✗ 0</span>
+                      @if (puntosPronostico(j) !== null) {
+                        @if (puntosPronostico(j)! > 0) {
+                          <span class="acierto">✓ +{{ puntosPronostico(j) }}</span>
+                        } @else {
+                          <span class="fallo">✗ 0</span>
+                        }
+                        @if (puntosDiferencia(j) !== null) {
+                          @if (puntosDiferencia(j)! > 0) {
+                            <span class="acierto bono">Dif. +{{ puntosDiferencia(j) }}</span>
+                          } @else {
+                            <span class="fallo bono">Dif. ✗</span>
+                          }
+                        }
                       } @else if (abierto(j)) {
                         Cierra {{ horaCierre(j) }}
                       } @else if (!miPronostico(j)) {

@@ -13,6 +13,8 @@ export interface Pronostico {
   participante_id: string;
   juego_id: number;
   eleccion: Eleccion;
+  /** Diferencia de puntos pronosticada (opcional; nunca con 'empate'). */
+  diferencia: number | null;
 }
 
 /** Instante (ms UTC) en que cierran los pronósticos de un juego, o null si no tiene fecha/hora válidas. */
@@ -64,19 +66,24 @@ export class PronosticosService {
   /** Pronósticos visibles del grupo, opcionalmente solo de ciertos juegos. */
   getPronosticos(grupoId: string, juegoIds?: number[]): Observable<Pronostico[]> {
     if (juegoIds && juegoIds.length === 0) return of([]);
-    let query = this.supabaseClient.from('pronosticos').select('participante_id,juego_id,eleccion').eq('grupo_id', grupoId);
+    let query = this.supabaseClient.from('pronosticos').select('participante_id,juego_id,eleccion,diferencia').eq('grupo_id', grupoId);
     if (juegoIds) query = query.in('juego_id', juegoIds);
     return from(query).pipe(
       map(({ data, error }: any) => {
         if (error) throw error;
-        return ((data ?? []) as any[]).map((p) => ({ ...p, juego_id: Number(p.juego_id) })) as Pronostico[];
+        return ((data ?? []) as any[]).map((p) => ({
+          ...p, juego_id: Number(p.juego_id), diferencia: p.diferencia === null ? null : Number(p.diferencia),
+        })) as Pronostico[];
       })
     );
   }
 
-  pronosticar(grupoId: string, juegoId: number, eleccion: Eleccion): Observable<Eleccion> {
+  /** Guarda ganador y diferencia juntos (la diferencia se reemplaza en cada llamada; con 'empate' va null). */
+  pronosticar(grupoId: string, juegoId: number, eleccion: Eleccion, diferencia: number | null = null): Observable<Eleccion> {
     return from(
-      this.supabaseClient.getClient().rpc('pronosticar', { p_grupo: grupoId, p_juego: juegoId, p_eleccion: eleccion })
+      this.supabaseClient.getClient().rpc('pronosticar', {
+        p_grupo: grupoId, p_juego: juegoId, p_eleccion: eleccion, p_diferencia: eleccion === 'empate' ? null : diferencia,
+      })
     ).pipe(
       map(({ data, error }: any) => {
         if (error) throw error;

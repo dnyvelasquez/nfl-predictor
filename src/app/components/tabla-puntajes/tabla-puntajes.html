@@ -87,6 +87,9 @@
                         <div class="equipo-item">
                           <div class="equipo-logo-nombre">
                             <strong class="equipo-nombre">{{ r.aciertos }} de {{ r.pronosticados }} aciertos</strong>
+                            @if (r.diferencias > 0) {
+                              <span class="equipo-record">{{ r.diferencias }} {{ r.diferencias === 1 ? 'diferencia' : 'diferencias' }} (+{{ r.puntosDiferencia }})</span>
+                            }
                           </div>
                           <div class="equipo-info-derecha">
                             <span class="equipo-puntaje">{{ r.puntos }} puntos</span>

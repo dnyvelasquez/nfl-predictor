@@ -20,6 +20,22 @@ export function puntosPorAcierto(etapa: Etapa): number {
   return PUNTOS_POR_ETAPA[etapa];
 }
 
+/** Tope del bono por diferencia de puntos en Modo Pronóstico. */
+export const TOPE_BONO_DIFERENCIA = 14;
+
+/**
+ * Modo Pronóstico: quien acierta la diferencia exacta de puntos del juego suma
+ * esa misma cantidad (máximo 14), sin importar qué equipo ganó. 0 si no acierta,
+ * si no pronosticó diferencia o si el juego no tiene marcador.
+ */
+export function bonoDiferencia(
+  diferencia: number | null | undefined, j: Pick<JuegoConResultado, 'resultado_local' | 'resultado_visitante'>
+): number {
+  if (!diferencia || j.resultado_local === null || j.resultado_visitante === null) return 0;
+  const real = Math.abs(j.resultado_local - j.resultado_visitante);
+  return real === diferencia ? Math.min(diferencia, TOPE_BONO_DIFERENCIA) : 0;
+}
+
 /** Lo que se pronostica en Modo Pronóstico. El empate solo existe en temporada regular. */
 export type Eleccion = 'local' | 'visitante' | 'empate';
 

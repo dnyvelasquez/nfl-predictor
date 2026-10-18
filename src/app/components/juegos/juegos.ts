@@ -1,5 +1,5 @@
 import { Component, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
-import { Etapa, ETAPAS, Eleccion, puntosPorAcierto, resultadoComoEleccion } from '../../services/core/etapas';
+import { Etapa, ETAPAS, Eleccion, puntosPorAcierto, resultadoComoEleccion, bonoDiferencia, TOPE_BONO_DIFERENCIA } from '../../services/core/etapas';
 import { PronosticosService, pronosticoAbierto, cierrePronosticoMs } from '../../services/pronosticos';
 import { JuegosService, Juego } from '../../services/juegos';
 import { MatCardModule } from '@angular/material/card';
@@ -63,7 +63,8 @@ export class Juegos implements OnDestroy {
   // Modo Pronóstico: el participante en sesión elige ganador (o empate) hasta 5 minutos antes.
   private pronosticosService = inject(PronosticosService);
   miParticipanteId: string | null = null;
-  misPronosticos = new Map<number, Eleccion>();
+  misPronosticos = new Map<number, { eleccion: Eleccion; diferencia: number | null }>();
+  readonly topeDiferencia = TOPE_BONO_DIFERENCIA;
   guardando = new Set<number>();
   errorPronostico: string | null = null;
   ahora = Date.now();
@@ -165,13 +166,17 @@ export class Juegos implements OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(lista => {
       if (grupoId !== this.grupoId) return;
-      this.misPronosticos = new Map(lista.map(p => [p.juego_id, p.eleccion]));
+      this.misPronosticos = new Map(lista.map(p => [p.juego_id, { eleccion: p.eleccion, diferencia: p.diferencia }]));
       this.cdr.detectChanges();
     });
   }
 
   miPronostico(j: Juego): Eleccion | null {
-    return this.misPronosticos.get(Number(j.id)) ?? null;
+    return this.misPronosticos.get(Number(j.id))?.eleccion ?? null;
+  }
+
+  miDiferencia(j: Juego): number | null {
+    return this.misPronosticos.get(Number(j.id))?.diferencia ?? null;
   }
 
   abierto(j: Juego): boolean {
@@ -191,23 +196,54 @@ export class Juegos implements OnDestroy {
     return j.etapa === 'regular';
   }
 
-  /** Puntos ganados con el pronóstico (null si el juego no ha terminado o no hubo pronóstico). */
+  private terminado(j: Juego): boolean {
+    return j.estado === 'final' || (j.estado !== 'en_vivo' && resultadoComoEleccion(j) !== null);
+  }
+
+  /** Puntos por el ganador (null si el juego no ha terminado o no hubo pronóstico). */
   puntosPronostico(j: Juego): number | null {
     const mio = this.miPronostico(j);
-    const terminado = j.estado === 'final' || (j.estado !== 'en_vivo' && resultadoComoEleccion(j) !== null);
-    if (!mio || !terminado) return null;
+    if (!mio || !this.terminado(j)) return null;
     return resultadoComoEleccion(j) === mio ? puntosPorAcierto(j.etapa) : 0;
   }
 
+  /** Puntos por la diferencia (null si no la pronosticó o el juego no ha terminado). */
+  puntosDiferencia(j: Juego): number | null {
+    const dif = this.miDiferencia(j);
+    if (!dif || !this.terminado(j)) return null;
+    return bonoDiferencia(dif, j);
+  }
+
   elegir(j: Juego, eleccion: Eleccion): void {
+    if (this.miPronostico(j) === eleccion) return;
+    // Con empate no hay diferencia; al cambiar de equipo se conserva la que había.
+    this.guardar(j, eleccion, eleccion === 'empate' ? null : this.miDiferencia(j));
+  }
+
+  /** Guarda la diferencia escrita (vacía = sin diferencia). Requiere haber elegido ganador. */
+  cambiarDiferencia(j: Juego, input: HTMLInputElement): void {
+    const eleccion = this.miPronostico(j);
+    const texto = input.value.trim();
+    const valor = texto === '' ? null : Math.round(Number(texto));
+    if (!eleccion || eleccion === 'empate') return;
+    if (valor !== null && (!Number.isFinite(valor) || valor < 1 || valor > 99)) {
+      this.errorPronostico = 'La diferencia debe ser un número entre 1 y 99.';
+      input.value = this.miDiferencia(j)?.toString() ?? '';
+      return;
+    }
+    if (valor === this.miDiferencia(j)) return;
+    this.guardar(j, eleccion, valor);
+  }
+
+  private guardar(j: Juego, eleccion: Eleccion, diferencia: number | null): void {
     const grupoId = this.grupoId;
     const id = Number(j.id);
-    if (!grupoId || !this.abierto(j) || this.guardando.has(id) || this.miPronostico(j) === eleccion) return;
+    if (!grupoId || !this.abierto(j) || this.guardando.has(id)) return;
     const anterior = this.misPronosticos.get(id);
-    this.misPronosticos.set(id, eleccion);
+    this.misPronosticos.set(id, { eleccion, diferencia });
     this.guardando.add(id);
     this.errorPronostico = null;
-    this.pronosticosService.pronosticar(grupoId, id, eleccion).pipe(
+    this.pronosticosService.pronosticar(grupoId, id, eleccion, diferencia).pipe(
       finalize(() => {
         this.guardando.delete(id);
         this.cdr.detectChanges();
