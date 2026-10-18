@@ -56,7 +56,7 @@
               @default {
                 <span class="arroba">&#64;</span>
                 <span class="detalle fuerte">{{ fechaCorta(j) }}</span>
-                <span class="detalle fuerte">{{ j.hora }}</span>
+                <span class="detalle fuerte">{{ horaLocal(j) }}</span>
                 @if (estado(j) === 'pospuesto') {
                   <span class="detalle">Pospuesto</span>
                 } @else if (cuentaRegresiva(j); as falta) {
@@ -113,7 +113,7 @@
                   }
                   @default {
                     <span class="detalle">{{ fechaCorta(j) }}</span>
-                    <span class="detalle fuerte">{{ j.hora }}</span>
+                    <span class="detalle fuerte">{{ horaLocal(j) }}</span>
                   }
                 }
               </div>

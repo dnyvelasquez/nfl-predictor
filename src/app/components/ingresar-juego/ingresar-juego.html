@@ -66,7 +66,7 @@
           }
           </mat-form-field>
           <mat-form-field appearance="fill">
-            <mat-label>Hora (HH:mm 24h)</mat-label>
+            <mat-label>Hora de Bogotá (HH:mm 24h)</mat-label>
             <input matInput placeholder="20:15" formControlName="hora" />
             @if (f.hora.touched && f.hora.hasError('required')) { <mat-error>La hora es requerida</mat-error> }
             @if (f.hora.touched && f.hora.hasError('pattern')) { <mat-error>Formato válido: 00:00 a 23:59</mat-error> }
@@ -133,7 +133,7 @@
 
       <div class="table">
         <div class="thead row">
-          <div class="cell fecha">Fecha / Hora</div>
+          <div class="cell fecha">Fecha / Hora (Bogotá)</div>
           <div class="cell equipo">Visitante</div>
           <div class="cell equipo">Local</div>
           <div class="cell etapa">Etapa</div>

@@ -15,6 +15,7 @@ import { takeUntil, catchError, finalize, switchMap } from 'rxjs/operators';
 import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { SelectorGrupo } from '../selector-grupo/selector-grupo';
 import { ParticipantesService } from '../../services/participantes';
+import { fechaLocal, horaLocal, horaLocalDeMs, kickoffMs, zonaHorariaLocal } from '../../services/core/hora-local';
 
 interface GrupoFecha {
   fecha: string;
@@ -253,12 +254,13 @@ export class Juegos implements OnDestroy {
     return pronosticoAbierto(j, this.ahora);
   }
 
-  /** Hora (Bogotá) a la que cierran los pronósticos del juego, "HH:MM". */
+  horaLocal = horaLocal;
+  zonaHoraria = zonaHorariaLocal()?.replace(/_/g, ' ') ?? null;
+
+  /** Hora local a la que cierran los pronósticos del juego, "HH:MM". */
   horaCierre(j: Juego): string {
     const cierre = cierrePronosticoMs(j);
-    if (cierre === null) return '';
-    const d = new Date(cierre - 5 * 3600_000);
-    return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+    return cierre === null ? '' : horaLocalDeMs(cierre);
   }
 
   /** El empate solo existe en temporada regular. */
@@ -366,20 +368,25 @@ export class Juegos implements OnDestroy {
     return this.juegosAgrupados.some(g => g.juegos.some(j => j.estado === 'en_vivo'));
   }
 
+  // Agrupa por la fecha local del usuario: el juego de la noche del domingo en
+  // Bogotá cae el lunes en Europa, y debe aparecer bajo el lunes.
   private agruparPorFecha(juegos: Juego[]): GrupoFecha[] {
     const gruposMap = new Map<string, Juego[]>();
 
     for (const j of juegos) {
-      if (!gruposMap.has(j.fecha)) {
-        gruposMap.set(j.fecha, []);
+      const fecha = fechaLocal(j);
+      if (!gruposMap.has(fecha)) {
+        gruposMap.set(fecha, []);
       }
-      gruposMap.get(j.fecha)!.push(j);
+      gruposMap.get(fecha)!.push(j);
     }
 
+    const porKickoff = (a: Juego, b: Juego) =>
+      (kickoffMs(a) ?? Number.MAX_SAFE_INTEGER) - (kickoffMs(b) ?? Number.MAX_SAFE_INTEGER);
     return Array.from(gruposMap.entries())
       .map(([fecha, juegos]) => ({
         fecha,
-        juegos: juegos.sort((a, b) => a.hora.localeCompare(b.hora))
+        juegos: juegos.sort(porKickoff)
       }))
       .sort((a, b) => a.fecha.localeCompare(b.fecha));
   }

@@ -1,19 +1,15 @@
 import { Juego } from '../../services/juegos';
+import { kickoffMs, fechaCortaLocal } from '../../services/core/hora-local';
 
 // Lógica pura de la portada (sin Angular): qué juego destacar, cómo
 // etiquetarlo, cuánto falta para que empiece y en qué orden listar la semana.
 // `fecha`/`hora` de `juegos` están en hora de Bogotá (UTC-5 fijo, sin horario
-// de verano), así que el instante real del kickoff es esa hora + 5 h en UTC.
+// de verano); el horario prime y su etiqueta se deciden con esa hora, y lo que
+// se muestra se pasa a la hora local del usuario (`services/core/hora-local.ts`).
 
 const HORA_PRIME = '19:00';
 
-/** Instante (ms UTC) del kickoff de un juego, o null si no tiene fecha/hora válidas. */
-export function kickoffMs(j: Pick<Juego, 'fecha' | 'hora'>): number | null {
-  const f = /^(\d{4})[/-](\d{2})[/-](\d{2})$/.exec(j.fecha ?? '');
-  const h = /^(\d{1,2}):(\d{2})$/.exec((j.hora ?? '').trim());
-  if (!f || !h) return null;
-  return Date.UTC(+f[1], +f[2] - 1, +f[3], +h[1] + 5, +h[2]);
-}
+export { kickoffMs };
 
 function esPrime(j: Juego): boolean {
   return (j.hora ?? '') >= HORA_PRIME;
@@ -83,14 +79,9 @@ export function cuentaRegresiva(j: Juego, ahora: number): string | null {
   return m > 0 ? `en ${m} min` : 'en instantes';
 }
 
-/** "Dom 12 oct" a partir de `fecha` (YYYY/MM/DD). */
-export function fechaCorta(j: Pick<Juego, 'fecha'>): string {
-  const f = /^(\d{4})[/-](\d{2})[/-](\d{2})$/.exec(j.fecha ?? '');
-  if (!f) return j.fecha ?? '';
-  const d = new Date(Date.UTC(+f[1], +f[2] - 1, +f[3], 12));
-  const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-  return `${dias[d.getUTCDay()]} ${d.getUTCDate()} ${meses[d.getUTCMonth()]}`;
+/** "Dom 12 oct" con la fecha local del usuario. */
+export function fechaCorta(j: Pick<Juego, 'fecha' | 'hora'>): string {
+  return fechaCortaLocal(j);
 }
 
 /** Orden de la lista de la semana: en vivo, luego próximos (por hora), luego terminados (el más reciente primero). */

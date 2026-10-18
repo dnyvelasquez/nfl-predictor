@@ -393,6 +393,21 @@
 
 /* Modo Pronóstico */
 
+.nota-zona {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.nota-zona mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
 .aviso-pronostico {
   margin: 0 0 12px;
   font-size: 0.9rem;

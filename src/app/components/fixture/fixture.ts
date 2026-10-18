@@ -9,14 +9,13 @@ import { takeUntil, catchError } from 'rxjs/operators';
 import { EquiposService, ConferenciaStanding, EquipoStanding } from '../../services/equipos';
 import { JuegosService } from '../../services/juegos';
 import { armarPostemporada, Postemporada, Cruce, EquipoBracket, Ronda, Conferencia } from './postemporada';
+import { fechaCortaLocal, horaLocal, tieneHora } from '../../services/core/hora-local';
 
 const LOGOS_CONFERENCIA: Record<'AFC' | 'NFC', string> = {
   AFC: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/American_Football_Conference_logo.svg',
   NFC: 'https://upload.wikimedia.org/wikipedia/commons/6/6f/National_Football_Conference_logo.svg',
 };
 
-const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const REFRESCO_EN_VIVO_MS = 60_000;
 
 /** Columna del cuadro de postemporada: una ronda de una conferencia, o el Super Bowl. */
@@ -152,12 +151,11 @@ export class Fixture implements OnInit, OnDestroy {
     }
   }
 
+  /** Fecha y hora del cruce en la hora local del usuario. */
   private fechaHora(c: Cruce): string {
-    const f = /^(\d{4})[/-](\d{2})[/-](\d{2})$/.exec(c.fecha ?? '');
-    if (!f) return 'Programado';
-    const d = new Date(Date.UTC(+f[1], +f[2] - 1, +f[3], 12));
-    const hora = c.hora && c.hora !== '00:00' ? ` · ${c.hora}` : '';
-    return `${DIAS[d.getUTCDay()]} ${d.getUTCDate()} ${MESES[d.getUTCMonth()]}${hora}`;
+    if (!/^\d{4}[/-]\d{2}[/-]\d{2}$/.test(c.fecha ?? '')) return 'Programado';
+    const hora = tieneHora(c) ? ` · ${horaLocal(c)}` : '';
+    return `${fechaCortaLocal(c)}${hora}`;
   }
 
   esPerdedor(c: Cruce, e: EquipoBracket | null): boolean {

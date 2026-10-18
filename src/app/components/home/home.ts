@@ -14,6 +14,7 @@ import { AuthService } from '../../services/auth/auth';
 import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { registroEquipoEnEtapa, ETAPAS } from '../../services/core/etapas';
 import { mascotaIzquierda, mascotaDerecha } from '../../services/core/mascotas';
+import { horaLocal } from '../../services/core/hora-local';
 import { elegirDestacado, etiquetaPrime, cuentaRegresiva, fechaCorta, ordenarSemana, estadoVisible } from './portada';
 
 const REFRESCO_EN_VIVO_MS = 60_000;
@@ -96,6 +97,7 @@ export class Home implements OnInit, OnDestroy {
   // Helpers para el template.
   etiquetaPrime = etiquetaPrime;
   fechaCorta = fechaCorta;
+  horaLocal = horaLocal;
   estado = estadoVisible;
   mascotaIzquierda = mascotaIzquierda;
   mascotaDerecha = mascotaDerecha;

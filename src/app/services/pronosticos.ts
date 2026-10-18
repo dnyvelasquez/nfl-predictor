@@ -4,7 +4,7 @@ import { SupabaseClientService } from './core/supabase-client';
 import { AuthService } from './auth/auth';
 import { Eleccion } from './core/etapas';
 import { Juego } from './juegos';
-import { kickoffMs } from '../components/home/portada';
+import { kickoffMs } from './core/hora-local';
 
 /** Minutos antes del inicio en que se cierran los pronósticos (igual que `juego_cerrado()` en la base). */
 export const MINUTOS_CIERRE = 5;

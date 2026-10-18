@@ -42,6 +42,9 @@
         <p>Cargando juegos...</p>
       </div>
     } @else {
+      @if (zonaHoraria) {
+        <p class="nota-zona"><mat-icon>public</mat-icon> Horas en tu zona horaria ({{ zonaHoraria }})</p>
+      }
       <div class="table-container">
         @for (grupo of juegosAgrupados; track grupo.fecha) {
           <div class="fecha-group">
@@ -105,7 +108,7 @@
                           <span>Final</span>
                         } @else {
                           <mat-icon>schedule</mat-icon>
-                          <span>{{ j.hora }}</span>
+                          <span>{{ horaLocal(j) }}</span>
                         }
                       </div>
                     }

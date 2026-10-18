@@ -1,4 +1,5 @@
 import { Etapa } from '../../services/core/etapas';
+import { diaMesLocal, fechaLocal } from '../../services/core/hora-local';
 
 // Lógica pura del cuadro de postemporada del Fixture (sin Angular).
 // Cada ronda se arma con los juegos reales si ESPN ya los publicó con equipos;
@@ -65,18 +66,16 @@ export interface Postemporada {
   iniciada: boolean;
 }
 
-const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
+// En fechas locales del usuario, igual que el resto de la página.
 function rangoFechas(juegos: JuegoPlayoff[], etapa: Etapa): string | null {
-  const fechas = juegos.filter(j => j.etapa === etapa).map(j => j.fecha).filter(Boolean).sort();
-  if (!fechas.length) return null;
-  const parte = (f: string) => {
-    const [, m, d] = f.split(/[/-]/).map(Number);
-    return { d, m: MESES[m - 1] };
-  };
-  const a = parte(fechas[0]);
-  const b = parte(fechas[fechas.length - 1]);
-  if (fechas[0] === fechas[fechas.length - 1]) return `${a.d} ${a.m}`;
+  const deEtapa = juegos.filter(j => j.etapa === etapa && j.fecha)
+    .sort((x, y) => fechaLocal(x).localeCompare(fechaLocal(y)));
+  if (!deEtapa.length) return null;
+  const primero = deEtapa[0], ultimo = deEtapa[deEtapa.length - 1];
+  const a = diaMesLocal(primero)!;
+  const b = diaMesLocal(ultimo)!;
+  if (fechaLocal(primero) === fechaLocal(ultimo)) return `${a.d} ${a.m}`;
   return a.m === b.m ? `${a.d}–${b.d} ${a.m}` : `${a.d} ${a.m}–${b.d} ${b.m}`;
 }
 
