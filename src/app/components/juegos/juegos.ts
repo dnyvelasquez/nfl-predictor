@@ -1,6 +1,6 @@
 import { Component, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { Etapa, ETAPAS, Eleccion, puntosPorAcierto, resultadoComoEleccion, bonoDiferencia, TOPE_BONO_DIFERENCIA } from '../../services/core/etapas';
-import { PronosticosService, pronosticoAbierto, cierrePronosticoMs } from '../../services/pronosticos';
+import { PronosticosService, Pronostico, pronosticoAbierto, cierrePronosticoMs } from '../../services/pronosticos';
 import { JuegosService, Juego } from '../../services/juegos';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -14,6 +14,7 @@ import { CommonModule } from '@angular/common';
 import { takeUntil, catchError, finalize, switchMap } from 'rxjs/operators';
 import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { SelectorGrupo } from '../selector-grupo/selector-grupo';
+import { ParticipantesService } from '../../services/participantes';
 
 interface GrupoFecha {
   fecha: string;
@@ -54,6 +55,7 @@ export class Juegos implements OnDestroy {
   private refreshTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   private gruposService = inject(GruposService);
+  private participantesService = inject(ParticipantesService);
 
   // La página es pública; quién tiene cada equipo solo se ve con sesión y es el del grupo elegido.
   logueado = false;
@@ -65,6 +67,10 @@ export class Juegos implements OnDestroy {
   miParticipanteId: string | null = null;
   misPronosticos = new Map<number, { eleccion: Eleccion; diferencia: number | null }>();
   readonly topeDiferencia = TOPE_BONO_DIFERENCIA;
+  // Pronósticos del grupo que RLS deja ver: los propios y, de los demás, solo los de juegos ya cerrados.
+  private pronosticosGrupo = new Map<number, Pronostico[]>();
+  private nombres = new Map<string, string>();
+  desplegados = new Set<number>();
   guardando = new Set<number>();
   errorPronostico: string | null = null;
   ahora = Date.now();
@@ -141,9 +147,15 @@ export class Juegos implements OnDestroy {
     });
   }
 
-  /** Participante del usuario en el grupo y sus pronósticos de los juegos visibles. */
+  /**
+   * Participante del usuario en el grupo, nombres de los participantes y los
+   * pronósticos visibles de los juegos de la semana (los propios, más los de
+   * los demás en juegos ya cerrados).
+   */
   private cargarPronosticos(): void {
     this.misPronosticos = new Map();
+    this.pronosticosGrupo = new Map();
+    this.desplegados = new Set();
     this.errorPronostico = null;
     const grupoId = this.grupoId;
     if (!this.logueado || !grupoId || !this.esPronostico) {
@@ -151,22 +163,80 @@ export class Juegos implements OnDestroy {
       return;
     }
     const ids = this.juegosAgrupados.flatMap(g => g.juegos.map(j => Number(j.id)));
-    this.pronosticosService.getMiParticipanteId(grupoId).pipe(
-      switchMap(participanteId => {
-        this.miParticipanteId = participanteId;
-        if (!participanteId) return of([]);
-        return this.pronosticosService.getPronosticos(grupoId, ids).pipe(
-          map(lista => lista.filter(p => p.participante_id === participanteId))
-        );
-      }),
+    forkJoin({
+      participanteId: this.pronosticosService.getMiParticipanteId(grupoId),
+      participantes: this.participantesService.getParticipantes(grupoId),
+      pronosticos: this.pronosticosService.getPronosticos(grupoId, ids),
+    }).pipe(
       catchError(() => {
-        this.errorPronostico = 'No fue posible cargar tus pronósticos.';
-        return of([]);
+        this.errorPronostico = 'No fue posible cargar los pronósticos.';
+        return of({ participanteId: null, participantes: [], pronosticos: [] as Pronostico[] });
       }),
       takeUntil(this.destroy$)
-    ).subscribe(lista => {
+    ).subscribe(({ participanteId, participantes, pronosticos }) => {
       if (grupoId !== this.grupoId) return;
-      this.misPronosticos = new Map(lista.map(p => [p.juego_id, { eleccion: p.eleccion, diferencia: p.diferencia }]));
+      this.miParticipanteId = participanteId;
+      this.nombres = new Map(participantes.map(p => [p.id, p.nombre]));
+      this.pronosticosGrupo = this.agruparPorJuego(pronosticos);
+      this.misPronosticos = new Map(pronosticos
+        .filter(p => p.participante_id === participanteId)
+        .map(p => [p.juego_id, { eleccion: p.eleccion, diferencia: p.diferencia }]));
+      this.cdr.detectChanges();
+    });
+  }
+
+  private agruparPorJuego(lista: Pronostico[]): Map<number, Pronostico[]> {
+    const porJuego = new Map<number, Pronostico[]>();
+    for (const p of lista) {
+      if (!porJuego.has(p.juego_id)) porJuego.set(p.juego_id, []);
+      porJuego.get(p.juego_id)!.push(p);
+    }
+    return porJuego;
+  }
+
+  /** Pronósticos del grupo para el juego, el propio primero y luego por nombre. */
+  pronosticosDe(j: Juego): (Pronostico & { nombre: string; mio: boolean })[] {
+    return (this.pronosticosGrupo.get(Number(j.id)) ?? [])
+      .map(p => ({ ...p, nombre: this.nombres.get(p.participante_id) ?? '—', mio: p.participante_id === this.miParticipanteId }))
+      .sort((a, b) => Number(b.mio) - Number(a.mio) || a.nombre.localeCompare(b.nombre));
+  }
+
+  /** Cuántos del grupo eligieron cada opción. */
+  resumenPronosticos(j: Juego): { visitante: number; empate: number; local: number } {
+    const r = { visitante: 0, empate: 0, local: 0 };
+    for (const p of this.pronosticosGrupo.get(Number(j.id)) ?? []) r[p.eleccion]++;
+    return r;
+  }
+
+  /** Puntos de un pronóstico ya resuelto (ganador + diferencia), o null si el juego no terminó. */
+  puntosDe(p: Pronostico, j: Juego): { ganador: number; diferencia: number } | null {
+    if (!this.terminado(j)) return null;
+    return {
+      ganador: resultadoComoEleccion(j) === p.eleccion ? puntosPorAcierto(j.etapa) : 0,
+      diferencia: bonoDiferencia(p.diferencia, j),
+    };
+  }
+
+  nombreEleccion(p: Pronostico, j: Juego): string {
+    return p.eleccion === 'empate' ? 'Empate' : p.eleccion === 'local' ? j.local : j.visitante;
+  }
+
+  /** Despliega (o pliega) los pronósticos del grupo; al abrir se vuelven a consultar para que estén al día. */
+  alternarPronosticos(j: Juego): void {
+    const id = Number(j.id);
+    if (this.desplegados.has(id)) {
+      this.desplegados.delete(id);
+      return;
+    }
+    this.desplegados.add(id);
+    const grupoId = this.grupoId;
+    if (!grupoId) return;
+    this.pronosticosService.getPronosticos(grupoId, [id]).pipe(
+      catchError(() => of(null)),
+      takeUntil(this.destroy$)
+    ).subscribe(lista => {
+      if (lista === null || grupoId !== this.grupoId) return;
+      this.pronosticosGrupo.set(id, lista);
       this.cdr.detectChanges();
     });
   }

@@ -161,6 +161,49 @@
                     </span>
                   </div>
                 }
+                @if (esPronostico && logueado && j.local !== 'TBD' && j.visitante !== 'TBD') {
+                  <div class="otros-pronosticos">
+                    @if (abierto(j)) {
+                      <span class="otros-nota">Los pronósticos de los demás se ven al cerrar ({{ horaCierre(j) }}).</span>
+                    } @else {
+                      <button type="button" class="ver-otros" (click)="alternarPronosticos(j)"
+                              [attr.aria-expanded]="desplegados.has(+j.id)" [attr.aria-controls]="'otros-' + j.id">
+                        {{ desplegados.has(+j.id) ? 'Ocultar' : 'Ver' }} pronósticos ({{ pronosticosDe(j).length }})
+                        <mat-icon>{{ desplegados.has(+j.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                      </button>
+                      @if (desplegados.has(+j.id)) {
+                        <div class="otros-detalle" [id]="'otros-' + j.id">
+                          @if (resumenPronosticos(j); as r) {
+                            <div class="otros-resumen">
+                              <span>{{ j.visitante }} <strong>{{ r.visitante }}</strong></span>
+                              @if (admiteEmpate(j)) { <span>Empate <strong>{{ r.empate }}</strong></span> }
+                              <span>{{ j.local }} <strong>{{ r.local }}</strong></span>
+                            </div>
+                          }
+                          @for (p of pronosticosDe(j); track p.participante_id) {
+                            <div class="otro" [class.mio]="p.mio">
+                              <span class="otro-nombre">{{ p.nombre }}@if (p.mio) { <small> (tú)</small> }</span>
+                              <span class="otro-eleccion">
+                                {{ nombreEleccion(p, j) }}@if (p.diferencia) { <small> · Dif. {{ p.diferencia }}</small> }
+                              </span>
+                              <span class="otro-puntos">
+                                @if (puntosDe(p, j); as pts) {
+                                  @if (pts.ganador + pts.diferencia > 0) {
+                                    <span class="acierto">+{{ pts.ganador + pts.diferencia }}</span>
+                                  } @else {
+                                    <span class="fallo">0</span>
+                                  }
+                                }
+                              </span>
+                            </div>
+                          } @empty {
+                            <p class="otros-nota">Nadie del grupo pronosticó este juego.</p>
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
+                }
               }
             </div>
           </div>
