@@ -4,9 +4,10 @@ on:
   schedule:
     # Modo rápido: cada 5 minutos, TODOS los días, todo el día.
     # 5 min es el mínimo que GitHub permite para cron schedules.
-    # No hay que adivinar horarios: el propio script consulta la tabla
-    # `juegos` para ver si hay algo cerca de "hoy" antes de llamar a ESPN.
-    # Si no hay nada, termina en segundos sin gastar de más. Esto cubre
+    # No hay que adivinar horarios: el propio script mira el marcador de
+    # ESPN (ayer a pasado mañana) y solo se conecta a Neon si hay un juego
+    # en vivo o recién terminado, para que el cómputo pueda dormirse el
+    # resto del tiempo (cuota mensual del plan gratuito). Esto cubre
     # jueves, sábados ocasionales, domingos con partido internacional
     # temprano y Monday Night Football sin necesidad de ventanas manuales.
     - cron: "*/5 * * * *"
@@ -105,9 +106,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          # sync-nfl.mjs deja reencadenar=true en $GITHUB_OUTPUT cuando
-          # encontró algún juego cerca de "hoy" (mismo chequeo que decide si
-          # vale la pena llamar a ESPN). Si es así, esta corrida se dispara a
+          # sync-nfl.mjs deja reencadenar=true en $GITHUB_OUTPUT cuando ESPN
+          # tiene algún juego cerca de "hoy" (ayer a pasado mañana), aunque
+          # esta corrida no haya tenido que tocar la base. Si es así, esta corrida se dispara a
           # sí misma de nuevo dentro de 4 minutos vía la API de GitHub, en vez
           # de depender de que el cron programado vuelva a disparar solo.
           # Cuando ya no hay ningún juego cerca (p.ej. terminó y el próximo

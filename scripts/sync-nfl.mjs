@@ -25,16 +25,17 @@
 //                       refresca equipos.espn_id. Pensado para correr 1 vez
 //                       por semana (calendario completo, cambios de horario,
 //                       aplazamientos, brackets de playoffs recién definidos).
-//   quick             -> NO barre las 22 semanas. Primero pregunta a la propia
-//                       base de datos qué semana(s)/etapa(s) tienen juegos
-//                       cerca de "hoy" (día antes / mismo día / día después,
-//                       en hora Bogotá) y solo sincroniza esas. Si no hay
-//                       ningún juego cerca, termina de inmediato sin llamar a
-//                       ESPN. Pensado para correr muy seguido (cada 5 min,
-//                       todos los días) sin gastar de más: cubre jueves,
-//                       sábados ocasionales, domingos con partido
-//                       internacional temprano y Monday Night Football sin
-//                       tener que adivinar ventanas horarias.
+//   quick             -> NO barre las 22 semanas. Primero pregunta SOLO a ESPN
+//                       (marcador de ayer, hoy, mañana y pasado, hora Bogotá)
+//                       y se conecta a la base únicamente si hay un juego en
+//                       vivo o uno que terminó hace poco (para dejar el
+//                       resultado final). Así el cómputo de Neon puede
+//                       dormirse el resto del tiempo: cada conexión lo
+//                       despierta y lo mantiene encendido ~5 minutos, y antes
+//                       (cuando este modo consultaba la base en cada corrida)
+//                       el cómputo no se dormía nunca y se gastaba el cupo
+//                       mensual del plan gratuito. Pensado para correr muy
+//                       seguido (cada 5 min, todos los días).
 //
 // Uso:
 //   DATABASE_URL="postgres://..." SEASON_YEAR=2026 MODE=full node sync-nfl.mjs
@@ -69,23 +70,11 @@ const POSTSEASON_WEEK_MAP = {
   5: { etapa: "superbowl", semana: 22 },
 };
 
-// Inverso de POSTSEASON_WEEK_MAP: dada una etapa de playoffs, ¿qué
-// seasontype/week usa ESPN?
-const ETAPA_TO_ESPN_WEEK = Object.fromEntries(
-  Object.entries(POSTSEASON_WEEK_MAP).map(([espnWeek, info]) => [
-    info.etapa,
-    { seasontype: 3, week: Number(espnWeek) },
-  ])
-);
-
-// Dada una fila (semana, etapa) de nuestra tabla `juegos`, devuelve los
-// parámetros de ESPN (seasontype/week) para volver a consultar esa semana.
-function toEspnWeekParams(semana, etapa) {
-  if (etapa === "regular") {
-    return { seasontype: 2, week: Number(semana) };
-  }
-  return ETAPA_TO_ESPN_WEEK[etapa] || null;
-}
+// Un juego terminado sigue sincronizándose mientras su inicio fue hace menos
+// de esto: un partido dura ~3 h 10 min (con tiempo extra, hasta ~3 h 45 min),
+// así hay margen para que ESPN lo marque como final y quede escrito. Si algo
+// se escapa (un juego larguísimo), el modo full del martes lo corrige.
+const VENTANA_FINAL_MS = 4.5 * 60 * 60 * 1000;
 
 // "Hoy" en hora de Bogotá, como objeto Date en UTC (medianoche Bogotá).
 function bogotaTodayAsUtcMidnight() {
@@ -327,65 +316,78 @@ async function syncWeek(client, { seasontype, week, semana, etapa, nextIdRef }) 
   );
 }
 
-// Busca en nuestra propia tabla `juegos` qué combinaciones (semana, etapa)
-// tienen al menos un juego programado en la ventana [hoy-1, hoy+2] (hora
-// Bogotá). Esa ventana es generosa a propósito: cubre un juego de jueves
-// que arranca "hoy" visto desde el jueves mismo, uno que ya se jugó ayer
-// (por si terminó tarde y quedó con estado en_vivo pendiente de cerrar), y
-// cualquier cosa programada para mañana o pasado (para no perder el primer
-// tick del día del partido).
-async function findWeeksNearToday(client) {
+// Juegos de ESPN de ayer, hoy, mañana y pasado mañana (hora Bogotá), sin
+// tocar la base. El marcador de ESPN no acepta rangos de fechas, así que se
+// pide día por día y se deduplica por id.
+async function espnEventsNearToday() {
   const utcMidnight = bogotaTodayAsUtcMidnight();
-  const fmt = (d) => {
-    const yyyy = d.getUTCFullYear();
-    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const dd = String(d.getUTCDate()).padStart(2, "0");
-    return `${yyyy}/${mm}/${dd}`;
-  };
-
-  const desde = fmt(new Date(utcMidnight.getTime() - 1 * 24 * 60 * 60 * 1000));
-  const hasta = fmt(new Date(utcMidnight.getTime() + 2 * 24 * 60 * 60 * 1000));
-
-  // `fecha` se guarda como texto "YYYY/MM/DD", que ordena igual que una
-  // fecha real siempre que el formato sea consistente (lo es).
-  const { rows } = await client.query(
-    `SELECT DISTINCT semana, etapa
-       FROM juegos
-      WHERE fecha IS NOT NULL
-        AND fecha BETWEEN $1 AND $2
-      ORDER BY semana, etapa`,
-    [desde, hasta]
-  );
-  return rows;
+  const porId = new Map();
+  for (let delta = -1; delta <= 2; delta++) {
+    const d = new Date(utcMidnight.getTime() + delta * 24 * 60 * 60 * 1000);
+    const ymd = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+    const data = await fetchJson(`${ESPN_BASE}/scoreboard?dates=${ymd}`);
+    for (const event of data?.events || []) porId.set(event.id, event);
+  }
+  return [...porId.values()];
 }
 
-async function runQuick(client) {
-  const nextIdRef = { value: await getNextId(client) };
-  const semanas = await findWeeksNearToday(client);
+// (semana, etapa) de nuestra tabla para un juego de ESPN, o null si no
+// aplica (pretemporada, Pro Bowl).
+function semanaEtapaDeEvento(event) {
+  const tipo = Number(event.season?.type);
+  const week = Number(event.week?.number);
+  if (tipo === 2) return { seasontype: 2, week, semana: week, etapa: "regular" };
+  if (tipo === 3 && POSTSEASON_WEEK_MAP[week]) {
+    return { seasontype: 3, week, ...POSTSEASON_WEEK_MAP[week] };
+  }
+  return null;
+}
 
-  if (semanas.length === 0) {
-    console.log("Modo rápido: no hay juegos cerca de hoy en la base de datos, no se llama a ESPN.");
-    writeGithubOutput("reencadenar", "false");
+// ¿Hay que escribir este juego en la base ahora? Sí si está en vivo, o si
+// terminó (o se aplazó) hace poco. Los programados no cambian nada que
+// importe minuto a minuto; el modo full del martes recoge cambios de horario.
+function necesitaEscritura(event, ahora) {
+  const state = event.competitions?.[0]?.status?.type?.state;
+  if (state === "in") return true;
+  if (state === "post") return ahora - new Date(event.date).getTime() < VENTANA_FINAL_MS;
+  return false;
+}
+
+async function runQuick() {
+  const ahora = Date.now();
+  const eventos = (await espnEventsNearToday()).filter((e) => semanaEtapaDeEvento(e));
+
+  // La cadena del workflow sigue viva mientras haya algo cerca de hoy (igual
+  // que antes); cada eslabón solo cuesta minutos de GitHub, no cómputo de Neon.
+  writeGithubOutput("reencadenar", eventos.length > 0 ? "true" : "false");
+
+  const activos = eventos.filter((e) => necesitaEscritura(e, ahora));
+  if (activos.length === 0) {
+    console.log(
+      `Modo rápido: ${eventos.length} juego(s) de ESPN cerca de hoy, ninguno en vivo ni recién ` +
+        "terminado -> no se toca la base."
+    );
     return;
   }
 
-  console.log(`Modo rápido: ${semanas.length} semana(s)/etapa(s) cerca de hoy -> sincronizando...`);
-  for (const { semana, etapa } of semanas) {
-    const params = toEspnWeekParams(semana, etapa);
-    if (!params) {
-      console.warn(`  sin mapeo ESPN para semana=${semana} etapa=${etapa}, se omite`);
-      continue;
-    }
-    await syncWeek(client, { ...params, semana: Number(semana), etapa, nextIdRef });
+  const semanas = new Map();
+  for (const e of activos) {
+    const se = semanaEtapaDeEvento(e);
+    semanas.set(`${se.etapa}-${se.semana}`, se);
   }
+  console.log(
+    `Modo rápido: ${activos.length} juego(s) en vivo o recién terminados en ${semanas.size} ` +
+      "semana(s) -> sincronizando..."
+  );
 
-  // Un resultado nuevo puede mover el orden de una división; es una sola
-  // petición extra por corrida, y solo cuando hay juegos cerca de hoy.
-  await syncStandings(client);
-
-  // Mientras siga habiendo algo cerca de "hoy", vale la pena que el workflow
-  // se vuelva a disparar solo en vez de esperar al próximo cron.
-  writeGithubOutput("reencadenar", "true");
+  await conBase(async (client) => {
+    const nextIdRef = { value: await getNextId(client) };
+    for (const se of semanas.values()) {
+      await syncWeek(client, { ...se, nextIdRef });
+    }
+    // Un resultado nuevo puede mover el orden de una división.
+    await syncStandings(client);
+  });
 }
 
 async function runFull(client) {
@@ -413,20 +415,24 @@ async function runFull(client) {
   await syncStandings(client);
 }
 
-async function main() {
+// Conectarse a Neon despierta el cómputo: solo se hace cuando hay algo que escribir.
+async function conBase(fn) {
   const client = crearCliente(DATABASE_URL);
   await client.connect();
-
   try {
-    if (MODE === "quick") {
-      await runQuick(client);
-    } else {
-      await runFull(client);
-    }
-    console.log("Sincronización completa.");
+    await fn(client);
   } finally {
     await client.end();
   }
+}
+
+async function main() {
+  if (MODE === "quick") {
+    await runQuick();
+  } else {
+    await conBase(runFull);
+  }
+  console.log("Sincronización completa.");
 }
 
 main().catch((err) => {
