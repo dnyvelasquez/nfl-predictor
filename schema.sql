@@ -1389,3 +1389,98 @@ REVOKE ALL ON FUNCTION public.agregar_miembro(text, uuid, text, text), public.us
 GRANT EXECUTE ON FUNCTION public.agregar_miembro(text, uuid, text, text), public.usuarios_visibles() TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- 2026-10-17 — Pronósticos (Modo Pronóstico).
+-- Cada participante de un grupo en Modo Pronóstico elige, por juego, quién gana
+-- (local / visitante) o empate (solo temporada regular). Puede cambiarlo hasta
+-- 5 minutos antes del inicio (hora Bogotá) mientras el juego siga 'programado'.
+-- Acertar da los puntos de la etapa (10/20/30/40/50, igual que Modo Equipos);
+-- el cálculo lo hace el frontend con los juegos terminados.
+-- Lectura: cada uno ve siempre los suyos; los de los demás miembros del grupo,
+-- solo cuando el juego ya cerró (nadie copia). Escritura: solo por pronosticar().
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.pronosticos (
+  participante_id uuid NOT NULL REFERENCES public.participantes(id) ON DELETE CASCADE,
+  juego_id smallint NOT NULL REFERENCES public.juegos(id) ON DELETE CASCADE,
+  grupo_id uuid NOT NULL REFERENCES public.grupos(id) ON DELETE CASCADE,
+  eleccion text NOT NULL CHECK (eleccion IN ('local', 'visitante', 'empate')),
+  actualizado_en timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (participante_id, juego_id)
+);
+CREATE INDEX IF NOT EXISTS pronosticos_grupo_juego ON public.pronosticos (grupo_id, juego_id);
+
+-- ¿Ya cerraron los pronósticos de este juego? Cierra 5 minutos antes del
+-- inicio, o en cuanto el juego deja de estar 'programado'. Los juegos sin
+-- equipos definidos (TBD) o con fecha/hora ilegible se tratan como cerrados.
+CREATE OR REPLACE FUNCTION public.juego_cerrado(p_juego smallint) RETURNS boolean
+LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public AS $$
+  SELECT coalesce((
+    SELECT j.estado <> 'programado'
+        OR j.local = 'TBD' OR j.visitante = 'TBD'
+        OR j.fecha !~ '^\d{4}/\d{2}/\d{2}$' OR j.hora !~ '^\d{1,2}:\d{2}$'
+        OR now() >= ((replace(j.fecha, '/', '-') || ' ' || j.hora)::timestamp AT TIME ZONE 'America/Bogota')
+                    - interval '5 minutes'
+    FROM juegos j WHERE j.id = p_juego
+  ), true)
+$$;
+
+ALTER TABLE public.pronosticos ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON public.pronosticos TO authenticated, anonymous;
+-- Los permisos por defecto del esquema le dan escritura a authenticated: se quita,
+-- solo se escribe por pronosticar().
+REVOKE INSERT, UPDATE, DELETE ON public.pronosticos FROM authenticated;
+GRANT EXECUTE ON FUNCTION public.juego_cerrado(smallint) TO authenticated, anonymous;
+
+DROP POLICY IF EXISTS "Pronosticos visibles" ON public.pronosticos;
+CREATE POLICY "Pronosticos visibles" ON public.pronosticos FOR SELECT TO authenticated USING (
+  EXISTS (SELECT 1 FROM roles_usuario r WHERE r.user_id::text = auth.user_id() AND r.rol = 'superusuario')
+  OR EXISTS (SELECT 1 FROM participantes p WHERE p.id = pronosticos.participante_id AND p.user_id::text = auth.user_id())
+  OR (
+    EXISTS (SELECT 1 FROM miembros_grupo m WHERE m.grupo_id = pronosticos.grupo_id AND m.user_id::text = auth.user_id())
+    AND public.juego_cerrado(pronosticos.juego_id)
+  )
+);
+
+CREATE OR REPLACE FUNCTION privado.pronosticar(p_grupo uuid, p_juego smallint, p_eleccion text, p_uid text) RETURNS text
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_participante uuid;
+  v_etapa text;
+BEGIN
+  IF p_eleccion NOT IN ('local', 'visitante', 'empate') THEN
+    RAISE EXCEPTION 'Pronóstico inválido' USING ERRCODE = '22023';
+  END IF;
+  IF (SELECT g.modo FROM grupos g WHERE g.id = p_grupo) IS DISTINCT FROM 'pronostico' THEN
+    RAISE EXCEPTION 'Este grupo no está en Modo Pronóstico' USING ERRCODE = '22023';
+  END IF;
+  SELECT p.id INTO v_participante FROM participantes p WHERE p.grupo_id = p_grupo AND p.user_id::text = p_uid;
+  IF v_participante IS NULL THEN
+    RAISE EXCEPTION 'No eres participante de este grupo' USING ERRCODE = '42501';
+  END IF;
+  SELECT j.etapa INTO v_etapa FROM juegos j WHERE j.id = p_juego;
+  IF v_etapa IS NULL THEN
+    RAISE EXCEPTION 'El juego no existe' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_eleccion = 'empate' AND v_etapa <> 'regular' THEN
+    RAISE EXCEPTION 'En playoffs no hay empate' USING ERRCODE = '22023';
+  END IF;
+  IF public.juego_cerrado(p_juego) THEN
+    RAISE EXCEPTION 'Los pronósticos de este juego ya cerraron' USING ERRCODE = '22023';
+  END IF;
+  INSERT INTO pronosticos (participante_id, juego_id, grupo_id, eleccion)
+    VALUES (v_participante, p_juego, p_grupo, p_eleccion)
+    ON CONFLICT (participante_id, juego_id) DO UPDATE SET eleccion = EXCLUDED.eleccion, actualizado_en = now();
+  RETURN p_eleccion;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.pronosticar(p_grupo uuid, p_juego smallint, p_eleccion text) RETURNS text
+LANGUAGE sql SECURITY INVOKER
+BEGIN ATOMIC
+  SELECT privado.pronosticar(p_grupo, p_juego, p_eleccion, auth.user_id());
+END;
+
+REVOKE ALL ON FUNCTION privado.pronosticar(uuid, smallint, text, text), public.pronosticar(uuid, smallint, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION privado.pronosticar(uuid, smallint, text, text), public.pronosticar(uuid, smallint, text) TO authenticated;
+
+NOTIFY pgrst, 'reload schema';

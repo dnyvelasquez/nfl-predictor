@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, map, of, switchMap, forkJoin } from 'rxjs';
 import { SupabaseClientService } from './core/supabase-client';
-import { Etapa, ETAPAS, registroEquipoEnEtapa } from './core/etapas';
+import { Etapa, ETAPAS, registroEquipoEnEtapa, puntosPorAcierto, resultadoComoEleccion } from './core/etapas';
+import { PronosticosService } from './pronosticos';
 import { EquiposService, Equipo } from './equipos';
 import { JuegosService } from './juegos';
 
@@ -22,8 +23,19 @@ export interface Participante {
   acumulado: number;
   puntaje?: number;
   equiposPorEtapa?: { etapa: Etapa; label: string; equipos: RegistroEquipoParticipante[] }[];
+  /** Modo Pronóstico: aciertos por etapa sobre los juegos terminados que pronosticó. */
+  pronosticosPorEtapa?: ResumenPronosticoEtapa[];
   max?: boolean;
   second?: boolean;
+}
+
+export interface ResumenPronosticoEtapa {
+  etapa: Etapa;
+  label: string;
+  aciertos: number;
+  /** Juegos terminados que el participante pronosticó. */
+  pronosticados: number;
+  puntos: number;
 }
 
 @Injectable({
@@ -35,6 +47,7 @@ export class ParticipantesService {
     private supabaseClient: SupabaseClientService,
     private equiposService: EquiposService,
     private juegosService: JuegosService,
+    private pronosticosService: PronosticosService,
   ) {}
 
   /** Sin `grupoId` devuelve los de todos los grupos (páginas públicas, donde el grupo aún no aplica). */
@@ -61,6 +74,52 @@ export class ParticipantesService {
    */
   getParticipantesConPuntaje(grupoId?: string): Observable<(Participante & {
   })[]> {
+    if (!grupoId) return this.puntajeModoEquipos();
+    // El modo del grupo decide cómo se suman los puntos.
+    return from(this.supabaseClient.from('grupos').select('modo').eq('id', grupoId).maybeSingle()).pipe(
+      switchMap(({ data }: any) => data?.modo === 'pronostico'
+        ? this.puntajeModoPronostico(grupoId)
+        : this.puntajeModoEquipos(grupoId))
+    );
+  }
+
+  /**
+   * Modo Pronóstico: cada acierto (ganador o empate) en un juego terminado suma
+   * los puntos de su etapa. Los pronósticos de juegos sin terminar no cuentan.
+   */
+  private puntajeModoPronostico(grupoId: string): Observable<Participante[]> {
+    return forkJoin({
+      participantes: this.getParticipantes(grupoId),
+      juegos: this.juegosService.getJuegosConResultado(),
+      pronosticos: this.pronosticosService.getPronosticos(grupoId),
+    }).pipe(
+      map(({ participantes, juegos, pronosticos }) => {
+        const porId = new Map(juegos.map(j => [Number(j.id), j]));
+        const lista = participantes.map(p => {
+          const pronosticosPorEtapa: ResumenPronosticoEtapa[] = ETAPAS.map(e => ({
+            etapa: e.value, label: e.label, aciertos: 0, pronosticados: 0, puntos: 0,
+          }));
+          for (const pr of pronosticos) {
+            if (pr.participante_id !== p.id) continue;
+            const juego = porId.get(pr.juego_id);
+            const resultado = juego ? resultadoComoEleccion(juego) : null;
+            if (!juego || resultado === null) continue;
+            const resumen = pronosticosPorEtapa.find(r => r.etapa === juego.etapa)!;
+            resumen.pronosticados++;
+            if (resultado === pr.eleccion) {
+              resumen.aciertos++;
+              resumen.puntos += puntosPorAcierto(juego.etapa);
+            }
+          }
+          const conJuegos = pronosticosPorEtapa.filter(r => r.pronosticados > 0);
+          return { ...p, equiposPorEtapa: [], pronosticosPorEtapa: conJuegos, puntaje: conJuegos.reduce((a, r) => a + r.puntos, 0) };
+        });
+        return this.marcarPodio(lista);
+      })
+    );
+  }
+
+  private puntajeModoEquipos(grupoId?: string): Observable<Participante[]> {
     return forkJoin({
       participantes: this.getParticipantes(grupoId),
       juegos: this.juegosService.getJuegosConResultado(),
@@ -93,22 +152,25 @@ export class ParticipantesService {
           )
         )
       ),
-      map(list => {
-        const participantesOrdenados = list.sort((a, b) => b.puntaje - a.puntaje);
-        const puntajesUnicos = [...new Set(participantesOrdenados.map(p => p.puntaje))]
-          .filter(p => p > 0)
-          .sort((a, b) => b - a);
-        const primerPuntaje = puntajesUnicos.length > 0 ? puntajesUnicos[0] : 0;
-        const hayEmpatePrimerLugar = participantesOrdenados.filter(p => p.puntaje === primerPuntaje).length > 1;
-        const segundoPuntaje = !hayEmpatePrimerLugar && puntajesUnicos.length > 1 ? puntajesUnicos[1] : 0;
-
-        return participantesOrdenados.map(p => ({
-          ...p,
-          max: p.puntaje === primerPuntaje && p.puntaje > 0,
-          second: !hayEmpatePrimerLugar && p.puntaje === segundoPuntaje && p.puntaje > 0
-        }));
-      })
+      map(list => this.marcarPodio(list))
     );
+  }
+
+  /** Ordena por puntaje y marca primer y segundo lugar (sin segundo si hay empate en el primero). */
+  private marcarPodio<T extends Participante & { puntaje: number }>(list: T[]): T[] {
+    const participantesOrdenados = list.sort((a, b) => b.puntaje - a.puntaje);
+    const puntajesUnicos = [...new Set(participantesOrdenados.map(p => p.puntaje))]
+      .filter(p => p > 0)
+      .sort((a, b) => b - a);
+    const primerPuntaje = puntajesUnicos.length > 0 ? puntajesUnicos[0] : 0;
+    const hayEmpatePrimerLugar = participantesOrdenados.filter(p => p.puntaje === primerPuntaje).length > 1;
+    const segundoPuntaje = !hayEmpatePrimerLugar && puntajesUnicos.length > 1 ? puntajesUnicos[1] : 0;
+
+    return participantesOrdenados.map(p => ({
+      ...p,
+      max: p.puntaje === primerPuntaje && p.puntaje > 0,
+      second: !hayEmpatePrimerLugar && p.puntaje === segundoPuntaje && p.puntaje > 0
+    }));
   }
 
   createParticipante(nombre: string, grupoId: string) {

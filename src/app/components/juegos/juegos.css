@@ -390,3 +390,107 @@
     padding-bottom: 88px;
   }
 }
+
+/* Modo Pronóstico */
+
+.aviso-pronostico {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.error-pronostico {
+  margin: 0 0 12px;
+  color: #ff8a80;
+  font-size: 0.9rem;
+}
+
+.pronostico {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 12px;
+  border-bottom: 1px solid #eee;
+  background-color: #f6f4fb;
+  color: #333;
+  font-size: 0.85rem;
+}
+
+.pronostico-titulo {
+  font-weight: 600;
+  color: #764ba2;
+}
+
+.opciones {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.opcion {
+  min-width: 84px;
+  padding: 6px 12px;
+  border: 1px solid #b9a6d6;
+  border-radius: 16px;
+  background: white;
+  color: #333;
+  font: inherit;
+  cursor: pointer;
+}
+
+.opcion:hover:not(:disabled) {
+  background: #efe9f8;
+}
+
+.opcion.elegida {
+  border-color: #764ba2;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.opcion:disabled {
+  cursor: default;
+}
+
+.pronostico.cerrado .opcion:not(.elegida) {
+  opacity: 0.45;
+}
+
+.pronostico-estado {
+  min-width: 90px;
+  text-align: right;
+  color: #555;
+}
+
+.acierto {
+  color: #1b873f;
+  font-weight: 700;
+}
+
+.fallo {
+  color: #c62828;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .pronostico {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "titulo estado"
+      "opciones opciones";
+    padding: 6px 8px 10px;
+  }
+
+  .pronostico-titulo { grid-area: titulo; }
+  .pronostico-estado { grid-area: estado; min-width: 0; }
+  .opciones { grid-area: opciones; }
+
+  .opcion {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 8px;
+  }
+}

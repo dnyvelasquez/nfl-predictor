@@ -22,6 +22,17 @@
       </div>
     }
 
+    @if (esPronostico && !loading) {
+      @if (miParticipanteId) {
+        <p class="aviso-pronostico">Elige quién gana cada juego. Puedes cambiarlo hasta 5 minutos antes del inicio.</p>
+      } @else {
+        <p class="aviso-pronostico">Solo los participantes de este grupo pueden pronosticar.</p>
+      }
+      @if (errorPronostico) {
+        <p class="error-pronostico" role="alert">{{ errorPronostico }}</p>
+      }
+    }
+
     @if (loading) {
       <div class="loading-container">
         <mat-spinner diameter="40"></mat-spinner>
@@ -44,7 +55,7 @@
                     <img [src]="j.logoVisitante" [alt]="j.visitante" class="equipo-logo" loading="lazy">
                     <div class="equipo-info">
                       <span class="nombre">{{ j.visitante }}</span>
-                      @if (logueado) {
+                      @if (mostrarTitulares) {
                         @if ((j.participanteVisitante || '').trim()) {
                           <span class="participante">{{ j.participanteVisitante }}</span>
                         } @else {
@@ -63,7 +74,7 @@
                     <img [src]="j.logoLocal" [alt]="j.local" class="equipo-logo" loading="lazy">
                     <div class="equipo-info">
                       <span class="nombre">{{ j.local }}</span>
-                      @if (logueado) {
+                      @if (mostrarTitulares) {
                         @if ((j.participanteLocal || '').trim()) {
                           <span class="participante">{{ j.participanteLocal }}</span>
                         } @else {
@@ -97,6 +108,37 @@
                     }
                   </div>
                 </div>
+                @if (esPronostico && miParticipanteId && j.local !== 'TBD' && j.visitante !== 'TBD') {
+                  <div class="pronostico" [class.cerrado]="!abierto(j)">
+                    <span class="pronostico-titulo">Tu pronóstico</span>
+                    <div class="opciones" role="group" [attr.aria-label]="'Pronóstico ' + j.visitante + ' vs ' + j.local">
+                      <button type="button" class="opcion" [class.elegida]="miPronostico(j) === 'visitante'"
+                              [attr.aria-pressed]="miPronostico(j) === 'visitante'"
+                              [disabled]="!abierto(j) || guardando.has(+j.id)" (click)="elegir(j, 'visitante')">{{ j.visitante }}</button>
+                      @if (admiteEmpate(j)) {
+                        <button type="button" class="opcion" [class.elegida]="miPronostico(j) === 'empate'"
+                                [attr.aria-pressed]="miPronostico(j) === 'empate'"
+                                [disabled]="!abierto(j) || guardando.has(+j.id)" (click)="elegir(j, 'empate')">Empate</button>
+                      }
+                      <button type="button" class="opcion" [class.elegida]="miPronostico(j) === 'local'"
+                              [attr.aria-pressed]="miPronostico(j) === 'local'"
+                              [disabled]="!abierto(j) || guardando.has(+j.id)" (click)="elegir(j, 'local')">{{ j.local }}</button>
+                    </div>
+                    <span class="pronostico-estado">
+                      @if (puntosPronostico(j); as puntos) {
+                        <span class="acierto">✓ +{{ puntos }}</span>
+                      } @else if (puntosPronostico(j) === 0) {
+                        <span class="fallo">✗ 0</span>
+                      } @else if (abierto(j)) {
+                        Cierra {{ horaCierre(j) }}
+                      } @else if (!miPronostico(j)) {
+                        Sin pronóstico
+                      } @else {
+                        Cerrado
+                      }
+                    </span>
+                  </div>
+                }
               }
             </div>
           </div>

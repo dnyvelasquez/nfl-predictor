@@ -43,6 +43,25 @@
                     }
                 </div>
             }
+            @if (data.pronosticosPorEtapa; as resumen) {
+              @for (r of resumen; track r.etapa) {
+                <div class="etapa-group">
+                  <div class="etapa-group-label">{{ r.label }}</div>
+                  <div class="equipo-item">
+                    <div class="equipo-logo-nombre">
+                      <strong class="equipo-nombre">{{ r.aciertos }} de {{ r.pronosticados }} aciertos</strong>
+                    </div>
+                    <div class="equipo-info-derecha">
+                      <span class="equipo-puntaje">{{ r.puntos }} puntos</span>
+                    </div>
+                  </div>
+                </div>
+              } @empty {
+                <div class="etapa-group">
+                  <div class="etapa-group-label">Todavía no hay juegos terminados con su pronóstico.</div>
+                </div>
+              }
+            }
             </div>
         </div>
         </div>

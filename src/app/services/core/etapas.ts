@@ -12,6 +12,25 @@ const PUNTOS_POR_ETAPA: Record<Etapa, number> = {
   regular: 10, wildcard: 20, divisional: 30, conferencia: 40, superbowl: 50,
 };
 
+/**
+ * Modo Pronóstico: acertar quién gana (o el empate) da el valor completo de la
+ * etapa, las mismas proporciones que un triunfo en Modo Equipos.
+ */
+export function puntosPorAcierto(etapa: Etapa): number {
+  return PUNTOS_POR_ETAPA[etapa];
+}
+
+/** Lo que se pronostica en Modo Pronóstico. El empate solo existe en temporada regular. */
+export type Eleccion = 'local' | 'visitante' | 'empate';
+
+/** Resultado de un juego como elección (null si todavía no tiene marcador). */
+export function resultadoComoEleccion(j: Pick<JuegoConResultado, 'resultado_local' | 'resultado_visitante'>): Eleccion | null {
+  if (j.resultado_local === null || j.resultado_visitante === null) return null;
+  if (j.resultado_local > j.resultado_visitante) return 'local';
+  if (j.resultado_local < j.resultado_visitante) return 'visitante';
+  return 'empate';
+}
+
 /** Forma mínima de un juego con resultado que necesita el cálculo de puntaje por etapa. */
 export interface JuegoConResultado {
   local: string;

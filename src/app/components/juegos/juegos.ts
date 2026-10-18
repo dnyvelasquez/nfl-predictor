@@ -1,5 +1,6 @@
 import { Component, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
-import { Etapa, ETAPAS } from '../../services/core/etapas';
+import { Etapa, ETAPAS, Eleccion, puntosPorAcierto, resultadoComoEleccion } from '../../services/core/etapas';
+import { PronosticosService, pronosticoAbierto, cierrePronosticoMs } from '../../services/pronosticos';
 import { JuegosService, Juego } from '../../services/juegos';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -10,7 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject, forkJoin, of, map } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { takeUntil, catchError, finalize } from 'rxjs/operators';
+import { takeUntil, catchError, finalize, switchMap } from 'rxjs/operators';
 import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { SelectorGrupo } from '../selector-grupo/selector-grupo';
 
@@ -58,6 +59,24 @@ export class Juegos implements OnDestroy {
   logueado = false;
   grupos: GrupoDisponible[] = [];
   grupoId: string | null = null;
+
+  // Modo Pronóstico: el participante en sesión elige ganador (o empate) hasta 5 minutos antes.
+  private pronosticosService = inject(PronosticosService);
+  miParticipanteId: string | null = null;
+  misPronosticos = new Map<number, Eleccion>();
+  guardando = new Set<number>();
+  errorPronostico: string | null = null;
+  ahora = Date.now();
+  private reloj = setInterval(() => { this.ahora = Date.now(); this.cdr.markForCheck(); }, 30_000);
+
+  get esPronostico(): boolean {
+    return this.grupos.find(g => g.id === this.grupoId)?.modo === 'pronostico';
+  }
+
+  /** En Modo Equipos se muestra quién tiene cada equipo; en Modo Pronóstico no hay equipos asignados. */
+  get mostrarTitulares(): boolean {
+    return this.logueado && !this.esPronostico;
+  }
 
   constructor() {
     this.loadInitialData();
@@ -117,6 +136,88 @@ export class Juegos implements OnDestroy {
     ).subscribe(grupos => {
       this.juegosAgrupados = grupos;
       this.scheduleAutoRefresh();
+      this.cargarPronosticos();
+    });
+  }
+
+  /** Participante del usuario en el grupo y sus pronósticos de los juegos visibles. */
+  private cargarPronosticos(): void {
+    this.misPronosticos = new Map();
+    this.errorPronostico = null;
+    const grupoId = this.grupoId;
+    if (!this.logueado || !grupoId || !this.esPronostico) {
+      this.miParticipanteId = null;
+      return;
+    }
+    const ids = this.juegosAgrupados.flatMap(g => g.juegos.map(j => Number(j.id)));
+    this.pronosticosService.getMiParticipanteId(grupoId).pipe(
+      switchMap(participanteId => {
+        this.miParticipanteId = participanteId;
+        if (!participanteId) return of([]);
+        return this.pronosticosService.getPronosticos(grupoId, ids).pipe(
+          map(lista => lista.filter(p => p.participante_id === participanteId))
+        );
+      }),
+      catchError(() => {
+        this.errorPronostico = 'No fue posible cargar tus pronósticos.';
+        return of([]);
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe(lista => {
+      if (grupoId !== this.grupoId) return;
+      this.misPronosticos = new Map(lista.map(p => [p.juego_id, p.eleccion]));
+      this.cdr.detectChanges();
+    });
+  }
+
+  miPronostico(j: Juego): Eleccion | null {
+    return this.misPronosticos.get(Number(j.id)) ?? null;
+  }
+
+  abierto(j: Juego): boolean {
+    return pronosticoAbierto(j, this.ahora);
+  }
+
+  /** Hora (Bogotá) a la que cierran los pronósticos del juego, "HH:MM". */
+  horaCierre(j: Juego): string {
+    const cierre = cierrePronosticoMs(j);
+    if (cierre === null) return '';
+    const d = new Date(cierre - 5 * 3600_000);
+    return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+  }
+
+  /** El empate solo existe en temporada regular. */
+  admiteEmpate(j: Juego): boolean {
+    return j.etapa === 'regular';
+  }
+
+  /** Puntos ganados con el pronóstico (null si el juego no ha terminado o no hubo pronóstico). */
+  puntosPronostico(j: Juego): number | null {
+    const mio = this.miPronostico(j);
+    const terminado = j.estado === 'final' || (j.estado !== 'en_vivo' && resultadoComoEleccion(j) !== null);
+    if (!mio || !terminado) return null;
+    return resultadoComoEleccion(j) === mio ? puntosPorAcierto(j.etapa) : 0;
+  }
+
+  elegir(j: Juego, eleccion: Eleccion): void {
+    const grupoId = this.grupoId;
+    const id = Number(j.id);
+    if (!grupoId || !this.abierto(j) || this.guardando.has(id) || this.miPronostico(j) === eleccion) return;
+    const anterior = this.misPronosticos.get(id);
+    this.misPronosticos.set(id, eleccion);
+    this.guardando.add(id);
+    this.errorPronostico = null;
+    this.pronosticosService.pronosticar(grupoId, id, eleccion).pipe(
+      finalize(() => {
+        this.guardando.delete(id);
+        this.cdr.detectChanges();
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe({
+      error: (e) => {
+        if (anterior) this.misPronosticos.set(id, anterior); else this.misPronosticos.delete(id);
+        this.errorPronostico = e?.message || 'No se pudo guardar el pronóstico.';
+      }
     });
   }
 
@@ -230,6 +331,7 @@ export class Juegos implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    clearInterval(this.reloj);
     this.clearAutoRefresh();
     this.destroy$.next();
     this.destroy$.complete();
