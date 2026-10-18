@@ -119,12 +119,15 @@ jobs:
           fi
 
           # Tope de seguridad: por si un bug dejara reencadenar=true para
-          # siempre, esto corta la cadena después de ~200 corridas
-          # (~16-17 horas seguidas), muy por encima de la duración de
-          # cualquier partido real.
+          # siempre, esto corta la cadena después de ~2000 corridas
+          # (~6 días seguidos a ~4,3 min por corrida). Ojo: la ventana de
+          # findWeeksNearToday() (-1/+2 días) mantiene la cadena viva todo
+          # el fin de semana, de jueves a martes sin pausa; con el tope
+          # anterior de 200 (~14 h) se cortó el domingo 2026-10-18 a media
+          # mañana y dejó los juegos sin actualizar.
           intento_actual="${{ github.event.inputs.intento || '0' }}"
           intento_siguiente=$((intento_actual + 1))
-          limite=200
+          limite=2000
           if [ "$intento_siguiente" -gt "$limite" ]; then
             echo "Tope de seguridad de $limite reencadenamientos alcanzado, no se sigue."
             exit 0
