@@ -1,6 +1,9 @@
 # NFL Predictor
 
-Aplicación para gestionar una quiniela/pool de predicciones de la temporada de la NFL: asignación de equipos a participantes (automática en todas las etapas, según el reglamento), calendario de juegos con resultados en vivo sincronizados desde ESPN, y tabla de posiciones calculada automáticamente. Varios grupos (pools independientes) pueden usar la misma instalación, cada uno con sus propios participantes, asignaciones y valor de apuesta.
+Aplicación para gestionar una quiniela/pool de predicciones de la temporada de la NFL, con calendario de juegos y resultados en vivo sincronizados desde ESPN y tabla de posiciones calculada automáticamente. Varios grupos (pools independientes) pueden usar la misma instalación, cada uno con sus propios participantes y valor de apuesta, y cada grupo juega en uno de dos modos:
+
+- **Modo Equipos**: los equipos se reparten entre los participantes (automáticamente en todas las etapas, según el reglamento) y cada uno suma los puntos que ganan sus equipos.
+- **Modo Pronóstico**: cada participante (un usuario) pronostica el ganador de cada juego, con un bono si acierta la diferencia exacta de puntos.
 
 Construida con Angular 20 (componentes standalone) y [Neon](https://neon.com) (Postgres, vía su Data API y Neon Auth). Es un sitio 100% estático (sin backend propio) — todo el acceso a datos y autenticación va directo del navegador a Neon.
 
@@ -43,7 +46,7 @@ El calendario y los resultados se pueden mantener al día automáticamente desde
 El script `scripts/sync-nfl.mjs` tiene dos modos, controlados por la variable `MODE`:
 
 - **`full`** (por defecto): recorre las 18 semanas de temporada regular y los playoffs (wildcard, divisional, conferencia, superbowl), y además actualiza `equipos.espn_id` de los 32 equipos. Pensado para correr aproximadamente una vez por semana.
-- **`quick`**: no recorre las 22 semanas — primero revisa la propia base de datos para ver si hay juegos programados entre ayer y pasado mañana (hora Bogotá); si no hay ninguno, termina sin llamar a ESPN. Si encuentra alguno, sincroniza solo esas semanas/etapas. Pensado para correr muy seguido (cada 5 minutos) sin gastar de más.
+- **`quick`**: no recorre las 22 semanas — primero mira solo el marcador de ESPN (de ayer a pasado mañana, hora Bogotá), sin conectarse a la base. Se conecta únicamente si hay un juego en vivo o uno que terminó hace poco (para dejar el resultado final), y sincroniza solo esas semanas/etapas. Así el cómputo de Neon puede apagarse el resto del tiempo y no se agota la cuota mensual del plan gratuito. Pensado para correr muy seguido (cada 5 minutos). Los cambios de horario de juegos que no están en vivo los recoge el modo `full` del martes.
 
 **Manual (PowerShell, ya que el desarrollo es en Windows):**
 
@@ -58,15 +61,15 @@ $env:DATABASE_URL="postgres://..."; $env:MODE="quick"; node scripts/sync-nfl.mjs
 - `DATABASE_URL`: connection string de Neon (requerido).
 - `SEASON_YEAR`: temporada a sincronizar (opcional, por defecto `2026`).
 - `MODE`: `full` o `quick` (opcional, por defecto `full`).
-- Requiere Node.js 18+ y la dependencia `pg` (ya incluida en `package.json`).
+- Requiere Node.js 18+ y la dependencia `pg`: `npm ci --prefix scripts` instala solo lo que necesitan los scripts (`scripts/package.json`); el `node_modules` de la raíz también sirve.
 
 En ambos modos, por cada juego: si ya existe una fila con ese ID de evento de ESPN la actualiza; si hay un juego cargado manualmente que coincide en semana/etapa/local/visitante lo vincula (en vez de duplicarlo); si no existe ninguno, lo inserta.
 
-Al final de cada corrida `full`, y de cada corrida `quick` que encontró juegos cerca de hoy, el script también descarga los standings de ESPN (una sola petición) y guarda en `equipos.posicion_division` (1-4) el orden de cada equipo dentro de su división y en `equipos.seed_conferencia` (1-16) su puesto en la conferencia. ESPN ya entrega ambos con los criterios de desempate oficiales de la NFL aplicados (división y wild card), así que la app no los calcula por su cuenta.
+Al final de cada corrida `full`, y de cada corrida `quick` que escribió algo (un juego en vivo o recién terminado), el script también descarga los standings de ESPN (una sola petición) y guarda en `equipos.posicion_division` (1-4) el orden de cada equipo dentro de su división y en `equipos.seed_conferencia` (1-16) su puesto en la conferencia. ESPN ya entrega ambos con los criterios de desempate oficiales de la NFL aplicados (división y wild card), así que la app no los calcula por su cuenta.
 
 **Automática:** existe una GitHub Action programada (`.github/workflows/sync-nfl.yml`, usa minutos ilimitados de Actions por ser repo público) con dos horarios: cada 5 minutos, todos los días, en modo `quick` (el mínimo que permite GitHub — cubre juegos de jueves, sábado y domingo temprano sin necesidad de ventanas horarias fijas), y una vez por semana (martes 06:00 UTC, ya terminado el Monday Night Football) en modo `full`. Usa el secret `DATABASE_URL` configurado en el repositorio. También se puede lanzar manualmente desde la pestaña Actions, eligiendo `quick` o `full`.
 
-⚠️ GitHub no garantiza que ese cron de "cada 5 minutos" se dispare realmente cada 5 minutos — se ha visto en producción que puede demorarse varias horas entre corridas. Para compensarlo, cada corrida en modo `quick` se reencadena a sí misma cada ~4 minutos (llamando a la API de GitHub para disparar la siguiente corrida) mientras siga habiendo algún juego cerca de "hoy" — así deja de depender del cron una vez arranca, y se detiene sola cuando ya no hay nada que sincronizar.
+⚠️ GitHub no garantiza que ese cron de "cada 5 minutos" se dispare realmente cada 5 minutos — se ha visto en producción que puede demorarse varias horas entre corridas. Para compensarlo, cada corrida en modo `quick` se reencadena a sí misma cada ~4 minutos (llamando a la API de GitHub para disparar la siguiente corrida) mientras ESPN tenga algún juego cerca de "hoy" — así deja de depender del cron una vez arranca, y se detiene sola cuando ya no hay nada que sincronizar (o al llegar a un tope de seguridad de 2000 corridas, unos 6 días). Esas corridas solo gastan minutos de GitHub: la base solo se toca cuando hay algo que escribir.
 
 ### Ranking de equipos
 
@@ -83,7 +86,9 @@ También tiene una GitHub Action (`.github/workflows/sync-ranking.yml`) que corr
 **Páginas públicas**
 
 - **Portada**: el juego destacado de la semana (el de horario prime, en vivo o el próximo, con las mascotas de los dos equipos enfrentadas, su récord y una cuenta regresiva) y los juegos de la semana, con los que están en vivo primero. Con sesión muestra además la tabla de posiciones del grupo y qué participante tiene cada equipo.
-- **Juegos de la semana**: calendario por semana con la hora, el marcador final o, mientras el juego está en curso, el marcador parcial con un letrero "En vivo" y el cuarto que se está jugando; se actualiza solo. Con sesión muestra qué participante del grupo tiene cada equipo.
+- **Juegos de la semana**: calendario por semana con la hora, el marcador final o, mientras el juego está en curso, el marcador parcial con un letrero "En vivo" y el cuarto que se está jugando; se actualiza solo. Con sesión muestra qué participante del grupo tiene cada equipo (Modo Equipos) o deja pronosticar cada juego (Modo Pronóstico, ver abajo).
+
+Las fechas y horas de los juegos se muestran en la zona horaria de cada usuario (la de su navegador); en la base se guardan en hora de Bogotá.
 - **Equipos → Fixture**: dos pestañas.
   - *Temporada regular*: standings por conferencia y división, con el récord (Ganados-Perdidos-Empatados) y el orden oficial de la NFL; una franja de color marca la clasificación a playoffs (amarillo: semilla 1, azul: otros campeones de división, rojo: wild cards).
   - *Postemporada*: el cuadro de playoffs (AFC, Super Bowl y NFC). Antes de los playoffs muestra los cruces proyectados con las semillas actuales; luego, los juegos reales con fecha, marcador en vivo y ganador. Se abre sola en esta pestaña cuando empiezan los playoffs.
@@ -92,20 +97,21 @@ También tiene una GitHub Action (`.github/workflows/sync-ranking.yml`) que corr
 
 **Páginas de cada grupo (requieren sesión)**
 
-- **Tabla de puntajes**: posiciones del grupo, con los equipos de cada participante agrupados por etapa, su récord y los puntos que aportaron. Los puntos solo cuentan juegos terminados: un marcador en vivo no mueve la tabla hasta que el juego acaba.
+- **Tabla de puntajes**: posiciones del grupo. En Modo Equipos, con los equipos de cada participante agrupados por etapa, su récord y los puntos que aportaron; en Modo Pronóstico, con los aciertos y puntos de cada participante por etapa. Los puntos solo cuentan juegos terminados: un marcador en vivo no mueve la tabla hasta que el juego acaba.
+- **Pronósticos** (Modo Pronóstico, en Juegos de la semana): cada participante elige ganador (o empate, solo en temporada regular) y, si quiere, la diferencia de puntos, y puede cambiarlo hasta 5 minutos antes del inicio. Un acierto vale lo mismo que una victoria en esa etapa (10 en temporada regular hasta 50 en el Super Bowl); acertar la diferencia exacta suma esos mismos puntos (máximo 14), sin importar quién gane. Los pronósticos de los demás se ven recién cuando el juego cierra ("Ver pronósticos").
 - **Equipos → En competición**: qué participante del grupo tiene cada equipo en cada etapa y cuántos puntos le dio.
 
 **Panel de administración** (solo super usuario y administradores de grupo)
 
 - **Asignación**: un cuadro por etapa (Temporada Regular, Wild Card, Ronda Divisional, Final de Conferencia y Super Bowl). Cada pestaña tiene "Auto-asignar", que aplica el reglamento: la temporada regular por el ranking, y cada ronda de playoffs por puntaje, con los resultados de la ronda anterior. Si la ronda anterior todavía no termina, la confirmación lo avisa.
-- **Participantes**: personas inscritas en el grupo; el orden de selección se reparte con el botón "Sortear números".
-- **Ingresar Juego**: calendario y resultados (la sincronización con ESPN los mantiene al día; aquí se pueden corregir a mano).
-- **Nuevo Usuario / Usuarios**: alta de usuarios en un grupo y gestión de roles, grupos y apuestas.
+- **Participantes**: personas inscritas en el grupo. En Modo Equipos el orden de selección se reparte con el botón "Sortear números"; en Modo Pronóstico cada participante es un usuario y se crea al agregarlo al grupo.
+- **Ingresar Juego**: calendario y resultados (la sincronización con ESPN los mantiene al día; aquí se pueden corregir a mano, en hora de Bogotá).
+- **Nuevo Usuario / Usuarios**: alta de usuarios en un grupo y gestión de roles, grupos (con su modo) y apuestas.
 
 **Roles**
 
 - **Super usuario**: hace todo, en todos los grupos.
-- **Administrador** (de un grupo): ve el panel, usa "Auto-asignar" y crea usuarios de solo lectura en su grupo.
+- **Administrador** (de un grupo): ve el panel, usa "Auto-asignar" y "Sortear números", y crea usuarios de solo lectura en su grupo.
 - **Solo lectura**: no entra al panel; inicia sesión para ver la tabla, los equipos y la apuesta de su grupo (pensado como una cuenta compartida por grupo).
 
 Un mismo usuario puede pertenecer a varios grupos, con un rol distinto en cada uno. Los datos de cada grupo (participantes, asignaciones, apuesta) son privados: la base de datos solo se los muestra a sus miembros.
