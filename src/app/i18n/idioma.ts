@@ -5,8 +5,8 @@ import { EN } from './textos.en';
 // Idioma de la interfaz. Se traduce en el navegador (sin recargar ni cambiar la
 // URL): el idioma vive en una signal, y todo lo que la lee en una plantilla
 // (el pipe `t`, o un helper del componente que llame a `t()`) se vuelve a
-// pintar solo al cambiarla. Arranca con el idioma guardado o, si no hay, con
-// el del navegador (español si empieza por "es", si no inglés).
+// pintar solo al cambiarla. Arranca con el idioma guardado o, si no hay, en
+// español (decisión del usuario: el idioma del navegador no se tiene en cuenta).
 
 export type Idioma = 'es' | 'en';
 
@@ -25,9 +25,8 @@ function idiomaInicial(): Idioma {
   try {
     const guardado = localStorage.getItem(CLAVE_STORAGE);
     if (guardado === 'es' || guardado === 'en') return guardado;
-  } catch { /* sin storage: se usa el del navegador */ }
-  const nav = typeof navigator !== 'undefined' ? (navigator.language || '') : '';
-  return nav.toLowerCase().startsWith('es') ? 'es' : 'en';
+  } catch { /* sin storage: español */ }
+  return 'es';
 }
 
 /** Traduce una clave sin depender de Angular (para módulos puros). */
