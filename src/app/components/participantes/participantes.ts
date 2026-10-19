@@ -11,12 +11,17 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ParticipantesService } from '../../services/participantes';
-import { GruposService, GrupoDisponible, etiquetaModo } from '../../services/grupos';
+import { GruposService, GrupoDisponible, ModoGrupo } from '../../services/grupos';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth/auth';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs/operators';
+import { IdiomaService } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
+import { registrarTextosAdmin } from '../../i18n/textos.admin';
+
+registrarTextosAdmin();
 
 type Row = { id: string; nombre: string; numero: number };
 
@@ -36,13 +41,14 @@ type Row = { id: string; nombre: string; numero: number };
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule, TPipe
   ],
   templateUrl: './participantes.html',
   styleUrls: ['./participantes.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Participantes implements OnInit, OnDestroy {
+  private idioma = inject(IdiomaService);
 
   private fb = inject(FormBuilder);
   private svc = inject(ParticipantesService);
@@ -61,7 +67,7 @@ export class Participantes implements OnInit, OnDestroy {
   participantes: Row[] = [];
 
   grupos: GrupoDisponible[] = [];
-  etiquetaModo = etiquetaModo;
+  etiquetaModo = (modo: ModoGrupo) => this.idioma.t(`modo.${modo}` as 'modo.equipos');
 
   // El sorteo (con su animación) lo pueden hacer también los administradores del grupo elegido.
   // En Modo Pronóstico no hay sorteo.
@@ -95,7 +101,7 @@ export class Participantes implements OnInit, OnDestroy {
         this.load();
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'No se pudieron cargar los grupos';
+        this.errorMsg = this.idioma.error(e, 'admin.errorGrupos');
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -113,7 +119,7 @@ export class Participantes implements OnInit, OnDestroy {
     this.loading = true; this.errorMsg = this.okMsg = null;
     if (!this.grupoId) {
       this.participantes = [];
-      this.errorMsg = 'Tu usuario no pertenece a ningún grupo';
+      this.errorMsg = this.idioma.t('admin.sinGrupo');
       this.loading = false;
       this.cdr.detectChanges();
       return;
@@ -122,7 +128,7 @@ export class Participantes implements OnInit, OnDestroy {
       finalize(() => { this.loading = false; this.cdr.detectChanges(); })
     ).subscribe({
       next: (rows) => { this.participantes = rows; },
-      error: (e) => this.errorMsg = e?.message || 'No se pudieron cargar los participantes',
+      error: (e) => this.errorMsg = this.idioma.error(e, 'pa.errorParticipantes'),
     });
   }
 
@@ -138,12 +144,12 @@ export class Participantes implements OnInit, OnDestroy {
       finalize(() => { this.loading = false; this.cdr.detectChanges(); })
     ).subscribe({
       next: (row: Row) => {
-        this.okMsg = 'Participante creado';
+        this.okMsg = this.idioma.t('pa.creado');
         this.addForm.reset();
         this.participantes = [...this.participantes, row]
           .sort((a, b) => a.numero - b.numero || a.nombre.localeCompare(b.nombre));
       },
-      error: (e) => this.errorMsg = e?.message || 'No se pudo crear el participante',
+      error: (e) => this.errorMsg = this.idioma.error(e, 'pa.errorCrear'),
     });
   }
 
@@ -184,21 +190,21 @@ export class Participantes implements OnInit, OnDestroy {
     ).subscribe({
       next: (row: Row) => {
         this.okMsg = repetido
-          ? `Participante actualizado. Ojo: ${repetido.nombre} también tiene el número ${patch.numero}.`
-          : 'Participante actualizado';
+          ? this.idioma.t('pa.actualizadoRepetido', { nombre: repetido.nombre, numero: patch.numero })
+          : this.idioma.t('pa.actualizado');
         this.participantes = this.participantes
           .map(x => x.id === p.id ? row : x)
           .sort((a, b) => a.numero - b.numero || a.nombre.localeCompare(b.nombre));
         this.cancelEdit(p);
       },
-      error: (e) => this.errorMsg = e?.message || 'No se pudo actualizar',
+      error: (e) => this.errorMsg = this.idioma.error(e, 'admin.errorActualizar'),
     });
   }
 
   sortearNumeros(): void {
     if (this.loading || this.participantes.length === 0 || !this.grupoId) return;
 
-    const ok = confirm('¿Asignar un número aleatorio a cada participante? Esto reemplazará los números actuales.');
+    const ok = confirm(this.idioma.t('pa.confirmSortear'));
     if (!ok) return;
 
     this.loading = true; this.errorMsg = this.okMsg = null;
@@ -210,7 +216,7 @@ export class Participantes implements OnInit, OnDestroy {
         this.editForms = {};
         this.revelarSorteo(rows);
       },
-      error: (e) => this.errorMsg = e?.message || 'No se pudieron asignar los números',
+      error: (e) => this.errorMsg = this.idioma.error(e, 'pa.errorSortear'),
     });
   }
 
@@ -260,7 +266,7 @@ export class Participantes implements OnInit, OnDestroy {
     this.sorteando = false;
     this.enVuelo = false;
     this.actual = null;
-    this.okMsg = 'Números asignados aleatoriamente';
+    this.okMsg = this.idioma.t('pa.sorteados');
     this.cdr.detectChanges();
   }
 
@@ -313,7 +319,7 @@ export class Participantes implements OnInit, OnDestroy {
   }
 
   remove(p: Row): void {
-    const ok = confirm(`¿Eliminar a "${p.nombre}"? Esta acción no se puede deshacer.`);
+    const ok = confirm(this.idioma.t('pa.confirmEliminar', { nombre: p.nombre }));
     if (!ok) return;
 
     this.loading = true; this.errorMsg = this.okMsg = null;
@@ -321,11 +327,11 @@ export class Participantes implements OnInit, OnDestroy {
       finalize(() => { this.loading = false; this.cdr.detectChanges(); })
     ).subscribe({
       next: () => {
-        this.okMsg = 'Participante eliminado';
+        this.okMsg = this.idioma.t('pa.eliminado');
         this.participantes = this.participantes.filter(x => x.id !== p.id);
         delete this.editForms[p.id];
       },
-      error: (e) => this.errorMsg = e?.message || 'No se pudo eliminar',
+      error: (e) => this.errorMsg = this.idioma.error(e, 'admin.errorEliminar'),
     });
   }
 

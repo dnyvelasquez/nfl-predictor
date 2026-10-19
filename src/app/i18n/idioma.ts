@@ -70,11 +70,22 @@ export function traducirPeriodo(idioma: Idioma, periodo: string | null | undefin
   return existe(clave) ? traducir(idioma, clave) : periodo;
 }
 
+// Mensajes de la base que llevan un dato adentro: se reconocen por patrón.
+const PATRONES_ERROR: [RegExp, Clave][] = [
+  [/^Ya hay un participante llamado "(.*)" en este grupo$/, 'db.participanteRepetido'],
+  [/^Etapa no soportada: (.*)$/, 'db.etapaNoSoportada'],
+];
+
 /** Los errores de las funciones SQL llegan en español; si hay traducción se usa, si no el original. */
 export function traducirErrorBase(idioma: Idioma, mensaje: string | null | undefined): string | null {
   if (!mensaje) return null;
   const clave = `db.${mensaje}` as Clave;
-  return existe(clave) ? traducir(idioma, clave) : mensaje;
+  if (existe(clave)) return traducir(idioma, clave);
+  for (const [re, claveP] of PATRONES_ERROR) {
+    const m = re.exec(mensaje);
+    if (m && existe(claveP)) return traducir(idioma, claveP, { x: m[1] });
+  }
+  return mensaje;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -94,6 +105,12 @@ export class IdiomaService {
   /** Texto en el idioma actual. Leído desde una plantilla, se actualiza al cambiar de idioma. */
   t(clave: Clave, params?: Params): string {
     return traducir(this.actual(), clave, params);
+  }
+
+  /** Mensaje para un error: el de la base traducido si se conoce, si no el texto de `clave`. */
+  error(e: unknown, clave: Clave): string {
+    const mensaje = (e as { message?: string } | null)?.message;
+    return traducirErrorBase(this.actual(), mensaje) || this.t(clave);
   }
 
   private aplicarAlDocumento(idioma: Idioma): void {

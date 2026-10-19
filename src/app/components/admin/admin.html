@@ -7,38 +7,38 @@
     </div>
     <mat-divider></mat-divider>
 
-    <h2 class="subtitle">Admin Module</h2>
+    <h2 class="subtitle">{{ 'admin.modulo' | t }}</h2>
     @if (rolLabel()) { <p class="rol">{{ rolLabel() }}</p> }
     <mat-divider></mat-divider>
 
     <div class="button-container">
       <button mat-button routerLink="/ingresar-juego">
         <mat-icon>sports_football</mat-icon>
-        <span>Ingresar Juego</span>
+        <span>{{ 'admin.ingresarJuego' | t }}</span>
       </button>
       <button mat-button routerLink="/participantes">
         <mat-icon>people</mat-icon>
-        <span>Participantes</span>
+        <span>{{ 'admin.participantes' | t }}</span>
       </button>
       <button mat-button routerLink="/asignacion">
         <mat-icon>dashboard_customize</mat-icon>
-        <span>Asignación</span>
+        <span>{{ 'admin.asignacion' | t }}</span>
       </button>
       @if (esAdministrador()) {
         <button mat-button routerLink="/nuevo-usuario">
           <mat-icon>person_add</mat-icon>
-          <span>Nuevo Usuario</span>
+          <span>{{ 'admin.nuevoUsuario' | t }}</span>
         </button>
       }
       @if (esSuperusuario()) {
         <button mat-button routerLink="/usuario">
           <mat-icon>manage_accounts</mat-icon>
-          <span>Usuarios</span>
+          <span>{{ 'admin.usuarios' | t }}</span>
         </button>
       }
       <button mat-button (click)="logout()">
         <mat-icon>logout</mat-icon>
-        <span>Logout</span>
+        <span>{{ 'admin.logout' | t }}</span>
       </button>
     </div>
   </mat-card>

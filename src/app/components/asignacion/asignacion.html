@@ -2,33 +2,33 @@
     <mat-card class="asignacion-card">
         <div class="header">
             <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
-            <mat-card-title class="asignacion-title">Asignación de Equipos</mat-card-title>
+            <mat-card-title class="asignacion-title">{{ 'as.titulo' | t }}</mat-card-title>
             <h1> 🏈</h1>
             <mat-divider></mat-divider>
         </div>
 
         <div class="button-container">
-        <button class="left" mat-icon-button routerLink="/admin" aria-label="Volver">
+        <button class="left" mat-icon-button routerLink="/admin" [attr.aria-label]="'admin.volver' | t">
             <mat-icon>arrow_back</mat-icon>
         </button>
         @if (puedeAutoAsignar() && etapasAutomaticas.includes(etapaActiva())) {
             <button mat-stroked-button class="auto-asignar" (click)="autoAsignar()">
-                <mat-icon>auto_fix_high</mat-icon>&nbsp;Auto-asignar
+                <mat-icon>auto_fix_high</mat-icon>&nbsp;{{ 'as.autoAsignar' | t }}
             </button>
         }
         @if (esSuperusuario()) {
         <button mat-stroked-button class="reset" (click)="resetAll()">
-            <mat-icon>restart_alt</mat-icon>&nbsp;Reset
+            <mat-icon>restart_alt</mat-icon>&nbsp;{{ 'as.reset' | t }}
         </button>
         }
-        <button class="right" mat-icon-button (click)="logout()" aria-label="Logout">
+        <button class="right" mat-icon-button (click)="logout()" [attr.aria-label]="'admin.logout' | t">
             <mat-icon>logout</mat-icon>
         </button>
         </div>
 
         @if (grupos().length > 1) {
           <mat-form-field appearance="fill" class="grupo-select">
-            <mat-label>Grupo</mat-label>
+            <mat-label>{{ 'admin.grupo' | t }}</mat-label>
             <mat-select [value]="grupoId()" (selectionChange)="cambiarGrupo($event.value)">
               @for (g of grupos(); track g.id) {
                 <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
@@ -36,7 +36,7 @@
             </mat-select>
           </mat-form-field>
         } @else if (grupos().length === 1) {
-          <p class="grupo-label">Grupo: {{ grupos()[0].nombre }}</p>
+          <p class="grupo-label">{{ 'admin.grupoLabel' | t: { grupo: grupos()[0].nombre } }}</p>
         }
 
         @if (errorMsg()) { <div class="err">{{ errorMsg() }}</div> }
@@ -44,14 +44,14 @@
 
         <mat-tab-group (selectedIndexChange)="onTabChange($event)" animationDuration="0ms">
           @for (e of etapas; track e.value) {
-            <mat-tab [label]="e.label"></mat-tab>
+            <mat-tab [label]="etapaLabel(e.value)"></mat-tab>
           }
         </mat-tab-group>
 
         @if (loading()) {
           <div class="loading-container">
             <mat-spinner diameter="40"></mat-spinner>
-            <p>Cargando asignaciones...</p>
+            <p>{{ 'as.cargando' | t }}</p>
           </div>
         }
 
@@ -76,7 +76,7 @@
                         disableOptionCentering
                         panelClass="asig-panel"
                     >
-                    <mat-option [value]="null">— Sin asignación —</mat-option>
+                    <mat-option [value]="null">{{ 'as.sinAsignacion' | t }}</mat-option>
                     @for (eq of opcionesPara(d); track eq.id) {
                         <mat-option [value]="eq.id">{{ eq.nombre }}</mat-option>
                     }
@@ -91,10 +91,10 @@
 </div>
 
 @if (animando()) {
-  <div #revOverlay class="revelado-overlay" [class.vuelo]="enVuelo()" role="dialog" aria-label="Asignación de equipos">
+  <div #revOverlay class="revelado-overlay" [class.vuelo]="enVuelo()" role="dialog" [attr.aria-label]="'as.overlayAria' | t">
     <p class="revelado-titulo">
       {{ tituloRevelado }}
-      @if (actual()) { <span>· Equipo {{ revelados().size + 1 }} de {{ totalRevelar }}</span> }
+      @if (actual()) { <span>{{ 'as.progreso' | t: { i: revelados().size + 1, n: totalRevelar } }}</span> }
     </p>
     <div class="revelado-escena" aria-live="assertive">
       <div #revEquipo class="revelado-equipo">
@@ -111,6 +111,6 @@
         }
       </div>
     </div>
-    <button mat-stroked-button type="button" class="revelado-saltar" (click)="saltarAnimacion()">Saltar animación</button>
+    <button mat-stroked-button type="button" class="revelado-saltar" (click)="saltarAnimacion()">{{ 'admin.saltarAnimacion' | t }}</button>
   </div>
 }

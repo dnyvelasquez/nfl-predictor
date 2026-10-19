@@ -19,6 +19,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth/auth';
 import { forkJoin, firstValueFrom } from 'rxjs';
 import { Router, RouterModule } from '@angular/router';
+import { IdiomaService, traducirEtapa } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
+import { registrarTextosAdmin } from '../../i18n/textos.admin';
+
+registrarTextosAdmin();
 
 type AsignacionRow = { id?: string; equipo_id: string; participante: string };
 
@@ -38,13 +43,14 @@ type Revelacion = { equipo: Equipo; duenos: string[]; detalle: string };
     RouterModule,
     MatMenuModule,
     MatProgressSpinnerModule,
-    MatTabsModule
+    MatTabsModule, TPipe
   ],
   templateUrl: './asignacion.html',
   styleUrls: ['./asignacion.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Asignacion implements OnInit, OnDestroy {
+  private idioma = inject(IdiomaService);
   private svc = inject(AsignacionService);
   private equiposService = inject(EquiposService);
   private participantesService = inject(ParticipantesService);
@@ -84,6 +90,7 @@ export class Asignacion implements OnInit, OnDestroy {
   });
 
   etapas = ETAPAS;
+  etapaLabel = (etapa: Etapa) => traducirEtapa(this.idioma.actual(), etapa);
   etapaActiva = signal<Etapa>('regular');
 
   ngOnInit(): void { this.cargarBase(); }
@@ -104,7 +111,7 @@ export class Asignacion implements OnInit, OnDestroy {
         this.cargarGrupo();
       },
       error: (e) => {
-        this.errorMsg.set(e?.message || 'No fue posible cargar la asignación');
+        this.errorMsg.set(this.idioma.error(e, 'as.errorCargar'));
         this.loading.set(false);
       }
     });
@@ -116,7 +123,7 @@ export class Asignacion implements OnInit, OnDestroy {
     if (!grupoId) {
       this.participantes.set([]);
       this.asignaciones.set([]);
-      this.errorMsg.set('Tu usuario no pertenece a ningún grupo');
+      this.errorMsg.set(this.idioma.t('admin.sinGrupo'));
       this.loading.set(false);
       return;
     }
@@ -131,7 +138,7 @@ export class Asignacion implements OnInit, OnDestroy {
         this.cargarAsignaciones(this.etapaActiva());
       },
       error: (e) => {
-        this.errorMsg.set(e?.message || 'No fue posible cargar los participantes');
+        this.errorMsg.set(this.idioma.error(e, 'as.errorParticipantes'));
         this.loading.set(false);
       }
     });
@@ -153,7 +160,7 @@ export class Asignacion implements OnInit, OnDestroy {
 
     this.svc.getAsignaciones(etapa, grupoId).subscribe({
       next: (asign) => this.asignaciones.set(asign ?? []),
-      error: (e) => this.errorMsg.set(e?.message || 'No fue posible cargar la asignación'),
+      error: (e) => this.errorMsg.set(this.idioma.error(e, 'as.errorCargar')),
       complete: () => this.loading.set(false)
     });
   }
@@ -223,9 +230,9 @@ export class Asignacion implements OnInit, OnDestroy {
         }
 
         this.asignaciones.set(prev);
-        this.okMsg.set('Asignación actualizada');
+        this.okMsg.set(this.idioma.t('as.actualizada'));
       },
-      error: (e) => this.errorMsg.set(e?.message || 'No se pudo actualizar la asignación'),
+      error: (e) => this.errorMsg.set(this.idioma.error(e, 'as.errorActualizar')),
       complete: () => this.loading.set(false),
     });
   }
@@ -235,20 +242,20 @@ export class Asignacion implements OnInit, OnDestroy {
     const etapa = this.etapaActiva();
     if (!grupoId || !this.etapasAutomaticas.includes(etapa)) return;
 
-    const label = this.etapas.find(e => e.value === etapa)?.label ?? etapa;
+    const label = this.etapaLabel(etapa);
     let mensaje: string;
     if (etapa === 'regular') {
-      mensaje = `¿Auto-asignar la temporada regular por ranking? Esto reemplaza por completo la asignación actual de "${label}" del grupo "${this.nombreGrupo()}".`;
+      mensaje = this.idioma.t('as.confirmRegular', { etapa: label, grupo: this.nombreGrupo() });
     } else {
       // Cada ronda de playoffs se arma con el cierre de la anterior.
       const anterior = Asignacion.RONDA_ANTERIOR[etapa]!;
-      const labelAnterior = this.etapas.find(e => e.value === anterior)?.label ?? anterior;
+      const labelAnterior = this.etapaLabel(anterior);
       const terminada = await firstValueFrom(this.juegosService.rondaTerminada(anterior)).catch(() => false);
-      mensaje = `¿Auto-asignar "${label}" según el reglamento? Esto reemplaza por completo la asignación actual de "${label}" del grupo "${this.nombreGrupo()}".`;
+      mensaje = this.idioma.t('as.confirmPlayoff', { etapa: label, grupo: this.nombreGrupo() });
       if (!terminada) {
         mensaje += etapa === 'wildcard'
-          ? '\n\nLa temporada regular todavía no termina: se usará la clasificación provisional de ESPN. Vuelve a ejecutarlo al cerrar la temporada.'
-          : `\n\n"${labelAnterior}" todavía no termina: solo cuentan los juegos que ya tienen resultado. Vuelve a ejecutarlo al cerrar esa ronda.`;
+          ? '\n\n' + this.idioma.t('as.avisoRegularAbierta')
+          : '\n\n' + this.idioma.t('as.avisoRondaAbierta', { etapa: labelAnterior });
       }
     }
     if (!confirm(mensaje)) return;
@@ -263,8 +270,8 @@ export class Asignacion implements OnInit, OnDestroy {
     op.subscribe({
       next: ({ asignados }) => {
         const ok = etapa === 'regular'
-          ? `Asignación por ranking completa (${asignados} equipos)`
-          : `Asignación de "${label}" completa (${asignados} equipos)`;
+          ? this.idioma.t('as.okRegular', { n: asignados })
+          : this.idioma.t('as.okPlayoff', { etapa: label, n: asignados });
         // La grilla arranca vacía y se va llenando con la animación.
         const reducido = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
         this.revelados.set(new Set());
@@ -277,13 +284,13 @@ export class Asignacion implements OnInit, OnDestroy {
           },
           error: (e) => {
             this.animando.set(false);
-            this.errorMsg.set(e?.message || 'No fue posible cargar la asignación');
+            this.errorMsg.set(this.idioma.error(e, 'as.errorCargar'));
             this.loading.set(false);
           },
         });
       },
       error: (e) => {
-        this.errorMsg.set(e?.message || 'No se pudo auto-asignar');
+        this.errorMsg.set(this.idioma.error(e, 'as.errorAuto'));
         this.loading.set(false);
       },
     });
@@ -342,8 +349,8 @@ export class Asignacion implements OnInit, OnDestroy {
         equipo,
         duenos: ps.sort((a, b) => (numero.get(a) ?? 0) - (numero.get(b) ?? 0)),
         detalle: etapa === 'regular'
-          ? (equipo.ranking ? `Ranking #${equipo.ranking}` : '')
-          : (equipo.seed_conferencia ? `${conf} · Semilla ${equipo.seed_conferencia}` : conf),
+          ? (equipo.ranking ? this.idioma.t('as.detalleRanking', { n: equipo.ranking }) : '')
+          : (equipo.seed_conferencia ? this.idioma.t('as.detalleSemilla', { conf, n: equipo.seed_conferencia }) : conf),
       };
     });
     const alto = 999;
@@ -360,7 +367,7 @@ export class Asignacion implements OnInit, OnDestroy {
       if (this.animando()) {
         const lista = this.ordenRevelado(etapa);
         this.totalRevelar = lista.length;
-        this.tituloRevelado = `Asignación · ${label}`;
+        this.tituloRevelado = this.idioma.t('as.tituloRevelado', { etapa: label });
         this.saltarAnim = false;
         this.cdr.detectChanges();
         for (const r of lista) {
@@ -443,8 +450,8 @@ export class Asignacion implements OnInit, OnDestroy {
   resetAll() {
     const grupoId = this.grupoId();
     if (!grupoId) return;
-    const label = this.etapas.find(e => e.value === this.etapaActiva())?.label ?? this.etapaActiva();
-    const ok = confirm(`¿Quitar TODAS las asignaciones de "${label}" del grupo "${this.nombreGrupo()}"?`);
+    const label = this.etapaLabel(this.etapaActiva());
+    const ok = confirm(this.idioma.t('as.confirmReset', { etapa: label, grupo: this.nombreGrupo() }));
     if (!ok) return;
 
     this.loading.set(true);
@@ -454,9 +461,9 @@ export class Asignacion implements OnInit, OnDestroy {
     this.svc.resetAsignaciones(this.etapaActiva(), grupoId).subscribe({
       next: () => {
         this.asignaciones.set([]);
-        this.okMsg.set('Asignaciones reiniciadas');
+        this.okMsg.set(this.idioma.t('as.reiniciadas'));
       },
-      error: (e) => this.errorMsg.set(e?.message || 'No se pudo reiniciar'),
+      error: (e) => this.errorMsg.set(this.idioma.error(e, 'as.errorReset')),
       complete: () => this.loading.set(false),
     });
   }

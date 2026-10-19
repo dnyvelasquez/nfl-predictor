@@ -2,37 +2,37 @@
   <mat-card class="agregar-card">
     <div class="header">
       <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
-      <h1>Nuevo Usuario</h1>
+      <h1>{{ 'nu.titulo' | t }}</h1>
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
 
     <div class="button-container">
-      <button class="left" mat-icon-button routerLink="/admin" aria-label="Volver">
+      <button class="left" mat-icon-button routerLink="/admin" [attr.aria-label]="'admin.volver' | t">
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <button class="right" mat-icon-button (click)="logout()" aria-label="Logout">
+      <button class="right" mat-icon-button (click)="logout()" [attr.aria-label]="'admin.logout' | t">
         <mat-icon>logout</mat-icon>
       </button>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()">
       <mat-form-field appearance="fill" class="box">
-        <mat-label>email</mat-label>
+        <mat-label>{{ 'nu.email' | t }}</mat-label>
       <input matInput formControlName="email" type="email" />
-      @if (f.email.touched && f.email.hasError('required')) { <mat-error>El email es requerido</mat-error> }
-      @if (f.email.touched && f.email.hasError('email')) { <mat-error>Email inválido</mat-error> }
+      @if (f.email.touched && f.email.hasError('required')) { <mat-error>{{ 'nu.emailRequerido' | t }}</mat-error> }
+      @if (f.email.touched && f.email.hasError('email')) { <mat-error>{{ 'nu.emailInvalido' | t }}</mat-error> }
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="box">
-        <mat-label>Contraseña</mat-label>
+        <mat-label>{{ 'nu.contrasena' | t }}</mat-label>
         <input matInput formControlName="password" type="password" />
-        @if (f.password.touched && f.password.hasError('required')) { <mat-error>La contraseña es requerida</mat-error> }
-        @if (f.password.touched && f.password.hasError('minlength')) { <mat-error>Mínimo 6 caracteres</mat-error> }
+        @if (f.password.touched && f.password.hasError('required')) { <mat-error>{{ 'nu.contrasenaRequerida' | t }}</mat-error> }
+        @if (f.password.touched && f.password.hasError('minlength')) { <mat-error>{{ 'nu.minimo6' | t }}</mat-error> }
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="box">
-        <mat-label>Grupo</mat-label>
+        <mat-label>{{ 'admin.grupo' | t }}</mat-label>
         <mat-select formControlName="grupoId" (selectionChange)="ajustarRol()">
           @for (g of grupos; track g.id) {
             <mat-option [value]="g.id">{{ g.nombre }} · {{ etiquetaModo(g.modo) }}</mat-option>
@@ -42,27 +42,27 @@
 
       @if (esPronostico) {
         <mat-form-field appearance="fill" class="box">
-          <mat-label>Nombre de participante</mat-label>
+          <mat-label>{{ 'nu.nombreParticipante' | t }}</mat-label>
           <input matInput formControlName="participante" maxlength="40" />
-          <mat-hint>Así aparecerá en la tabla del grupo</mat-hint>
-          @if (f.participante.touched && f.participante.hasError('required')) { <mat-error>El nombre es requerido</mat-error> }
+          <mat-hint>{{ 'nu.hintParticipante' | t }}</mat-hint>
+          @if (f.participante.touched && f.participante.hasError('required')) { <mat-error>{{ 'nu.nombreRequerido' | t }}</mat-error> }
         </mat-form-field>
       }
 
       <mat-form-field appearance="fill" class="box">
-        <mat-label>Rol en el grupo</mat-label>
+        <mat-label>{{ 'nu.rol' | t }}</mat-label>
         <mat-select formControlName="rol">
           @for (r of roles; track r.value) {
-            <mat-option [value]="r.value">{{ r.label }}</mat-option>
+            <mat-option [value]="r.value">{{ etiquetaRol(r.value) }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
-      <p class="nota">Si el email ya tiene cuenta, se agrega al grupo y la contraseña no cambia.
-        @if (esPronostico) { Si ya era participante del grupo, conserva su nombre. }</p>
+      <p class="nota">{{ 'nu.nota' | t }}
+        @if (esPronostico) { {{ 'nu.notaPronostico' | t }} }</p>
 
       <div>
         <button mat-raised-button type="submit" [disabled]="form.invalid || loading">
-          {{ loading ? 'Creando…' : 'Crear' }}
+          {{ (loading ? 'nu.creando' : 'nu.crear') | t }}
         </button>
       </div>
 

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth/auth';
@@ -11,6 +11,11 @@ import { FormsModule, FormBuilder, FormGroup, Validators, ReactiveFormsModule } 
 import { finalize } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { supabase } from '../../core/supabase.client';
+import { IdiomaService } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
+import { registrarTextosAdmin } from '../../i18n/textos.admin';
+
+registrarTextosAdmin();
 
 @Component({
   selector: 'app-login',
@@ -23,12 +28,13 @@ import { supabase } from '../../core/supabase.client';
     MatFormFieldModule,
     MatInputModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule, TPipe
   ],
   templateUrl: './login.html',
   styleUrls: ['./login.css']
 })
 export class Login {
+  private idioma = inject(IdiomaService);
   form: FormGroup;
   errorMsg: string | null = null;
   loading = false;
@@ -58,7 +64,7 @@ export class Login {
     this.authService.login(email, password).subscribe({
       next: async (res) => {
         const user = res?.data ?? null;
-        if (!user) { this.errorMsg = 'Credenciales incorrectas'; return; }
+        if (!user) { this.errorMsg = this.idioma.t('login.credenciales'); return; }
 
         const { data } = await supabase.auth.getSession();
         console.log('[after login] session?', !!data.session);
@@ -69,7 +75,7 @@ export class Login {
         const redirect = this.route.snapshot.queryParamMap.get('redirect') || (esAdmin ? '/admin' : '/');
         this.router.navigateByUrl(redirect, { replaceUrl: true });
       },
-      error: () => this.errorMsg = 'Correo o contraseña incorrectos'
+      error: () => this.errorMsg = this.idioma.t('login.incorrectos')
     });
 
   }

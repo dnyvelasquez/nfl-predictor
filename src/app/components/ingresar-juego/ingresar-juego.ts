@@ -20,6 +20,11 @@ import { JuegosService, Juego } from '../../services/juegos';
 import { EquiposService, Equipo } from '../../services/equipos';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth/auth';
+import { IdiomaService, traducirEtapa } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
+import { registrarTextosAdmin } from '../../i18n/textos.admin';
+
+registrarTextosAdmin();
 
 interface GrupoFecha {
   fecha: string;
@@ -50,12 +55,13 @@ function distintos(control: AbstractControl): ValidationErrors | null {
     MatIconModule,
     MatDividerModule,
     MatMenuModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule, TPipe
   ],
   templateUrl: './ingresar-juego.html',
   styleUrls: ['./ingresar-juego.css'],
 })
 export class IngresarJuego implements OnInit {
+  private idioma = inject(IdiomaService);
   private fb = inject(FormBuilder);
   private svc = inject(JuegosService);
   private equiposService = inject(EquiposService);
@@ -96,7 +102,7 @@ export class IngresarJuego implements OnInit {
         this.equipos = (eqs ?? []).slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
         this.cdr.detectChanges();
       },
-      error: (e) => { this.errorMsg = e?.message || 'No fue posible cargar equipos'; this.cdr.detectChanges(); },
+      error: (e) => { this.errorMsg = this.idioma.error(e, 'ij.errorEquipos'); this.cdr.detectChanges(); },
     });
 
     this.svc.getSemanaActualId().subscribe(sem => {
@@ -113,7 +119,7 @@ export class IngresarJuego implements OnInit {
   get f() { return this.form.controls; }
 
   etapaLabel(etapa: Etapa): string {
-    return this.etapas.find(e => e.value === etapa)?.label ?? etapa;
+    return traducirEtapa(this.idioma.actual(), etapa);
   }
 
   private loadGames(): void {
@@ -128,7 +134,7 @@ export class IngresarJuego implements OnInit {
         this.editForms = {};
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'No fue posible cargar los juegos';
+        this.errorMsg = this.idioma.error(e, 'ij.errorJuegos');
       },
     });
   }
@@ -177,7 +183,7 @@ export class IngresarJuego implements OnInit {
   }
 
   borrarTodosLosJuegos(): void {
-    const ok = confirm('¿Eliminar TODOS los juegos almacenados? Esta acción no se puede deshacer.');
+    const ok = confirm(this.idioma.t('ij.confirmBorrarTodos'));
     if (!ok) return;
 
     this.listLoading = true;
@@ -186,11 +192,11 @@ export class IngresarJuego implements OnInit {
 
     this.svc.eliminarTodosLosJuegos().subscribe({
       next: () => {
-        this.okMsg = 'Todos los juegos fueron eliminados';
+        this.okMsg = this.idioma.t('ij.todosEliminados');
         this.loadGames();
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'No se pudieron eliminar los juegos';
+        this.errorMsg = this.idioma.error(e, 'ij.errorBorrarTodos');
         this.listLoading = false;
         this.cdr.detectChanges();
       },
@@ -198,7 +204,7 @@ export class IngresarJuego implements OnInit {
   }
 
   borrarJuego(j: Juego): void {
-    const ok = confirm(`¿Eliminar el juego ${j.visitante} @ ${j.local}? Esta acción no se puede deshacer.`);
+    const ok = confirm(this.idioma.t('ij.confirmBorrar', { visitante: j.visitante, local: j.local }));
     if (!ok) return;
 
     this.listLoading = true;
@@ -207,11 +213,11 @@ export class IngresarJuego implements OnInit {
 
     this.svc.eliminarJuego(j.id).subscribe({
       next: () => {
-        this.okMsg = 'Juego eliminado';
+        this.okMsg = this.idioma.t('ij.eliminado');
         this.loadGames();
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'No se pudo eliminar el juego';
+        this.errorMsg = this.idioma.error(e, 'ij.errorBorrar');
         this.listLoading = false;
         this.cdr.detectChanges();
       },
@@ -239,11 +245,11 @@ export class IngresarJuego implements OnInit {
 
     this.svc.actualizarJuego(j.id, patch).subscribe({
       next: () => {
-        this.okMsg = 'Juego actualizado';
+        this.okMsg = this.idioma.t('ij.actualizado');
         this.loadGames();
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'No se pudo actualizar el juego';
+        this.errorMsg = this.idioma.error(e, 'ij.errorActualizar');
         this.listLoading = false;
         this.cdr.detectChanges();
       },
@@ -285,10 +291,10 @@ export class IngresarJuego implements OnInit {
 
       this.form.reset();
       this.form.patchValue({ etapa: 'regular' });
-      this.okMsg = 'Juego creado';
+      this.okMsg = this.idioma.t('ij.creado');
       this.loadGames();
     } catch (err: any) {
-      this.errorMsg = err?.message || 'No fue posible crear el juego';
+      this.errorMsg = this.idioma.error(err, 'ij.errorCrear');
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

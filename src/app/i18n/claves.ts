@@ -7,10 +7,12 @@ import type { ES_FIXTURE } from '../components/fixture/textos';
 import type { ES_EQUIPOS } from '../components/equipos/textos';
 import type { ES_RANKING } from '../components/ranking/textos';
 import type { ES_REGLAMENTO } from '../components/reglamento/textos';
+import type { ES_ADMIN } from './textos.admin';
 
 export type Clave =
   | keyof typeof ES
   | keyof typeof ES_FIXTURE
   | keyof typeof ES_EQUIPOS
   | keyof typeof ES_RANKING
-  | keyof typeof ES_REGLAMENTO;
+  | keyof typeof ES_REGLAMENTO
+  | keyof typeof ES_ADMIN;

@@ -10,9 +10,14 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService, ROLES_GRUPO, RolGrupo, UsuarioVisible, MembresiaVisible } from '../../services/auth/auth';
-import { GruposService, Grupo, ModoGrupo, MODOS_GRUPO, etiquetaModo } from '../../services/grupos';
+import { GruposService, Grupo, ModoGrupo, MODOS_GRUPO } from '../../services/grupos';
 import { Router, RouterModule } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
+import { IdiomaService } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
+import { registrarTextosAdmin } from '../../i18n/textos.admin';
+
+registrarTextosAdmin();
 
 const POR_PAGINA = 20;
 
@@ -30,12 +35,13 @@ const POR_PAGINA = 20;
     MatDividerModule,
     MatIconModule,
     MatMenuModule,
-    RouterModule
+    RouterModule, TPipe
   ],
   templateUrl: './usuario.html',
   styleUrls: ['./usuario.css']
 })
 export class Usuario implements OnInit {
+  private idioma = inject(IdiomaService);
 
   private svc = inject(AuthService);
   private gruposService = inject(GruposService);
@@ -55,7 +61,8 @@ export class Usuario implements OnInit {
 
   roles = ROLES_GRUPO;
   modos = MODOS_GRUPO;
-  etiquetaModo = etiquetaModo;
+  etiquetaModo = (modo: ModoGrupo) => this.idioma.t(`modo.${modo}` as 'modo.equipos');
+  etiquetaRol = (rol: RolGrupo) => this.idioma.t(`rol.${rol}` as 'rol.lectura');
   grupos: Grupo[] = [];
   // El usuario en sesión no puede quitarse el super usuario ni borrarse (evita quedarse sin super usuario).
   miUserId: string | null = null;
@@ -82,7 +89,7 @@ export class Usuario implements OnInit {
         this.loading = false;
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'Error cargando usuarios';
+        this.errorMsg = this.idioma.error(e, 'us.errorCargar');
         this.loading = false;
       },
     });
@@ -110,17 +117,17 @@ export class Usuario implements OnInit {
   }
 
   cambiarSuperusuario(u: UsuarioVisible, esSuper: boolean) {
-    this.ejecutar(this.svc.setSuperusuario(u.id, esSuper), `Usuario ${u.email} actualizado.`, () => u.esSuperusuario = esSuper);
+    this.ejecutar(this.svc.setSuperusuario(u.id, esSuper), this.idioma.t('us.actualizado', { email: u.email }), () => u.esSuperusuario = esSuper);
   }
 
   cambiarRolEnGrupo(u: UsuarioVisible, m: MembresiaVisible, rol: RolGrupo) {
-    this.ejecutar(this.svc.setRolEnGrupo(u.id, m.grupo_id, rol), `Rol de ${u.email} en "${m.grupo}" actualizado.`, () => m.rol = rol);
+    this.ejecutar(this.svc.setRolEnGrupo(u.id, m.grupo_id, rol), this.idioma.t('us.rolActualizado', { email: u.email, grupo: m.grupo }), () => m.rol = rol);
   }
 
   quitarDeGrupo(u: UsuarioVisible, m: MembresiaVisible) {
-    const aviso = m.participante ? ` También se borrará su participante "${m.participante}" del grupo.` : '';
-    if (!confirm(`¿Sacar a ${u.email} del grupo "${m.grupo}"?${aviso}`)) return;
-    this.ejecutar(this.svc.quitarDeGrupo(u.id, m.grupo_id), `${u.email} salió de "${m.grupo}".`,
+    const aviso = m.participante ? this.idioma.t('us.avisoParticipante', { p: m.participante }) : '';
+    if (!confirm(this.idioma.t('us.confirmSacar', { email: u.email, grupo: m.grupo, aviso }))) return;
+    this.ejecutar(this.svc.quitarDeGrupo(u.id, m.grupo_id), this.idioma.t('us.salio', { email: u.email, grupo: m.grupo }),
       () => u.membresias = u.membresias.filter((x) => x.grupo_id !== m.grupo_id));
   }
 
@@ -128,11 +135,11 @@ export class Usuario implements OnInit {
     // En Modo Pronóstico el usuario entra como participante: hace falta su nombre.
     let participante: string | null = null;
     if (g.modo === 'pronostico') {
-      participante = prompt(`Nombre de participante de ${u.email} en "${g.nombre}":`)?.trim() || null;
+      participante = prompt(this.idioma.t('us.promptParticipante', { email: u.email, grupo: g.nombre }))?.trim() || null;
       if (!participante) return;
     }
     this.ejecutar(this.svc.agregarMiembro(u.email, g.id, 'lectura', participante ?? undefined),
-      `${u.email} agregado a "${g.nombre}" como solo lectura${participante ? ` (participante "${participante}")` : ''}.`,
+      this.idioma.t('us.agregado', { email: u.email, grupo: g.nombre, extra: participante ? this.idioma.t('us.agregadoExtra', { p: participante }) : '' }),
       () => u.membresias = [...u.membresias, { grupo_id: g.id, grupo: g.nombre, rol: 'lectura' as RolGrupo, participante }]
         .sort((a, b) => a.grupo.localeCompare(b.grupo)));
   }
@@ -147,7 +154,7 @@ export class Usuario implements OnInit {
         this.loading = false;
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'No se pudo actualizar el usuario';
+        this.errorMsg = this.idioma.error(e, 'us.errorActualizar');
         this.loading = false;
       },
     });
@@ -168,11 +175,11 @@ export class Usuario implements OnInit {
         this.nuevoGrupo.reset('');
         this.nuevaApuesta.reset(null);
         this.nuevoModo.reset(null);
-        this.okMsg = `Grupo "${g.nombre}" creado en ${etiquetaModo(g.modo)}.`;
+        this.okMsg = this.idioma.t('us.grupoCreado', { grupo: g.nombre, modo: this.etiquetaModo(g.modo) });
         this.loading = false;
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'No se pudo crear el grupo';
+        this.errorMsg = this.idioma.error(e, 'us.errorCrearGrupo');
         this.loading = false;
       },
     });
@@ -181,17 +188,17 @@ export class Usuario implements OnInit {
   cambiarApuesta(g: Grupo, valor: string) {
     const apuesta = this.leerApuesta(valor);
     if (apuesta === g.apuesta) return;
-    if (apuesta !== null && apuesta < 0) { this.errorMsg = 'La apuesta no puede ser negativa'; return; }
+    if (apuesta !== null && apuesta < 0) { this.errorMsg = this.idioma.t('us.apuestaNegativa'); return; }
 
     this.loading = true; this.errorMsg = this.okMsg = null;
     this.gruposService.actualizarApuesta(g.id, apuesta).subscribe({
       next: () => {
         g.apuesta = apuesta;
-        this.okMsg = `Apuesta de "${g.nombre}" actualizada.`;
+        this.okMsg = this.idioma.t('us.apuestaActualizada', { grupo: g.nombre });
         this.loading = false;
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'No se pudo actualizar la apuesta';
+        this.errorMsg = this.idioma.error(e, 'us.errorApuesta');
         this.loading = false;
       },
     });
@@ -204,35 +211,35 @@ export class Usuario implements OnInit {
   }
 
   borrarGrupo(g: Grupo) {
-    const ok = confirm(`¿Eliminar el grupo "${g.nombre}"? Solo se puede si no tiene participantes, asignaciones ni usuarios.`);
+    const ok = confirm(this.idioma.t('us.confirmBorrarGrupo', { grupo: g.nombre }));
     if (!ok) return;
 
     this.loading = true; this.errorMsg = this.okMsg = null;
     this.gruposService.borrarGrupo(g.id).subscribe({
       next: () => {
         this.grupos = this.grupos.filter((x) => x.id !== g.id);
-        this.okMsg = `Grupo "${g.nombre}" eliminado.`;
+        this.okMsg = this.idioma.t('us.grupoEliminado', { grupo: g.nombre });
         this.loading = false;
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'No se pudo eliminar el grupo';
+        this.errorMsg = this.idioma.error(e, 'us.errorBorrarGrupo');
         this.loading = false;
       },
     });
   }
 
   confirmAndDelete(u: UsuarioVisible) {
-    const ok = confirm(`¿Eliminar al usuario ${u.email ?? u.id}? Esta acción no se puede deshacer.`);
+    const ok = confirm(this.idioma.t('us.confirmEliminarUsuario', { usuario: u.email ?? u.id }));
     if (!ok) return;
 
     this.loading = true; this.errorMsg = this.okMsg = null;
     this.svc.deleteUser(u.id).subscribe({
       next: () => {
-        this.okMsg = 'Usuario eliminado.';
+        this.okMsg = this.idioma.t('us.usuarioEliminado');
         this.load();
       },
       error: (e) => {
-        this.errorMsg = e?.message || 'No se pudo eliminar';
+        this.errorMsg = this.idioma.error(e, 'admin.errorEliminar');
         this.loading = false;
       },
     });

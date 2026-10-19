@@ -2,16 +2,16 @@
   <mat-card class="participantes-card">
     <div class="header">
       <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
-      <mat-card-title class="participantes-title">Participantes</mat-card-title>
+      <mat-card-title class="participantes-title">{{ 'pa.titulo' | t }}</mat-card-title>
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
 
     <div class="button-container">
-      <button class="left" mat-icon-button routerLink="/admin" aria-label="Volver">
+      <button class="left" mat-icon-button routerLink="/admin" [attr.aria-label]="'admin.volver' | t">
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <button class="right" mat-icon-button (click)="logout()" aria-label="Logout">
+      <button class="right" mat-icon-button (click)="logout()" [attr.aria-label]="'admin.logout' | t">
         <mat-icon>logout</mat-icon>
       </button>
     </div>
@@ -19,7 +19,7 @@
 
     @if (grupos.length > 1) {
       <mat-form-field appearance="fill" class="grupo-select">
-        <mat-label>Grupo</mat-label>
+        <mat-label>{{ 'admin.grupo' | t }}</mat-label>
         <mat-select [value]="grupoId" (selectionChange)="cambiarGrupo($event.value)">
           @for (g of grupos; track g.id) {
             <mat-option [value]="g.id">{{ g.nombre }} · {{ etiquetaModo(g.modo) }}</mat-option>
@@ -27,34 +27,30 @@
         </mat-select>
       </mat-form-field>
     } @else if (grupos.length === 1) {
-      <p class="grupo-label">Grupo: {{ grupos[0].nombre }} · {{ etiquetaModo(grupos[0].modo) }}</p>
+      <p class="grupo-label">{{ 'admin.grupoLabel' | t: { grupo: grupos[0].nombre } }} · {{ etiquetaModo(grupos[0].modo) }}</p>
     }
 
     <div class="table-container">
 
       @if (esPronostico) {
-        <p class="nota-pronostico">
-          En Modo Pronóstico cada participante es un usuario. Se agregan desde "Nuevo usuario" o "Usuarios"
-          (con su nombre de participante) y se eliminan al sacarlos del grupo. No hay sorteo de números:
-          el N° es el orden de inscripción.
-        </p>
+        <p class="nota-pronostico">{{ 'pa.notaPronostico' | t }}</p>
       }
 
       @if (esSuperusuario() && !esPronostico) {
       <form [formGroup]="addForm" (ngSubmit)="add()" class="add">
         <mat-form-field appearance="fill" class="w">
-          <mat-label>Nombre</mat-label>
-          <input matInput formControlName="nombre" placeholder="Ej: Juan Pérez" />
+          <mat-label>{{ 'admin.nombre' | t }}</mat-label>
+          <input matInput formControlName="nombre" [placeholder]="'pa.placeholderNombre' | t" />
           @if (addForm.get('nombre')?.touched && addForm.get('nombre')?.hasError('required')) {
-            <mat-error>El nombre es requerido</mat-error>
+            <mat-error>{{ 'pa.nombreRequerido' | t }}</mat-error>
           }
           @if (addForm.get('nombre')?.touched && addForm.get('nombre')?.hasError('minlength')) {
-            <mat-error>Mínimo 2 caracteres</mat-error>
+            <mat-error>{{ 'pa.minimo2' | t }}</mat-error>
           }
         </mat-form-field>
 
         <button mat-raised-button class="agregar" type="submit" [disabled]="addForm.invalid || loading">
-          Agregar
+          {{ 'pa.agregar' | t }}
         </button>
       </form>
 
@@ -64,7 +60,7 @@
       <div class="sorteo">
         <button mat-raised-button color="accent" (click)="sortearNumeros()" [disabled]="loading || participantes.length === 0">
           <mat-icon>casino</mat-icon>
-          Sortear números
+          {{ 'pa.sortear' | t }}
         </button>
       </div>
       }
@@ -72,7 +68,7 @@
       @if (loading) {
         <div class="loading-container">
           <mat-spinner diameter="40"></mat-spinner>
-          <p>Cargando participantes...</p>
+          <p>{{ 'pa.cargando' | t }}</p>
         </div>
       }
       @if (errorMsg) { <div class="error">{{ errorMsg }}</div> }
@@ -80,9 +76,9 @@
 
       <div class="table">
         <div class="thead row">
-          <div class="cell n">N°</div>
-          <div class="cell w">Nombre</div>
-          @if (esSuperusuario()) { <div class="cell a">Acciones</div> }
+          <div class="cell n">{{ 'pa.numero' | t }}</div>
+          <div class="cell w">{{ 'admin.nombre' | t }}</div>
+          @if (esSuperusuario()) { <div class="cell a">{{ 'admin.acciones' | t }}</div> }
         </div>
 
         <div class="tbody">
@@ -102,9 +98,9 @@
 
                 @if (esSuperusuario()) {
                 <div class="cell a">
-                  <button mat-stroked-button (click)="startEdit(p)" [disabled]="loading">Editar</button>
+                  <button mat-stroked-button (click)="startEdit(p)" [disabled]="loading">{{ 'admin.editar' | t }}</button>
                   @if (!esPronostico) {
-                    <button mat-button color="warn" (click)="remove(p)" [disabled]="loading">Eliminar</button>
+                    <button mat-button color="warn" (click)="remove(p)" [disabled]="loading">{{ 'admin.eliminar' | t }}</button>
                   }
                 </div>
                 }
@@ -113,7 +109,7 @@
               <div class="row" [formGroup]="editForms[p.id]">
                 <div class="cell n editando">
                   <mat-form-field appearance="fill" class="tight numero">
-                    <input matInput type="number" min="1" step="1" formControlName="numero" aria-label="Número" />
+                    <input matInput type="number" min="1" step="1" formControlName="numero" [attr.aria-label]="'pa.numeroAria' | t" />
                   </mat-form-field>
                 </div>
 
@@ -127,9 +123,9 @@
                   <button mat-raised-button color="primary"
                     (click)="saveEdit(p)"
                     [disabled]="editForms[p.id].invalid || loading">
-                    Guardar
+                    {{ 'admin.guardar' | t }}
                   </button>
-                  <button mat-button (click)="cancelEdit(p)" [disabled]="loading">Cancelar</button>
+                  <button mat-button (click)="cancelEdit(p)" [disabled]="loading">{{ 'admin.cancelar' | t }}</button>
                 </div>
               </div>
             }
@@ -143,15 +139,15 @@
 </div>
 
 @if (sorteando) {
-  <div class="sorteo-overlay" [class.vuelo]="enVuelo" role="dialog" aria-label="Sorteo de números">
+  <div class="sorteo-overlay" [class.vuelo]="enVuelo" role="dialog" [attr.aria-label]="'pa.sorteoTitulo' | t">
     <p class="sorteo-titulo">
-      Sorteo de números
-      @if (actual) { <span>· Participante {{ revelados.size + 1 }} de {{ participantes.length }}</span> }
+      {{ 'pa.sorteoTitulo' | t }}
+      @if (actual) { <span>{{ 'pa.sorteoProgreso' | t: { i: revelados.size + 1, n: participantes.length } }}</span> }
     </p>
     <div class="sorteo-escena" aria-live="assertive">
       <div #sorteoNumero class="sorteo-numero">{{ actual?.numero }}</div>
       <div #sorteoNombre class="sorteo-nombre">{{ actual?.nombre }}</div>
     </div>
-    <button mat-stroked-button type="button" class="sorteo-saltar" (click)="saltarSorteo()">Saltar animación</button>
+    <button mat-stroked-button type="button" class="sorteo-saltar" (click)="saltarSorteo()">{{ 'admin.saltarAnimacion' | t }}</button>
   </div>
 }

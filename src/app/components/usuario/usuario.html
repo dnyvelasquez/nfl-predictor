@@ -2,30 +2,30 @@
   <mat-card class="borrar-card">
     <div class="header">
       <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
-      <h1>Usuarios</h1>
+      <h1>{{ 'us.titulo' | t }}</h1>
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
 
     <div class="button-container">
-      <button mat-icon-button routerLink="/admin" aria-label="Volver">
+      <button mat-icon-button routerLink="/admin" [attr.aria-label]="'admin.volver' | t">
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <button mat-icon-button (click)="logout()" aria-label="Logout">
+      <button mat-icon-button (click)="logout()" [attr.aria-label]="'admin.logout' | t">
         <mat-icon>logout</mat-icon>
       </button>
     </div>
 
     <div class="buscador">
       <mat-form-field appearance="fill" class="campo-buscar" subscriptSizing="dynamic">
-        <mat-label>Buscar (email)</mat-label>
+        <mat-label>{{ 'us.buscar' | t }}</mat-label>
         <input matInput [formControl]="search" (keyup.enter)="doSearch()" />
       </mat-form-field>
-      <button mat-raised-button color="primary" (click)="doSearch()">Buscar</button>
+      <button mat-raised-button color="primary" (click)="doSearch()">{{ 'us.botonBuscar' | t }}</button>
     </div>
 
     @if (loading) {
-      <p>Cargando…</p>
+      <p>{{ 'admin.cargando' | t }}</p>
     }
 
     @if (errorMsg) {
@@ -44,40 +44,40 @@
             <div class="usuario-encabezado">
               <span class="email">{{ u.email }}</span>
               <button mat-icon-button color="warn" (click)="confirmAndDelete(u)"
-                      [disabled]="u.id === miUserId || loading" [attr.aria-label]="'Eliminar a ' + u.email">
+                      [disabled]="u.id === miUserId || loading" [attr.aria-label]="'us.eliminarA' | t: { email: u.email }">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
 
             <mat-checkbox [checked]="u.esSuperusuario" (change)="cambiarSuperusuario(u, $event.checked)"
-                          [disabled]="u.id === miUserId || loading">Super usuario</mat-checkbox>
+                          [disabled]="u.id === miUserId || loading">{{ 'rol.superusuario' | t }}</mat-checkbox>
 
             <div class="membresias">
               @for (m of u.membresias; track m.grupo_id) {
                 <div class="membresia">
                   <div class="membresia-grupo">
                     <span>{{ m.grupo }}</span>
-                    @if (m.participante) { <small class="participante">Participante: {{ m.participante }}</small> }
+                    @if (m.participante) { <small class="participante">{{ 'us.participante' | t: { p: m.participante } }}</small> }
                   </div>
                   <mat-select class="membresia-rol" [value]="m.rol" (selectionChange)="cambiarRolEnGrupo(u, m, $event.value)"
-                              [disabled]="loading" [attr.aria-label]="'Rol en ' + m.grupo">
+                              [disabled]="loading" [attr.aria-label]="'us.rolEn' | t: { grupo: m.grupo }">
                     @for (r of roles; track r.value) {
-                      <mat-option [value]="r.value">{{ r.label }}</mat-option>
+                      <mat-option [value]="r.value">{{ etiquetaRol(r.value) }}</mat-option>
                     }
                   </mat-select>
                   <button mat-icon-button class="membresia-quitar" (click)="quitarDeGrupo(u, m)" [disabled]="loading"
-                          [attr.aria-label]="'Sacar de ' + m.grupo">
+                          [attr.aria-label]="'us.sacarDe' | t: { grupo: m.grupo }">
                     <mat-icon>close</mat-icon>
                   </button>
                 </div>
               } @empty {
-                <p class="sin-grupo">{{ u.esSuperusuario ? 'Ve todos los grupos' : 'Sin grupo' }}</p>
+                <p class="sin-grupo">{{ (u.esSuperusuario ? 'us.veTodos' : 'us.sinGrupo') | t }}</p>
               }
             </div>
 
             @if (gruposSinMembresia(u).length > 0) {
-              <mat-select class="agregar-grupo" placeholder="Agregar a grupo…" [value]="null"
-                          (selectionChange)="agregarAGrupo(u, $event.value)" [disabled]="loading" aria-label="Agregar a grupo">
+              <mat-select class="agregar-grupo" [placeholder]="'us.agregarA' | t" [value]="null"
+                          (selectionChange)="agregarAGrupo(u, $event.value)" [disabled]="loading" [attr.aria-label]="'us.agregarA' | t">
                 @for (g of gruposSinMembresia(u); track g.id) {
                   <mat-option [value]="g">{{ g.nombre }} · {{ etiquetaModo(g.modo) }}</mat-option>
                 }
@@ -88,14 +88,14 @@
       </div>
 
       <div class="paginacion">
-        <button mat-stroked-button (click)="prevPage()" [disabled]="page<=1">Anterior</button>
-        <button mat-stroked-button (click)="nextPage()" [disabled]="!hayMas">Siguiente</button>
+        <button mat-stroked-button (click)="prevPage()" [disabled]="page<=1">{{ 'us.anterior' | t }}</button>
+        <button mat-stroked-button (click)="nextPage()" [disabled]="!hayMas">{{ 'us.siguiente' | t }}</button>
       </div>
     }
 
     <mat-divider class="separador"></mat-divider>
 
-    <h2>Grupos</h2>
+    <h2>{{ 'us.grupos' | t }}</h2>
     <ul class="lista-grupos">
       @for (g of grupos; track g.id) {
         <li class="tarjeta-grupo">
@@ -105,12 +105,12 @@
           </div>
           <div class="grupo-acciones">
             <mat-form-field appearance="fill" class="campo-apuesta" subscriptSizing="dynamic">
-              <mat-label>Apuesta ({{ g.moneda }})</mat-label>
+              <mat-label>{{ 'us.apuesta' | t: { moneda: g.moneda } }}</mat-label>
               <input matInput type="number" min="0" step="1000" [value]="g.apuesta ?? ''"
                      (change)="cambiarApuesta(g, $any($event.target).value)" />
             </mat-form-field>
             <button mat-icon-button color="warn" (click)="borrarGrupo(g)" [disabled]="loading"
-                    [attr.aria-label]="'Borrar grupo ' + g.nombre">
+                    [attr.aria-label]="'us.borrarGrupo' | t: { grupo: g.nombre }">
               <mat-icon>delete</mat-icon>
             </button>
           </div>
@@ -120,24 +120,24 @@
 
     <div class="nuevo-grupo">
       <mat-form-field appearance="fill" class="campo-nombre">
-        <mat-label>Nuevo grupo</mat-label>
+        <mat-label>{{ 'us.nuevoGrupo' | t }}</mat-label>
         <input matInput [formControl]="nuevoGrupo" (keyup.enter)="crearGrupo()" />
       </mat-form-field>
       <mat-form-field appearance="fill" class="campo-modo">
-        <mat-label>Modo</mat-label>
+        <mat-label>{{ 'us.modo' | t }}</mat-label>
         <mat-select [formControl]="nuevoModo">
           @for (m of modos; track m.value) {
-            <mat-option [value]="m.value">{{ m.label }}</mat-option>
+            <mat-option [value]="m.value">{{ etiquetaModo(m.value) }}</mat-option>
           }
         </mat-select>
-        <mat-hint>No se puede cambiar después</mat-hint>
-        <mat-error>Elige el modo del grupo</mat-error>
+        <mat-hint>{{ 'us.noCambia' | t }}</mat-hint>
+        <mat-error>{{ 'us.eligeModo' | t }}</mat-error>
       </mat-form-field>
       <mat-form-field appearance="fill" class="campo-apuesta">
-        <mat-label>Apuesta (COP)</mat-label>
+        <mat-label>{{ 'us.apuesta' | t: { moneda: 'COP' } }}</mat-label>
         <input matInput type="number" min="0" step="1000" [formControl]="nuevaApuesta" />
       </mat-form-field>
-      <button mat-raised-button color="primary" class="boton-crear" (click)="crearGrupo()" [disabled]="loading">Crear grupo</button>
+      <button mat-raised-button color="primary" class="boton-crear" (click)="crearGrupo()" [disabled]="loading">{{ 'us.crearGrupo' | t }}</button>
     </div>
 
   </mat-card>

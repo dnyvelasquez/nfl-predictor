@@ -5,6 +5,8 @@ Aplicación para gestionar una quiniela/pool de predicciones de la temporada de 
 - **Modo Equipos**: los equipos se reparten entre los participantes (automáticamente en todas las etapas, según el reglamento) y cada uno suma los puntos que ganan sus equipos.
 - **Modo Pronóstico**: cada participante (un usuario) pronostica el ganador de cada juego, con un bono si acierta la diferencia exacta de puntos.
 
+El sitio está en español y en inglés: un botón ES/EN en el encabezado cambia el idioma al instante (por defecto, español) y recuerda la elección. Las fechas y horas se muestran en la zona horaria de cada usuario.
+
 Construida con Angular 20 (componentes standalone) y [Neon](https://neon.com) (Postgres, vía su Data API y Neon Auth). Es un sitio 100% estático (sin backend propio) — todo el acceso a datos y autenticación va directo del navegador a Neon.
 
 ## Requisitos
@@ -88,7 +90,7 @@ También tiene una GitHub Action (`.github/workflows/sync-ranking.yml`) que corr
 - **Portada**: el juego destacado de la semana (el de horario prime, en vivo o el próximo, con las mascotas de los dos equipos enfrentadas, su récord y una cuenta regresiva) y los juegos de la semana, con los que están en vivo primero. Con sesión muestra además la tabla de posiciones del grupo y qué participante tiene cada equipo.
 - **Juegos de la semana**: calendario por semana con la hora, el marcador final o, mientras el juego está en curso, el marcador parcial con un letrero "En vivo" y el cuarto que se está jugando; se actualiza solo. Con sesión muestra qué participante del grupo tiene cada equipo (Modo Equipos) o deja pronosticar cada juego (Modo Pronóstico, ver abajo).
 
-Las fechas y horas de los juegos se muestran en la zona horaria de cada usuario (la de su navegador); en la base se guardan en hora de Bogotá.
+Las fechas y horas de los juegos se muestran en la zona horaria de cada usuario (la de su navegador); en la base se guardan en hora de Bogotá. En inglés van en formato de 12 horas.
 - **Equipos → Fixture**: dos pestañas.
   - *Temporada regular*: standings por conferencia y división, con el récord (Ganados-Perdidos-Empatados) y el orden oficial de la NFL; una franja de color marca la clasificación a playoffs (amarillo: semilla 1, azul: otros campeones de división, rojo: wild cards).
   - *Postemporada*: el cuadro de playoffs (AFC, Super Bowl y NFC). Antes de los playoffs muestra los cruces proyectados con las semillas actuales; luego, los juegos reales con fecha, marcador en vivo y ganador. Se abre sola en esta pestaña cuando empiezan los playoffs.

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Injectable } from '@angular/core';
@@ -9,9 +9,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { AuthService, etiquetaRol } from '../../services/auth/auth';
+import { AuthService, RolEnGrupo } from '../../services/auth/auth';
 import { GruposService } from '../../services/grupos';
 import { map } from 'rxjs';
+import { IdiomaService } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
+import { registrarTextosAdmin } from '../../i18n/textos.admin';
+
+registrarTextosAdmin();
 
 @Injectable({
   providedIn: 'root'
@@ -28,30 +33,32 @@ import { map } from 'rxjs';
     MatButtonModule,
     MatMenuModule,
     MatToolbarModule,
-    RouterModule
+    RouterModule, TPipe
   ],
   templateUrl: './admin.html',
   styleUrls: ['./admin.css']
 })
 
 export class Admin {
+  private idioma = inject(IdiomaService);
 
   constructor(private authService: AuthService, private router: Router) {}
 
   esSuperusuario = toSignal(inject(AuthService).esSuperusuario$(), { initialValue: false });
   esAdministrador = toSignal(inject(AuthService).esAdministrador$(), { initialValue: false });
 
-  // "Super usuario", o el rol en cada grupo ("Grupo principal: Solo lectura").
-  rolLabel = toSignal(
-    inject(GruposService).gruposDisponibles$().pipe(
-      map(({ grupos }) =>
-        grupos.some((g) => g.rol === 'superusuario')
-          ? 'Super usuario'
-          : grupos.map((g) => `${g.nombre}: ${etiquetaRol(g.rol)}`).join(' · ')
-      )
-    ),
-    { initialValue: '' }
+  // "Super usuario", o el rol en cada grupo ("Grupo principal: Solo lectura"), en el idioma actual.
+  private gruposConRol = toSignal(
+    inject(GruposService).gruposDisponibles$().pipe(map(({ grupos }) => grupos)),
+    { initialValue: [] }
   );
+  rolLabel = computed(() => {
+    const grupos = this.gruposConRol();
+    const rol = (r: RolEnGrupo) => this.idioma.t(`rol.${r}` as 'rol.lectura');
+    return grupos.some((g) => g.rol === 'superusuario')
+      ? rol('superusuario')
+      : grupos.map((g) => `${g.nombre}: ${rol(g.rol)}`).join(' · ');
+  });
 
   logout(): void {
     this.authService.logout();

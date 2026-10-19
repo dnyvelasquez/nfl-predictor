@@ -2,16 +2,16 @@
   <mat-card class="ingresar-juego-card">
     <div class="header">
       <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
-      <mat-card-title class="ingresar-juego-title">Ingresar Juego</mat-card-title>
+      <mat-card-title class="ingresar-juego-title">{{ 'ij.titulo' | t }}</mat-card-title>
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
 
     <div class="button-container">
-      <button class="left" mat-icon-button routerLink="/admin" aria-label="Volver">
+      <button class="left" mat-icon-button routerLink="/admin" [attr.aria-label]="'admin.volver' | t">
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <button class="right" mat-icon-button (click)="logout()" aria-label="Logout">
+      <button class="right" mat-icon-button (click)="logout()" [attr.aria-label]="'admin.logout' | t">
         <mat-icon>logout</mat-icon>
       </button>
     </div>
@@ -21,34 +21,34 @@
       @if (esSuperusuario()) {
       <form [formGroup]="form" (ngSubmit)="guardar()" novalidate class="pg-form">
           <mat-form-field appearance="fill">
-            <mat-label>Equipo visitante</mat-label>
+            <mat-label>{{ 'ij.visitante' | t }}</mat-label>
             <mat-select formControlName="visitante">
                 @for (e of equipos; track e.id) {
                 <mat-option [value]="e.nombre">{{ e.nombre }}</mat-option>
                 }
             </mat-select>
             @if (f.visitante.touched && f.visitante.hasError('required')) {
-                <mat-error>Selecciona el equipo visitante</mat-error>
+                <mat-error>{{ 'ij.eligeVisitante' | t }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="fill">
-          <mat-label>Equipo local</mat-label>
+          <mat-label>{{ 'ij.local' | t }}</mat-label>
           <mat-select formControlName="local">
               @for (e of equipos; track e.id) {
               <mat-option [value]="e.nombre">{{ e.nombre }}</mat-option>
               }
           </mat-select>
           @if (f.local.touched && f.local.hasError('required')) {
-              <mat-error>Selecciona el equipo local</mat-error>
+              <mat-error>{{ 'ij.eligeLocal' | t }}</mat-error>
           }
           @if (form.hasError('mismosEquipos')) {
-              <mat-error>Visitante y Local no pueden ser el mismo equipo</mat-error>
+              <mat-error>{{ 'ij.mismosEquipos' | t }}</mat-error>
           }
           </mat-form-field>
 
           <mat-form-field appearance="fill">
-          <mat-label>Fecha (AAAA/MM/DD)</mat-label>
+          <mat-label>{{ 'ij.fecha' | t }}</mat-label>
           <input
               matInput
               [matDatepicker]="picker"
@@ -62,31 +62,31 @@
           <mat-datepicker #picker startView="multi-year"></mat-datepicker>
 
           @if (f.fecha.touched && f.fecha.hasError('required')) {
-              <mat-error>La fecha es requerida</mat-error>
+              <mat-error>{{ 'ij.fechaRequerida' | t }}</mat-error>
           }
           </mat-form-field>
           <mat-form-field appearance="fill">
-            <mat-label>Hora de Bogotá (HH:mm 24h)</mat-label>
+            <mat-label>{{ 'ij.hora' | t }}</mat-label>
             <input matInput placeholder="20:15" formControlName="hora" />
-            @if (f.hora.touched && f.hora.hasError('required')) { <mat-error>La hora es requerida</mat-error> }
-            @if (f.hora.touched && f.hora.hasError('pattern')) { <mat-error>Formato válido: 00:00 a 23:59</mat-error> }
+            @if (f.hora.touched && f.hora.hasError('required')) { <mat-error>{{ 'ij.horaRequerida' | t }}</mat-error> }
+            @if (f.hora.touched && f.hora.hasError('pattern')) { <mat-error>{{ 'ij.formatoHora' | t }}</mat-error> }
           </mat-form-field>
 
           <mat-form-field appearance="fill">
-            <mat-label>Etapa</mat-label>
+            <mat-label>{{ 'ij.etapa' | t }}</mat-label>
             <mat-select formControlName="etapa">
               @for (e of etapas; track e.value) {
-                <mat-option [value]="e.value">{{ e.label }}</mat-option>
+                <mat-option [value]="e.value">{{ etapaLabel(e.value) }}</mat-option>
               }
             </mat-select>
             @if (f.etapa.touched && f.etapa.hasError('required')) {
-              <mat-error>Selecciona la etapa</mat-error>
+              <mat-error>{{ 'ij.eligeEtapa' | t }}</mat-error>
             }
           </mat-form-field>
 
           <div class="pg-actions">
           <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">
-              {{ loading ? 'Guardando…' : 'Guardar' }}
+              {{ (loading ? 'admin.guardando' : 'admin.guardar') | t }}
           </button>
           </div>
 
@@ -104,13 +104,13 @@
       <div class="week-nav">
         <button mat-icon-button (click)="prevWeek()"
           [disabled]="currentWeekId === null || minWeek === null || currentWeekId <= minWeek || listLoading"
-          aria-label="Semana anterior">
+          [attr.aria-label]="'ij.semanaAnterior' | t">
           <mat-icon>chevron_left</mat-icon>
         </button>
-        <span>Semana {{ currentWeekId }}</span>
+        <span>{{ 'ij.semana' | t: { n: currentWeekId } }}</span>
         <button mat-icon-button (click)="nextWeek()"
           [disabled]="currentWeekId === null || maxWeek === null || currentWeekId >= maxWeek || listLoading"
-          aria-label="Semana siguiente">
+          [attr.aria-label]="'ij.semanaSiguiente' | t">
           <mat-icon>chevron_right</mat-icon>
         </button>
       </div>
@@ -119,7 +119,7 @@
       <div class="table-actions">
         <button mat-stroked-button color="warn" (click)="borrarTodosLosJuegos()" [disabled]="listLoading">
           <mat-icon>delete_sweep</mat-icon>
-          Borrar todos los juegos
+          {{ 'ij.borrarTodos' | t }}
         </button>
       </div>
       }
@@ -127,18 +127,18 @@
       @if (listLoading) {
         <div class="loading-container">
           <mat-spinner diameter="40"></mat-spinner>
-          <p>Cargando juegos...</p>
+          <p>{{ 'ij.cargando' | t }}</p>
         </div>
       }
 
       <div class="table">
         <div class="thead row">
-          <div class="cell fecha">Fecha / Hora (Bogotá)</div>
-          <div class="cell equipo">Visitante</div>
-          <div class="cell equipo">Local</div>
-          <div class="cell etapa">Etapa</div>
-          <div class="cell resultado">Resultado</div>
-          @if (esSuperusuario()) { <div class="cell a">Acciones</div> }
+          <div class="cell fecha">{{ 'ij.colFecha' | t }}</div>
+          <div class="cell equipo">{{ 'ij.colVisitante' | t }}</div>
+          <div class="cell equipo">{{ 'ij.colLocal' | t }}</div>
+          <div class="cell etapa">{{ 'ij.colEtapa' | t }}</div>
+          <div class="cell resultado">{{ 'ij.colResultado' | t }}</div>
+          @if (esSuperusuario()) { <div class="cell a">{{ 'admin.acciones' | t }}</div> }
         </div>
 
         <div class="tbody">
@@ -160,13 +160,13 @@
                     @if (j.resultado_local !== null && j.resultado_visitante !== null) {
                       <span>{{ j.resultado_visitante }} - {{ j.resultado_local }}</span>
                     } @else {
-                      <span class="muted">Sin resultado</span>
+                      <span class="muted">{{ 'ij.sinResultado' | t }}</span>
                     }
                   </div>
                   @if (esSuperusuario()) {
                   <div class="cell a">
-                    <button mat-stroked-button (click)="startEdit(j)" [disabled]="listLoading">Editar</button>
-                    <button mat-icon-button color="warn" (click)="borrarJuego(j)" [disabled]="listLoading" aria-label="Borrar juego">
+                    <button mat-stroked-button (click)="startEdit(j)" [disabled]="listLoading">{{ 'admin.editar' | t }}</button>
+                    <button mat-icon-button color="warn" (click)="borrarJuego(j)" [disabled]="listLoading" [attr.aria-label]="'ij.borrarJuego' | t">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
@@ -206,26 +206,26 @@
                     <mat-form-field appearance="fill" class="tight">
                       <mat-select formControlName="etapa">
                         @for (e of etapas; track e.value) {
-                          <mat-option [value]="e.value">{{ e.label }}</mat-option>
+                          <mat-option [value]="e.value">{{ etapaLabel(e.value) }}</mat-option>
                         }
                       </mat-select>
                     </mat-form-field>
                   </div>
                   <div class="cell resultado">
                     <mat-form-field appearance="fill" class="tight score">
-                      <input matInput type="number" placeholder="Visit." formControlName="resultadoVisitante" />
+                      <input matInput type="number" [placeholder]="'ij.visitCorto' | t" formControlName="resultadoVisitante" />
                     </mat-form-field>
                     <mat-form-field appearance="fill" class="tight score">
-                      <input matInput type="number" placeholder="Local" formControlName="resultadoLocal" />
+                      <input matInput type="number" [placeholder]="'ij.colLocal' | t" formControlName="resultadoLocal" />
                     </mat-form-field>
                   </div>
                   <div class="cell a">
                     <button mat-raised-button color="primary"
                       (click)="saveEdit(j)"
                       [disabled]="editForms[j.id].invalid || listLoading">
-                      Guardar
+                      {{ 'admin.guardar' | t }}
                     </button>
-                    <button mat-button (click)="cancelEdit(j)" [disabled]="listLoading">Cancelar</button>
+                    <button mat-button (click)="cancelEdit(j)" [disabled]="listLoading">{{ 'admin.cancelar' | t }}</button>
                   </div>
                 </div>
               }
@@ -234,7 +234,7 @@
           } @empty {
             <div class="no-juegos">
               <mat-icon>sports_football</mat-icon>
-              <p>No hay juegos programados para esta semana</p>
+              <p>{{ 'juegos.sinJuegos' | t }}</p>
             </div>
           }
         </div>

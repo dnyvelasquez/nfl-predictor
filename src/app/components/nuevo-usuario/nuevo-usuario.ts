@@ -10,7 +10,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { FormsModule, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, ROLES_GRUPO, RolGrupo } from '../../services/auth/auth';
-import { GruposService, GrupoDisponible, etiquetaModo } from '../../services/grupos';
+import { GruposService, GrupoDisponible, ModoGrupo } from '../../services/grupos';
+import { IdiomaService } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
+import { registrarTextosAdmin } from '../../i18n/textos.admin';
+
+registrarTextosAdmin();
 
 @Component({
   selector: 'app-nuevo-usuario',
@@ -26,12 +31,13 @@ import { GruposService, GrupoDisponible, etiquetaModo } from '../../services/gru
     MatIconModule,
     MatMenuModule,
     MatButtonModule,
-    RouterModule
+    RouterModule, TPipe
   ],
   templateUrl: './nuevo-usuario.html',
   styleUrls: ['./nuevo-usuario.css']
 })
 export class NuevoUsuario implements OnInit {
+  private idioma = inject(IdiomaService);
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
@@ -47,7 +53,8 @@ export class NuevoUsuario implements OnInit {
   // el super usuario elige el rol. Hacer super usuario a alguien se hace en "Usuarios".
   roles = ROLES_GRUPO;
   grupos: GrupoDisponible[] = [];
-  etiquetaModo = etiquetaModo;
+  etiquetaModo = (modo: ModoGrupo) => this.idioma.t(`modo.${modo}` as 'modo.equipos');
+  etiquetaRol = (rol: RolGrupo) => this.idioma.t(`rol.${rol}` as 'rol.lectura');
   // En Modo Pronóstico cada usuario es un participante: se pide su nombre.
   esPronostico = false;
 
@@ -69,7 +76,7 @@ export class NuevoUsuario implements OnInit {
         this.form.patchValue({ grupoId: inicial });
         this.ajustarRol();
       },
-      error: (e) => this.errorMsg = e?.message || 'No fue posible cargar los grupos',
+      error: (e) => this.errorMsg = this.idioma.error(e, 'admin.errorGrupos'),
     });
   }
 
@@ -99,14 +106,14 @@ export class NuevoUsuario implements OnInit {
       .subscribe({
         next: ({ yaExistia }) => {
           this.okMsg = yaExistia
-            ? 'El usuario ya existía: se agregó al grupo (su contraseña no cambió)'
-            : 'Usuario creado correctamente';
+            ? this.idioma.t('nu.yaExistia')
+            : this.idioma.t('nu.creado');
           this.form.reset({ grupoId, rol: 'lectura', participante: '' });
           this.ajustarRol();
           this.loading = false;
         },
         error: (e) => {
-          this.errorMsg = e?.message || 'No fue posible crear el usuario';
+          this.errorMsg = this.idioma.error(e, 'nu.errorCrear');
           this.loading = false;
         },
       });
