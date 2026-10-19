@@ -213,3 +213,99 @@
   justify-content: center;
   margin: 8px 0;
 }
+
+/* Modo Pronóstico */
+.nota-pronostico {
+  margin: 4px 0 12px;
+  font-size: 0.85rem;
+  opacity: 0.8;
+  text-align: center;
+}
+
+.record-pronostico {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 8px 16px;
+  border-top: 1px solid #eee;
+  font-weight: 600;
+}
+
+.record-label {
+  font-weight: 400;
+  color: #666;
+  margin-right: 4px;
+}
+
+.puntos-desplegable {
+  border-top: 1px solid #eee;
+}
+
+.puntos-desplegable summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.puntos-desplegable summary::-webkit-details-marker {
+  display: none;
+}
+
+.puntos-desplegable summary:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: -2px;
+}
+
+.puntos-total {
+  margin-left: auto;
+  font-weight: 700;
+  color: #003B73;
+}
+
+.puntos-desplegable .flecha {
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.puntos-desplegable[open] .flecha {
+  transform: rotate(180deg);
+}
+
+.participantes-puntos {
+  display: flex;
+  flex-direction: column;
+}
+
+.participante-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 8px 16px;
+  border-top: 1px solid #f2f2f2;
+}
+
+.participante-nombre {
+  font-weight: 600;
+}
+
+.participante-detalle {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.participante-puntos {
+  margin-left: auto;
+  font-weight: 700;
+}
+
+.sin-puntos {
+  margin: 0;
+  padding: 8px 16px 12px;
+  color: #666;
+  font-size: 0.9rem;
+}

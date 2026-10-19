@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { Subject, of } from 'rxjs';
 import { takeUntil, catchError, finalize } from 'rxjs/operators';
-import { EquiposService, Equipo, RegistroEquipoPorEtapa } from '../../services/equipos';
+import { EquiposService, Equipo, RegistroEquipoPorEtapa, EquipoPronostico } from '../../services/equipos';
 import { marcaEquipoPorEtapa } from '../../services/core/etapas';
 import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { SelectorGrupo } from '../selector-grupo/selector-grupo';
@@ -39,6 +39,8 @@ export class Equipos implements OnInit, OnDestroy {
   readonly marca = marcaEquipoPorEtapa;
 
   equipos: EquipoConEtapas[] = [];
+  /** Modo Pronóstico: no hay equipos asignados; cada equipo muestra los puntos que dio a cada participante. */
+  equiposPronostico: EquipoPronostico[] = [];
   loading = true;
   error: string | null = null;
 
@@ -66,6 +68,10 @@ export class Equipos implements OnInit, OnDestroy {
     });
   }
 
+  get esPronostico(): boolean {
+    return this.grupos.find(g => g.id === this.grupoId)?.modo === 'pronostico';
+  }
+
   cambiarGrupo(grupoId: string): void {
     this.grupoId = grupoId;
     this.loadEquipos();
@@ -74,6 +80,11 @@ export class Equipos implements OnInit, OnDestroy {
   private loadEquipos(): void {
     this.loading = true;
     this.error = null;
+
+    if (this.esPronostico && this.grupoId) {
+      this.loadEquiposPronostico(this.grupoId);
+      return;
+    }
 
     this.service.getEquiposConPuntajePorEtapa(this.grupoId ?? undefined).pipe(
       catchError(err => {
@@ -88,6 +99,24 @@ export class Equipos implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(equipos => {
       this.equipos = equipos.filter(e => e.porEtapa.length > 0);
+    });
+  }
+
+  private loadEquiposPronostico(grupoId: string): void {
+    this.service.getEquiposModoPronostico(grupoId).pipe(
+      catchError(err => {
+        console.error('Error loading equipos (pronóstico):', err);
+        this.error = 'Error al cargar los equipos. Por favor, intenta de nuevo.';
+        return of([] as EquipoPronostico[]);
+      }),
+      finalize(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe(equipos => {
+      if (grupoId !== this.grupoId) return;
+      this.equiposPronostico = equipos;
     });
   }
 

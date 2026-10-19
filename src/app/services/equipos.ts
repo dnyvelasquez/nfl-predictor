@@ -1,10 +1,36 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, map, forkJoin } from 'rxjs';
 import { SupabaseClientService } from './core/supabase-client';
-import { Etapa, ETAPAS, registroEquipoEnEtapa } from './core/etapas';
+import { Etapa, ETAPAS, registroEquipoEnEtapa, resultadoComoEleccion, puntosPorAcierto, bonoDiferencia } from './core/etapas';
 import { JuegosService } from './juegos';
 import { mascotaIzquierda } from './core/mascotas';
+import { PronosticosService } from './pronosticos';
 
+/** Lo que un equipo le ha dado a un participante en Modo Pronóstico. */
+export interface PuntosEquipoParticipante {
+  participante: string;
+  /** Juegos terminados en que lo eligió (o eligió empate en un juego suyo). */
+  elegido: number;
+  /** De esos, en cuántos acertó el resultado. */
+  aciertos: number;
+  /** Aciertos de diferencia exacta en esos juegos. */
+  diferencias: number;
+  puntos: number;
+}
+
+/** Equipo en Modo Pronóstico: su récord y los puntos que dio a cada participante. */
+export interface EquipoPronostico {
+  id: string;
+  nombre: string;
+  ciudad: string;
+  division: string;
+  mascota: string;
+  regular: { wins: number; ties: number; losses: number };
+  /** Récord en playoffs ("G-P"), o null si todavía no ha jugado ninguno. */
+  playoffs: string | null;
+  participantes: PuntosEquipoParticipante[];
+  puntosTotales: number;
+}
 export interface Equipo {
   id: string;
   nombre: string;
@@ -80,7 +106,83 @@ export class EquiposService {
   constructor(
     private supabaseClient: SupabaseClientService,
     private juegosService: JuegosService,
+    private pronosticosService: PronosticosService,
   ) {}
+
+  /**
+   * Modo Pronóstico: cada equipo con su récord y, por participante, los puntos
+   * que sacó en los juegos terminados en que eligió a ese equipo (resultado
+   * acertado + bono de diferencia, que también se le acredita al equipo elegido
+   * aunque haya perdido). Un empate pronosticado cuenta para los dos equipos del
+   * juego, así que la suma de todas las tarjetas puede superar el total del
+   * participante. Solo se ven pronósticos de juegos cerrados (RLS), que son
+   * justamente los únicos con resultado.
+   */
+  getEquiposModoPronostico(grupoId: string): Observable<EquipoPronostico[]> {
+    return forkJoin({
+      equiposRes: from(this.supabaseClient.from('equipos').select('id,nombre,ciudad,division').order('id', { ascending: true })),
+      participantesRes: from(this.supabaseClient.from('participantes').select('id,nombre').eq('grupo_id', grupoId)),
+      juegos: this.juegosService.getJuegosConResultado(),
+      pronosticos: this.pronosticosService.getPronosticos(grupoId),
+    }).pipe(
+      map(({ equiposRes, participantesRes, juegos, pronosticos }: any) => {
+        if (equiposRes.error) throw equiposRes.error;
+        if (participantesRes.error) throw participantesRes.error;
+        const nombres = new Map<string, string>((participantesRes.data ?? []).map((p: any) => [p.id, p.nombre]));
+        const juegosPorId = new Map<number, any>(juegos.map((j: any) => [Number(j.id), j]));
+
+        // equipo -> participante -> acumulado
+        const porEquipo = new Map<string, Map<string, PuntosEquipoParticipante>>();
+        const sumar = (equipo: string, participante: string, acierto: boolean, puntos: number, diferencia: boolean) => {
+          const mapa = porEquipo.get(equipo) ?? new Map<string, PuntosEquipoParticipante>();
+          porEquipo.set(equipo, mapa);
+          const fila = mapa.get(participante) ?? { participante, elegido: 0, aciertos: 0, diferencias: 0, puntos: 0 };
+          mapa.set(participante, fila);
+          fila.elegido++;
+          if (acierto) fila.aciertos++;
+          if (diferencia) fila.diferencias++;
+          fila.puntos += puntos;
+        };
+
+        for (const pr of pronosticos) {
+          const juego = juegosPorId.get(pr.juego_id);
+          const nombre = nombres.get(pr.participante_id);
+          const resultado = juego ? resultadoComoEleccion(juego) : null;
+          if (!juego || !nombre || resultado === null) continue;
+          const acierto = resultado === pr.eleccion;
+          const bono = bonoDiferencia(pr.diferencia, juego);
+          const puntos = (acierto ? puntosPorAcierto(juego.etapa) : 0) + bono;
+          const equipos = pr.eleccion === 'empate' ? [juego.local, juego.visitante]
+            : [pr.eleccion === 'local' ? juego.local : juego.visitante];
+          for (const equipo of equipos) sumar(equipo, nombre, acierto, puntos, bono > 0);
+        }
+
+        return (equiposRes.data ?? []).map((e: any) => {
+          const { wins, ties, losses } = registroEquipoEnEtapa(e.nombre, 'regular', juegos);
+          let pg = 0, pp = 0;
+          for (const et of ETAPAS) {
+            if (et.value === 'regular') continue;
+            const r = registroEquipoEnEtapa(e.nombre, et.value, juegos);
+            pg += r.wins;
+            pp += r.losses;
+          }
+          const participantes = [...(porEquipo.get(e.nombre)?.values() ?? [])]
+            .sort((a, b) => b.puntos - a.puntos || a.participante.localeCompare(b.participante));
+          return {
+            id: e.id,
+            nombre: e.nombre,
+            ciudad: e.ciudad,
+            division: e.division,
+            mascota: mascotaIzquierda(e.nombre),
+            regular: { wins, ties, losses },
+            playoffs: pg + pp > 0 ? `${pg}-${pp}` : null,
+            participantes,
+            puntosTotales: participantes.reduce((a, p) => a + p.puntos, 0),
+          } as EquipoPronostico;
+        });
+      })
+    );
+  }
 
   getEquipos(etapa: Etapa = 'regular'): Observable<Equipo[]> {
     return forkJoin({

@@ -99,7 +99,7 @@ Las fechas y horas de los juegos se muestran en la zona horaria de cada usuario 
 
 - **Tabla de puntajes**: posiciones del grupo. En Modo Equipos, con los equipos de cada participante agrupados por etapa, su récord y los puntos que aportaron; en Modo Pronóstico, con los aciertos y puntos de cada participante por etapa. Los puntos solo cuentan juegos terminados: un marcador en vivo no mueve la tabla hasta que el juego acaba.
 - **Pronósticos** (Modo Pronóstico, en Juegos de la semana): cada participante elige ganador (o empate, solo en temporada regular) y, si quiere, la diferencia de puntos, y puede cambiarlo hasta 5 minutos antes del inicio. Un acierto vale lo mismo que una victoria en esa etapa (10 en temporada regular hasta 50 en el Super Bowl); acertar la diferencia exacta suma esos mismos puntos (máximo 14), sin importar quién gane. Los pronósticos de los demás se ven recién cuando el juego cierra ("Ver pronósticos").
-- **Equipos → En competición**: qué participante del grupo tiene cada equipo en cada etapa y cuántos puntos le dio.
+- **Equipos → En competición**: en Modo Equipos, qué participante del grupo tiene cada equipo en cada etapa y cuántos puntos le dio. En Modo Pronóstico, cada equipo con su récord y un desplegable con los puntos que le ha dado a cada participante en los juegos en que lo eligió (resultado acertado más el bono por diferencia; un empate acertado cuenta para los dos equipos).
 
 **Panel de administración** (solo super usuario y administradores de grupo)
 

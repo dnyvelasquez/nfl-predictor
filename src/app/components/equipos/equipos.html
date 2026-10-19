@@ -34,6 +34,54 @@
         <mat-icon>error_outline</mat-icon>
         <p>{{ error }}</p>
       </div>
+    } @else if (esPronostico) {
+      <p class="nota-pronostico">
+        Cada tarjeta muestra los puntos que el equipo le ha dado a cada participante en los juegos terminados en que lo eligió:
+        el resultado acertado más el bono por diferencia exacta. Un empate acertado cuenta para los dos equipos.
+      </p>
+      <div class="equipos-lista">
+        @for (e of equiposPronostico; track e.id) {
+          <div class="equipo-card">
+            <div class="equipo-card-header">
+              <img [src]="e.mascota" [alt]="e.nombre" class="equipo-logo" loading="lazy">
+              <div class="equipo-nombre-division">
+                <strong class="equipo-nombre">{{ e.ciudad }} {{ e.nombre }}</strong>
+                <span [ngClass]="{ 'chip-afc': e.division.startsWith('AFC'), 'chip-nfc': e.division.startsWith('NFC') }">
+                  {{ e.division }}
+                </span>
+              </div>
+            </div>
+            <div class="record-pronostico">
+              <span><span class="record-label">Temporada regular</span> {{ e.regular.wins }}-{{ e.regular.losses }}-{{ e.regular.ties }}</span>
+              @if (e.playoffs) {
+                <span><span class="record-label">Playoffs</span> {{ e.playoffs }}</span>
+              }
+            </div>
+            <details class="puntos-desplegable">
+              <summary>
+                <span>Puntos dados al grupo</span>
+                <span class="puntos-total">{{ e.puntosTotales }}</span>
+                <mat-icon class="flecha">expand_more</mat-icon>
+              </summary>
+              @if (e.participantes.length > 0) {
+                <div class="participantes-puntos">
+                  @for (p of e.participantes; track p.participante) {
+                    <div class="participante-row">
+                      <span class="participante-nombre">{{ p.participante }}</span>
+                      <span class="participante-detalle">
+                        {{ p.aciertos }} de {{ p.elegido }} {{ p.aciertos === 1 ? 'acierto' : 'aciertos' }}@if (p.diferencias > 0) { · {{ p.diferencias }} {{ p.diferencias === 1 ? 'diferencia' : 'diferencias' }}}
+                      </span>
+                      <span class="participante-puntos">{{ p.puntos }} pts</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="sin-puntos">Nadie lo ha elegido todavía en un juego terminado.</p>
+              }
+            </details>
+          </div>
+        }
+      </div>
     } @else {
       <div class="equipos-lista">
         @for (e of equipos; track e.id) {
