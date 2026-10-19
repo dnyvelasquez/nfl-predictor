@@ -1,5 +1,5 @@
 import { Component, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
-import { Etapa, ETAPAS, Eleccion, puntosPorAcierto, resultadoComoEleccion, bonoDiferencia, TOPE_BONO_DIFERENCIA } from '../../services/core/etapas';
+import { Etapa, Eleccion, puntosPorAcierto, resultadoComoEleccion, bonoDiferencia, TOPE_BONO_DIFERENCIA } from '../../services/core/etapas';
 import { PronosticosService, Pronostico, pronosticoAbierto, cierrePronosticoMs } from '../../services/pronosticos';
 import { JuegosService, Juego } from '../../services/juegos';
 import { MatCardModule } from '@angular/material/card';
@@ -15,7 +15,9 @@ import { takeUntil, catchError, finalize, switchMap } from 'rxjs/operators';
 import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { SelectorGrupo } from '../selector-grupo/selector-grupo';
 import { ParticipantesService } from '../../services/participantes';
-import { fechaLocal, horaLocal, horaLocalDeMs, kickoffMs, zonaHorariaLocal } from '../../services/core/hora-local';
+import { fechaLocal, fechaLarga, horaLocal, horaLocalDeMs, kickoffMs, zonaHorariaLocal } from '../../services/core/hora-local';
+import { IdiomaService, traducirEtapa, traducirPeriodo, traducirErrorBase } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
 
 interface GrupoFecha {
   fecha: string;
@@ -34,7 +36,8 @@ interface GrupoFecha {
     MatButtonModule,
     MatProgressSpinnerModule,
     CommonModule,
-    SelectorGrupo
+    SelectorGrupo,
+    TPipe
   ],
   templateUrl: './juegos.html',
   styleUrls: ['./juegos.css'],
@@ -170,7 +173,7 @@ export class Juegos implements OnDestroy {
       pronosticos: this.pronosticosService.getPronosticos(grupoId, ids),
     }).pipe(
       catchError(() => {
-        this.errorPronostico = 'No fue posible cargar los pronósticos.';
+        this.errorPronostico = this.idioma.t('juegos.errorCargarPronosticos');
         return of({ participanteId: null, participantes: [], pronosticos: [] as Pronostico[] });
       }),
       takeUntil(this.destroy$)
@@ -219,7 +222,7 @@ export class Juegos implements OnDestroy {
   }
 
   nombreEleccion(p: Pronostico, j: Juego): string {
-    return p.eleccion === 'empate' ? 'Empate' : p.eleccion === 'local' ? j.local : j.visitante;
+    return p.eleccion === 'empate' ? this.idioma.t('comun.empate') : p.eleccion === 'local' ? j.local : j.visitante;
   }
 
   /** Despliega (o pliega) los pronósticos del grupo; al abrir se vuelven a consultar para que estén al día. */
@@ -254,13 +257,16 @@ export class Juegos implements OnDestroy {
     return pronosticoAbierto(j, this.ahora);
   }
 
-  horaLocal = horaLocal;
+  private idioma = inject(IdiomaService);
+  horaLocal = (j: Juego) => horaLocal(j, this.idioma.actual());
+  fechaLarga = (fecha: string) => fechaLarga(fecha, this.idioma.actual());
+  periodo = (p: string) => traducirPeriodo(this.idioma.actual(), p);
   zonaHoraria = zonaHorariaLocal()?.replace(/_/g, ' ') ?? null;
 
   /** Hora local a la que cierran los pronósticos del juego, "HH:MM". */
   horaCierre(j: Juego): string {
     const cierre = cierrePronosticoMs(j);
-    return cierre === null ? '' : horaLocalDeMs(cierre);
+    return cierre === null ? '' : horaLocalDeMs(cierre, this.idioma.actual());
   }
 
   /** El empate solo existe en temporada regular. */
@@ -299,7 +305,7 @@ export class Juegos implements OnDestroy {
     const valor = texto === '' ? null : Math.round(Number(texto));
     if (!eleccion || eleccion === 'empate') return;
     if (valor !== null && (!Number.isFinite(valor) || valor < 1 || valor > 99)) {
-      this.errorPronostico = 'La diferencia debe ser un número entre 1 y 99.';
+      this.errorPronostico = this.idioma.t('juegos.errorDiferencia');
       input.value = this.miDiferencia(j)?.toString() ?? '';
       return;
     }
@@ -324,7 +330,7 @@ export class Juegos implements OnDestroy {
     ).subscribe({
       error: (e) => {
         if (anterior) this.misPronosticos.set(id, anterior); else this.misPronosticos.delete(id);
-        this.errorPronostico = e?.message || 'No se pudo guardar el pronóstico.';
+        this.errorPronostico = traducirErrorBase(this.idioma.actual(), e?.message) || this.idioma.t('juegos.errorGuardar');
       }
     });
   }
@@ -432,7 +438,7 @@ export class Juegos implements OnDestroy {
   }
 
   etapaLabel(etapa: Etapa): string {
-    return ETAPAS.find(e => e.value === etapa)?.label ?? etapa;
+    return traducirEtapa(this.idioma.actual(), etapa);
   }
 
   trackByFecha(index: number, grupo: GrupoFecha): string {

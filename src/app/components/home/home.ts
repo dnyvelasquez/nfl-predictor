@@ -15,6 +15,8 @@ import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { registroEquipoEnEtapa, ETAPAS } from '../../services/core/etapas';
 import { mascotaIzquierda, mascotaDerecha } from '../../services/core/mascotas';
 import { horaLocal } from '../../services/core/hora-local';
+import { IdiomaService, traducirPeriodo } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
 import { elegirDestacado, etiquetaPrime, cuentaRegresiva, fechaCorta, ordenarSemana, estadoVisible } from './portada';
 
 const REFRESCO_EN_VIVO_MS = 60_000;
@@ -36,7 +38,8 @@ const TICK_RELOJ_MS = 30_000;
     MatIconModule,
     MatButtonModule,
     MatDialogModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    TPipe
   ],
   templateUrl: './home.html',
   styleUrls: ['./home.css'],
@@ -49,6 +52,7 @@ export class Home implements OnInit, OnDestroy {
   private juegosService = inject(JuegosService);
   private authService = inject(AuthService);
   private gruposService = inject(GruposService);
+  private idioma = inject(IdiomaService);
 
   cargando = signal(true);
   error = signal<string | null>(null);
@@ -94,10 +98,11 @@ export class Home implements OnInit, OnDestroy {
   listaSemana = computed(() => ordenarSemana(this.juegosSemana()));
   nombreGrupo = computed(() => this.grupos().find(g => g.id === this.grupoId())?.nombre ?? '');
 
-  // Helpers para el template.
-  etiquetaPrime = etiquetaPrime;
-  fechaCorta = fechaCorta;
-  horaLocal = horaLocal;
+  // Helpers para el template (los que muestran texto leen el idioma actual).
+  etiquetaPrime = (j: Juego) => etiquetaPrime(j, this.idioma.actual());
+  fechaCorta = (j: Juego) => fechaCorta(j, this.idioma.actual());
+  horaLocal = (j: Juego) => horaLocal(j, this.idioma.actual());
+  periodo = (p: string) => traducirPeriodo(this.idioma.actual(), p);
   estado = estadoVisible;
   mascotaIzquierda = mascotaIzquierda;
   mascotaDerecha = mascotaDerecha;
@@ -182,7 +187,7 @@ export class Home implements OnInit, OnDestroy {
   }
 
   cuentaRegresiva(j: Juego): string | null {
-    return cuentaRegresiva(j, this.ahora());
+    return cuentaRegresiva(j, this.ahora(), this.idioma.actual());
   }
 
   record(nombre: string): string {
@@ -229,7 +234,7 @@ export class Home implements OnInit, OnDestroy {
         this.programarRefresco();
       },
       error: () => {
-        if (!silencioso) this.error.set('No fue posible cargar los juegos. Intenta de nuevo.');
+        if (!silencioso) this.error.set(this.idioma.t('home.errorJuegos'));
         this.cargando.set(false);
         this.programarRefresco();
       },

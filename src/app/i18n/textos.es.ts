@@ -1,0 +1,111 @@
+// Textos de la interfaz en español (el idioma original del sitio). Es la fuente
+// de las claves: `textos.en.ts` debe tener exactamente las mismas, y TypeScript
+// avisa si falta alguna. Las claves van agrupadas por página con un prefijo.
+// "{x}" se reemplaza con el parámetro x de `t()`.
+
+export const ES = {
+  // Común
+  'comun.cargando': 'Cargando...',
+  'comun.final': 'Final',
+  'comun.enVivo': 'En vivo',
+  'comun.pospuesto': 'Pospuesto',
+  'comun.empate': 'Empate',
+  'comun.vs': 'Vs',
+  'comun.iniciarSesion': 'Iniciar sesión',
+  'comun.sinGrupo': 'Tu usuario todavía no pertenece a ningún grupo.',
+  'comun.idioma': 'Idioma',
+  'comun.puntos': '{n} puntos',
+  'comun.pts': '{n} pts',
+
+  // Etapas
+  'etapa.regular': 'Temporada Regular',
+  'etapa.wildcard': 'Wild Card',
+  'etapa.divisional': 'Ronda Divisional',
+  'etapa.conferencia': 'Final de Conferencia',
+  'etapa.superbowl': 'Super Bowl',
+
+  // Periodos que escribe la sincronización con ESPN (juegos.periodo, en español en la base)
+  'periodo.1er cuarto': '1er cuarto',
+  'periodo.2do cuarto': '2do cuarto',
+  'periodo.3er cuarto': '3er cuarto',
+  'periodo.4to cuarto': '4to cuarto',
+  'periodo.Medio tiempo': 'Medio tiempo',
+  'periodo.Tiempo extra': 'Tiempo extra',
+
+  // Encabezado
+  'header.home': 'Home',
+  'header.tablaPuntajes': 'Tabla de puntajes',
+  'header.juegos': 'Juegos de la semana',
+  'header.equipos': 'Equipos',
+  'header.enCompeticion': 'En competición',
+  'header.fixture': 'Fixture',
+  'header.ranking': 'Ranking inicial',
+  'header.reglamento': 'Reglamento',
+  'header.cerrarSesion': 'Cerrar sesión',
+  'header.admin': 'Admin',
+  'header.cambiarIdioma': 'Cambiar idioma',
+
+  // Portada
+  'home.cargandoSemana': 'Cargando la semana...',
+  'home.errorJuegos': 'No fue posible cargar los juegos. Intenta de nuevo.',
+  'home.destacadoEnVivo': 'Juego destacado · en vivo',
+  'home.ultimoJuego': 'Último juego',
+  'home.proximoDestacado': 'Próximo juego destacado',
+  'home.visitante': 'visitante',
+  'home.local': 'local',
+  'home.juegosSemana': 'Juegos de la semana',
+  'home.juegosSemanaN': 'Juegos de la semana {n}',
+  'home.verTodos': 'Ver todos',
+  'home.sinJuegos': 'No hay juegos programados esta semana.',
+  'home.invitacion': 'Inicia sesión para ver la tabla de posiciones de tu grupo y quién tiene cada equipo.',
+  'home.posiciones': 'Posiciones',
+  'home.primerLugar': 'Primer lugar',
+  'home.segundoLugar': 'Segundo lugar',
+  'home.sinParticipantes': 'Este grupo todavía no tiene participantes.',
+  'home.horarioPrime': 'Horario prime',
+  'home.enDiasHoras': 'en {d} d {h} h',
+  'home.enHorasMin': 'en {h} h {m} min',
+  'home.enMin': 'en {m} min',
+  'home.enInstantes': 'en instantes',
+
+  // Juegos de la semana
+  'juegos.titulo': 'Juegos de la Semana {n}',
+  'juegos.avisoPronostico': 'Elige quién gana cada juego y, si quieres, la diferencia de puntos: si la aciertas exacta, sumas esos puntos (máximo {tope}) sin importar quién gane. Puedes cambiarlo hasta 5 minutos antes del inicio.',
+  'juegos.soloParticipantes': 'Solo los participantes de este grupo pueden pronosticar.',
+  'juegos.cargando': 'Cargando juegos...',
+  'juegos.zonaHoraria': 'Horas en tu zona horaria ({zona})',
+  'juegos.noAsignado': 'No asignado',
+  'juegos.tuPronostico': 'Tu pronóstico',
+  'juegos.ariaPronostico': 'Pronóstico {visitante} vs {local}',
+  'juegos.dif': 'Dif.',
+  'juegos.difEmpate': 'Con empate no hay diferencia',
+  'juegos.difPrimero': 'Primero elige el ganador',
+  'juegos.difTitulo': 'Diferencia de puntos',
+  'juegos.ariaDiferencia': 'Diferencia de puntos {visitante} vs {local}',
+  'juegos.cierra': 'Cierra {hora}',
+  'juegos.sinPronostico': 'Sin pronóstico',
+  'juegos.cerrado': 'Cerrado',
+  'juegos.otrosAlCerrar': 'Los pronósticos de los demás se ven al cerrar ({hora}).',
+  'juegos.verPronosticos': 'Ver pronósticos ({n})',
+  'juegos.ocultarPronosticos': 'Ocultar pronósticos ({n})',
+  'juegos.tu': '(tú)',
+  'juegos.nadiePronostico': 'Nadie del grupo pronosticó este juego.',
+  'juegos.sinJuegos': 'No hay juegos programados para esta semana',
+  'juegos.semanaAnterior': 'Semana anterior',
+  'juegos.semanaSiguiente': 'Semana siguiente',
+  'juegos.errorCargarPronosticos': 'No fue posible cargar los pronósticos.',
+  'juegos.errorDiferencia': 'La diferencia debe ser un número entre 1 y 99.',
+  'juegos.errorGuardar': 'No se pudo guardar el pronóstico.',
+
+  // Mensajes de error de las funciones SQL (la base los devuelve en español)
+  'db.Pronóstico inválido': 'Pronóstico inválido',
+  'db.Con empate no hay diferencia de puntos': 'Con empate no hay diferencia de puntos',
+  'db.La diferencia debe estar entre 1 y 99': 'La diferencia debe estar entre 1 y 99',
+  'db.Este grupo no está en Modo Pronóstico': 'Este grupo no está en Modo Pronóstico',
+  'db.No eres participante de este grupo': 'No eres participante de este grupo',
+  'db.El juego no existe': 'El juego no existe',
+  'db.En playoffs no hay empate': 'En playoffs no hay empate',
+  'db.Los pronósticos de este juego ya cerraron': 'Los pronósticos de este juego ya cerraron',
+} as const;
+
+export type Clave = keyof typeof ES;

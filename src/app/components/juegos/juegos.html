@@ -5,7 +5,7 @@
       <div class="titulos">
         <mat-card-title class="juegos-title">
           @if (currentWeekId !== null) {
-            Juegos de la Semana {{ currentWeekId }}
+            {{ 'juegos.titulo' | t: { n: currentWeekId } }}
           }
         </mat-card-title>
         @if (etapaActual()) {
@@ -24,12 +24,9 @@
 
     @if (esPronostico && !loading) {
       @if (miParticipanteId) {
-        <p class="aviso-pronostico">
-          Elige quién gana cada juego y, si quieres, la diferencia de puntos: si la aciertas exacta, sumas esos puntos
-          (máximo {{ topeDiferencia }}) sin importar quién gane. Puedes cambiarlo hasta 5 minutos antes del inicio.
-        </p>
+        <p class="aviso-pronostico">{{ 'juegos.avisoPronostico' | t: { tope: topeDiferencia } }}</p>
       } @else {
-        <p class="aviso-pronostico">Solo los participantes de este grupo pueden pronosticar.</p>
+        <p class="aviso-pronostico">{{ 'juegos.soloParticipantes' | t }}</p>
       }
       @if (errorPronostico) {
         <p class="error-pronostico" role="alert">{{ errorPronostico }}</p>
@@ -39,11 +36,11 @@
     @if (loading) {
       <div class="loading-container">
         <mat-spinner diameter="40"></mat-spinner>
-        <p>Cargando juegos...</p>
+        <p>{{ 'juegos.cargando' | t }}</p>
       </div>
     } @else {
       @if (zonaHoraria) {
-        <p class="nota-zona"><mat-icon>public</mat-icon> Horas en tu zona horaria ({{ zonaHoraria }})</p>
+        <p class="nota-zona"><mat-icon>public</mat-icon> {{ 'juegos.zonaHoraria' | t: { zona: zonaHoraria } }}</p>
       }
       <div class="table-container">
         @for (grupo of juegosAgrupados; track grupo.fecha) {
@@ -51,7 +48,7 @@
             <div class="fecha-header">
               <div class="info">
                 <mat-icon>calendar_today</mat-icon>
-                <h3>{{ grupo.fecha }}</h3>
+                <h3>{{ fechaLarga(grupo.fecha) }}</h3>
               </div>
             </div>
             <div class="subtable">
@@ -65,7 +62,7 @@
                         @if ((j.participanteVisitante || '').trim()) {
                           <span class="participante">{{ j.participanteVisitante }}</span>
                         } @else {
-                          <span class="participante muted">No asignado</span>
+                          <span class="participante muted">{{ 'juegos.noAsignado' | t }}</span>
                         }
                       }
                     </div>
@@ -74,7 +71,7 @@
                     }
                   </div>
                   <div class="vs">
-                    <span>Vs</span>
+                    <span>{{ 'comun.vs' | t }}</span>
                   </div>
                   <div class="equipo equipo-local">
                     <img [src]="j.logoLocal" [alt]="j.local" class="equipo-logo" loading="lazy">
@@ -84,7 +81,7 @@
                         @if ((j.participanteLocal || '').trim()) {
                           <span class="participante">{{ j.participanteLocal }}</span>
                         } @else {
-                          <span class="participante muted">No asignado</span>
+                          <span class="participante muted">{{ 'juegos.noAsignado' | t }}</span>
                         }
                       }
                     </div>
@@ -96,16 +93,16 @@
                     @if (j.estado === 'en_vivo') {
                       <span class="en-vivo-badge">
                         <mat-icon class="en-vivo-dot">fiber_manual_record</mat-icon>
-                        En vivo
+                        {{ 'comun.enVivo' | t }}
                       </span>
                       @if (j.periodo) {
-                        <span class="periodo-label">{{ j.periodo }}</span>
+                        <span class="periodo-label">{{ periodo(j.periodo) }}</span>
                       }
                     } @else {
                       <div class="estado-principal">
                         @if (j.resultado_local !== null && j.resultado_visitante !== null) {
                           <mat-icon>sports_score</mat-icon>
-                          <span>Final</span>
+                          <span>{{ 'comun.final' | t }}</span>
                         } @else {
                           <mat-icon>schedule</mat-icon>
                           <span>{{ horaLocal(j) }}</span>
@@ -116,27 +113,27 @@
                 </div>
                 @if (esPronostico && miParticipanteId && j.local !== 'TBD' && j.visitante !== 'TBD') {
                   <div class="pronostico" [class.cerrado]="!abierto(j)">
-                    <span class="pronostico-titulo">Tu pronóstico</span>
-                    <div class="opciones" role="group" [attr.aria-label]="'Pronóstico ' + j.visitante + ' vs ' + j.local">
+                    <span class="pronostico-titulo">{{ 'juegos.tuPronostico' | t }}</span>
+                    <div class="opciones" role="group" [attr.aria-label]="'juegos.ariaPronostico' | t: { visitante: j.visitante, local: j.local }">
                       <button type="button" class="opcion" [class.elegida]="miPronostico(j) === 'visitante'"
                               [attr.aria-pressed]="miPronostico(j) === 'visitante'"
                               [disabled]="!abierto(j) || guardando.has(+j.id)" (click)="elegir(j, 'visitante')">{{ j.visitante }}</button>
                       @if (admiteEmpate(j)) {
                         <button type="button" class="opcion" [class.elegida]="miPronostico(j) === 'empate'"
                                 [attr.aria-pressed]="miPronostico(j) === 'empate'"
-                                [disabled]="!abierto(j) || guardando.has(+j.id)" (click)="elegir(j, 'empate')">Empate</button>
+                                [disabled]="!abierto(j) || guardando.has(+j.id)" (click)="elegir(j, 'empate')">{{ 'comun.empate' | t }}</button>
                       }
                       <button type="button" class="opcion" [class.elegida]="miPronostico(j) === 'local'"
                               [attr.aria-pressed]="miPronostico(j) === 'local'"
                               [disabled]="!abierto(j) || guardando.has(+j.id)" (click)="elegir(j, 'local')">{{ j.local }}</button>
                     </div>
                     <label class="diferencia" [class.inactiva]="!miPronostico(j) || miPronostico(j) === 'empate'">
-                      <span>Dif.</span>
+                      <span>{{ 'juegos.dif' | t }}</span>
                       <input #dif type="number" inputmode="numeric" min="1" max="99" step="1" placeholder="–"
                              [value]="miDiferencia(j) ?? ''"
                              [disabled]="!abierto(j) || !miPronostico(j) || miPronostico(j) === 'empate' || guardando.has(+j.id)"
-                             [title]="miPronostico(j) === 'empate' ? 'Con empate no hay diferencia' : (!miPronostico(j) ? 'Primero elige el ganador' : 'Diferencia de puntos')"
-                             [attr.aria-label]="'Diferencia de puntos ' + j.visitante + ' vs ' + j.local"
+                             [title]="(miPronostico(j) === 'empate' ? 'juegos.difEmpate' : (!miPronostico(j) ? 'juegos.difPrimero' : 'juegos.difTitulo')) | t"
+                             [attr.aria-label]="'juegos.ariaDiferencia' | t: { visitante: j.visitante, local: j.local }"
                              (change)="cambiarDiferencia(j, dif)"
                              (keyup.enter)="dif.blur()" />
                     </label>
@@ -149,17 +146,17 @@
                         }
                         @if (puntosDiferencia(j) !== null) {
                           @if (puntosDiferencia(j)! > 0) {
-                            <span class="acierto bono">Dif. +{{ puntosDiferencia(j) }}</span>
+                            <span class="acierto bono">{{ 'juegos.dif' | t }} +{{ puntosDiferencia(j) }}</span>
                           } @else {
-                            <span class="fallo bono">Dif. ✗</span>
+                            <span class="fallo bono">{{ 'juegos.dif' | t }} ✗</span>
                           }
                         }
                       } @else if (abierto(j)) {
-                        Cierra {{ horaCierre(j) }}
+                        {{ 'juegos.cierra' | t: { hora: horaCierre(j) } }}
                       } @else if (!miPronostico(j)) {
-                        Sin pronóstico
+                        {{ 'juegos.sinPronostico' | t }}
                       } @else {
-                        Cerrado
+                        {{ 'juegos.cerrado' | t }}
                       }
                     </span>
                   </div>
@@ -167,11 +164,11 @@
                 @if (esPronostico && logueado && j.local !== 'TBD' && j.visitante !== 'TBD') {
                   <div class="otros-pronosticos">
                     @if (abierto(j)) {
-                      <span class="otros-nota">Los pronósticos de los demás se ven al cerrar ({{ horaCierre(j) }}).</span>
+                      <span class="otros-nota">{{ 'juegos.otrosAlCerrar' | t: { hora: horaCierre(j) } }}</span>
                     } @else {
                       <button type="button" class="ver-otros" (click)="alternarPronosticos(j)"
                               [attr.aria-expanded]="desplegados.has(+j.id)" [attr.aria-controls]="'otros-' + j.id">
-                        {{ desplegados.has(+j.id) ? 'Ocultar' : 'Ver' }} pronósticos ({{ pronosticosDe(j).length }})
+                        {{ (desplegados.has(+j.id) ? 'juegos.ocultarPronosticos' : 'juegos.verPronosticos') | t: { n: pronosticosDe(j).length } }}
                         <mat-icon>{{ desplegados.has(+j.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
                       </button>
                       @if (desplegados.has(+j.id)) {
@@ -179,15 +176,15 @@
                           @if (resumenPronosticos(j); as r) {
                             <div class="otros-resumen">
                               <span>{{ j.visitante }} <strong>{{ r.visitante }}</strong></span>
-                              @if (admiteEmpate(j)) { <span>Empate <strong>{{ r.empate }}</strong></span> }
+                              @if (admiteEmpate(j)) { <span>{{ 'comun.empate' | t }} <strong>{{ r.empate }}</strong></span> }
                               <span>{{ j.local }} <strong>{{ r.local }}</strong></span>
                             </div>
                           }
                           @for (p of pronosticosDe(j); track p.participante_id) {
                             <div class="otro" [class.mio]="p.mio">
-                              <span class="otro-nombre">{{ p.nombre }}@if (p.mio) { <small> (tú)</small> }</span>
+                              <span class="otro-nombre">{{ p.nombre }}@if (p.mio) { <small> {{ 'juegos.tu' | t }}</small> }</span>
                               <span class="otro-eleccion">
-                                {{ nombreEleccion(p, j) }}@if (p.diferencia) { <small> · Dif. {{ p.diferencia }}</small> }
+                                {{ nombreEleccion(p, j) }}@if (p.diferencia) { <small> · {{ 'juegos.dif' | t }} {{ p.diferencia }}</small> }
                               </span>
                               <span class="otro-puntos">
                                 @if (puntosDe(p, j); as pts) {
@@ -200,7 +197,7 @@
                               </span>
                             </div>
                           } @empty {
-                            <p class="otros-nota">Nadie del grupo pronosticó este juego.</p>
+                            <p class="otros-nota">{{ 'juegos.nadiePronostico' | t }}</p>
                           }
                         </div>
                       }
@@ -213,18 +210,18 @@
         } @empty {
           <div class="no-juegos">
             <mat-icon>sports_football</mat-icon>
-            <p>No hay juegos programados para esta semana</p>
+            <p>{{ 'juegos.sinJuegos' | t }}</p>
           </div>
         }
       </div>
     }
   </mat-card>
 
-  <button class="fab-left" mat-fab (click)="prevWeek()"
+  <button class="fab-left" mat-fab (click)="prevWeek()" [attr.aria-label]="'juegos.semanaAnterior' | t"
     [disabled]="currentWeekId === null || minWeek === null || currentWeekId <= minWeek || loading">
     <mat-icon>chevron_left</mat-icon>
   </button>
-  <button class="fab-right" mat-fab (click)="nextWeek()"
+  <button class="fab-right" mat-fab (click)="nextWeek()" [attr.aria-label]="'juegos.semanaSiguiente' | t"
     [disabled]="currentWeekId === null || maxWeek === null || currentWeekId >= maxWeek || loading">
     <mat-icon>chevron_right</mat-icon>
   </button>

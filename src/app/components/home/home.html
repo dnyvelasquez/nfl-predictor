@@ -4,7 +4,7 @@
     @if (cargando()) {
       <div class="estado-carga">
         <mat-spinner diameter="40"></mat-spinner>
-        <p>Cargando la semana...</p>
+        <p>{{ 'home.cargandoSemana' | t }}</p>
       </div>
     } @else if (error()) {
       <div class="estado-carga">
@@ -18,9 +18,9 @@
         <div class="destacado-encabezado">
           <span class="destacado-titulo">
             @switch (estado(j)) {
-              @case ('en_vivo') { Juego destacado · en vivo }
-              @case ('final') { Último juego }
-              @default { Próximo juego destacado }
+              @case ('en_vivo') { {{ 'home.destacadoEnVivo' | t }} }
+              @case ('final') { {{ 'home.ultimoJuego' | t }} }
+              @default { {{ 'home.proximoDestacado' | t }} }
             }
           </span>
           @if (etiquetaPrime(j); as prime) {
@@ -34,7 +34,7 @@
                  width="640" height="640" fetchpriority="high" class="mascota-grande">
             <p class="equipo-nombre">{{ j.visitante }}</p>
             <p class="equipo-detalle">
-              @if (record(j.visitante)) { {{ record(j.visitante) }} · }visitante
+              @if (record(j.visitante)) { {{ record(j.visitante) }} · }{{ 'home.visitante' | t }}
             </p>
             @if (logueado() && j.participanteVisitante) {
               <p class="equipo-participante">{{ j.participanteVisitante }}</p>
@@ -44,12 +44,12 @@
           <div class="centro">
             @switch (estado(j)) {
               @case ('en_vivo') {
-                <span class="en-vivo"><span class="punto"></span>En vivo</span>
+                <span class="en-vivo"><span class="punto"></span>{{ 'comun.enVivo' | t }}</span>
                 <span class="marcador">{{ j.resultado_visitante ?? 0 }} - {{ j.resultado_local ?? 0 }}</span>
-                @if (j.periodo) { <span class="detalle">{{ j.periodo }}</span> }
+                @if (j.periodo) { <span class="detalle">{{ periodo(j.periodo) }}</span> }
               }
               @case ('final') {
-                <span class="detalle">Final</span>
+                <span class="detalle">{{ 'comun.final' | t }}</span>
                 <span class="marcador">{{ j.resultado_visitante }} - {{ j.resultado_local }}</span>
                 <span class="detalle">{{ fechaCorta(j) }}</span>
               }
@@ -58,7 +58,7 @@
                 <span class="detalle fuerte">{{ fechaCorta(j) }}</span>
                 <span class="detalle fuerte">{{ horaLocal(j) }}</span>
                 @if (estado(j) === 'pospuesto') {
-                  <span class="detalle">Pospuesto</span>
+                  <span class="detalle">{{ 'comun.pospuesto' | t }}</span>
                 } @else if (cuentaRegresiva(j); as falta) {
                   <span class="cuenta"><mat-icon>schedule</mat-icon>{{ falta }}</span>
                 }
@@ -71,7 +71,7 @@
                  width="640" height="640" fetchpriority="high" class="mascota-grande">
             <p class="equipo-nombre">{{ j.local }}</p>
             <p class="equipo-detalle">
-              @if (record(j.local)) { {{ record(j.local) }} · }local
+              @if (record(j.local)) { {{ record(j.local) }} · }{{ 'home.local' | t }}
             </p>
             @if (logueado() && j.participanteLocal) {
               <p class="equipo-participante">{{ j.participanteLocal }}</p>
@@ -86,8 +86,8 @@
 
         <mat-card class="semana">
           <div class="tarjeta-encabezado">
-            <h2>Juegos de la semana @if (semanaId()) { {{ semanaId() }} }</h2>
-            <a mat-button routerLink="/juegos">Ver todos</a>
+            <h2>@if (semanaId()) { {{ 'home.juegosSemanaN' | t: { n: semanaId()! } }} } @else { {{ 'home.juegosSemana' | t }} }</h2>
+            <a mat-button routerLink="/juegos">{{ 'home.verTodos' | t }}</a>
           </div>
 
           @for (j of listaSemana(); track j.id) {
@@ -101,15 +101,15 @@
               <div class="fila-centro">
                 @switch (estado(j)) {
                   @case ('en_vivo') {
-                    <span class="en-vivo"><span class="punto"></span>{{ j.periodo || 'En vivo' }}</span>
+                    <span class="en-vivo"><span class="punto"></span>{{ j.periodo ? periodo(j.periodo) : ('comun.enVivo' | t) }}</span>
                     <span class="fila-marcador">{{ j.resultado_visitante ?? 0 }} - {{ j.resultado_local ?? 0 }}</span>
                   }
                   @case ('final') {
-                    <span class="detalle">Final</span>
+                    <span class="detalle">{{ 'comun.final' | t }}</span>
                     <span class="fila-marcador">{{ j.resultado_visitante }} - {{ j.resultado_local }}</span>
                   }
                   @case ('pospuesto') {
-                    <span class="detalle">Pospuesto</span>
+                    <span class="detalle">{{ 'comun.pospuesto' | t }}</span>
                   }
                   @default {
                     <span class="detalle">{{ fechaCorta(j) }}</span>
@@ -125,7 +125,7 @@
               <img [src]="j.logoLocal" [alt]="j.local" width="44" height="44" loading="lazy" class="mascota-chica">
             </div>
           } @empty {
-            <p class="vacio">No hay juegos programados esta semana.</p>
+            <p class="vacio">{{ 'home.sinJuegos' | t }}</p>
           }
         </mat-card>
 
@@ -133,17 +133,17 @@
           @if (!logueado()) {
             <div class="invitacion">
               <mat-icon>lock</mat-icon>
-              <p>Inicia sesión para ver la tabla de posiciones de tu grupo y quién tiene cada equipo.</p>
-              <a mat-flat-button color="primary" routerLink="/login" [queryParams]="{ redirect: '/' }">Iniciar sesión</a>
+              <p>{{ 'home.invitacion' | t }}</p>
+              <a mat-flat-button color="primary" routerLink="/login" [queryParams]="{ redirect: '/' }">{{ 'comun.iniciarSesion' | t }}</a>
             </div>
           } @else if (grupos().length === 0) {
             <div class="invitacion">
               <mat-icon>group_off</mat-icon>
-              <p>Tu usuario todavía no pertenece a ningún grupo.</p>
+              <p>{{ 'comun.sinGrupo' | t }}</p>
             </div>
           } @else {
             <div class="tarjeta-encabezado">
-              <h2>Posiciones</h2>
+              <h2>{{ 'home.posiciones' | t }}</h2>
               @if (!variosGrupos()) {
                 <span class="detalle">{{ nombreGrupo() }}</span>
               }
@@ -191,14 +191,14 @@
                       }
                     </span>
                     @if (p.puntaje !== 0 && p.max) {
-                      <mat-icon class="icono-trofeo" aria-label="Primer lugar">emoji_events</mat-icon>
+                      <mat-icon class="icono-trofeo" [attr.aria-label]="'home.primerLugar' | t">emoji_events</mat-icon>
                     } @else if (p.puntaje !== 0 && p.second) {
-                      <mat-icon class="icono-medalla" aria-label="Segundo lugar">military_tech</mat-icon>
+                      <mat-icon class="icono-medalla" [attr.aria-label]="'home.segundoLugar' | t">military_tech</mat-icon>
                     }
                     <span class="puntaje">{{ p.puntaje }}</span>
                   </button>
                 } @empty {
-                  <p class="vacio">Este grupo todavía no tiene participantes.</p>
+                  <p class="vacio">{{ 'home.sinParticipantes' | t }}</p>
                 }
               }
             </ng-template>

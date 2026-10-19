@@ -1,5 +1,6 @@
 import { Juego } from '../../services/juegos';
 import { kickoffMs, fechaCortaLocal } from '../../services/core/hora-local';
+import { Idioma, traducir } from '../../i18n/idioma';
 
 // Lógica pura de la portada (sin Angular): qué juego destacar, cómo
 // etiquetarlo, cuánto falta para que empiece y en qué orden listar la semana.
@@ -58,30 +59,31 @@ export function elegirDestacado(juegos: Juego[]): Juego | null {
 }
 
 /** "Thursday Night Football", "Sunday Night Football", "Monday Night Football", "Horario prime" o null. */
-export function etiquetaPrime(j: Juego): string | null {
+export function etiquetaPrime(j: Juego, idioma: Idioma = 'es'): string | null {
   if (!esPrime(j)) return null;
   const ms = kickoffMs(j);
-  if (ms === null) return 'Horario prime';
+  const generico = traducir(idioma, 'home.horarioPrime');
+  if (ms === null) return generico;
   // Día de la semana en Bogotá: se resta el desfase para leerlo en UTC.
   const dia = new Date(ms - 5 * 3600_000).getUTCDay();
   return ({ 4: 'Thursday Night Football', 0: 'Sunday Night Football', 1: 'Monday Night Football' } as Record<number, string>)[dia]
-    ?? 'Horario prime';
+    ?? generico;
 }
 
 /** "en 2 d 5 h", "en 3 h 20 min", "en 12 min", "en instantes", o null si ya empezó. */
-export function cuentaRegresiva(j: Juego, ahora: number): string | null {
+export function cuentaRegresiva(j: Juego, ahora: number, idioma: Idioma = 'es'): string | null {
   const ms = kickoffMs(j);
   if (ms === null || ms <= ahora) return null;
   const min = Math.floor((ms - ahora) / 60_000);
   const d = Math.floor(min / 1440), h = Math.floor((min % 1440) / 60), m = min % 60;
-  if (d > 0) return `en ${d} d ${h} h`;
-  if (h > 0) return `en ${h} h ${m} min`;
-  return m > 0 ? `en ${m} min` : 'en instantes';
+  if (d > 0) return traducir(idioma, 'home.enDiasHoras', { d, h });
+  if (h > 0) return traducir(idioma, 'home.enHorasMin', { h, m });
+  return m > 0 ? traducir(idioma, 'home.enMin', { m }) : traducir(idioma, 'home.enInstantes');
 }
 
-/** "Dom 12 oct" con la fecha local del usuario. */
-export function fechaCorta(j: Pick<Juego, 'fecha' | 'hora'>): string {
-  return fechaCortaLocal(j);
+/** "Dom 12 oct" / "Sun, Oct 12" con la fecha local del usuario. */
+export function fechaCorta(j: Pick<Juego, 'fecha' | 'hora'>, idioma: Idioma = 'es'): string {
+  return fechaCortaLocal(j, idioma);
 }
 
 /** Orden de la lista de la semana: en vivo, luego próximos (por hora), luego terminados (el más reciente primero). */

@@ -8,13 +8,13 @@
   <!-- Menú en desktop -->
   <nav class="menu-desktop">
     <button class="menu-button" mat-button routerLink="/">
-      <mat-icon class="icon">home</mat-icon> Home
+      <mat-icon class="icon">home</mat-icon> {{ 'header.home' | t }}
     </button>
     <button class="menu-button" mat-button routerLink="/tabla-puntajes">
-      <mat-icon class="icon">leaderboard</mat-icon> Tabla de puntajes
+      <mat-icon class="icon">leaderboard</mat-icon> {{ 'header.tablaPuntajes' | t }}
     </button>
     <button class="menu-button" mat-button routerLink="/juegos">
-      <mat-icon class="icon">sports_football</mat-icon> Juegos de la semana
+      <mat-icon class="icon">sports_football</mat-icon> {{ 'header.juegos' | t }}
     </button>
     <div
       class="menu-button-container desktop-2"
@@ -27,88 +27,96 @@
         #equiposMenuTrigger="matMenuTrigger"
         routerLink="/equipos"
       >
-        <mat-icon class="icon">groups</mat-icon> Equipos
+        <mat-icon class="icon">groups</mat-icon> {{ 'header.equipos' | t }}
         <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
       </button>
 
       <mat-menu #equiposSubMenu="matMenu" class="submenu-hover">
         <div (mouseenter)="equiposMenuTrigger.openMenu()" (mouseleave)="equiposMenuTrigger.closeMenu()">
           <button mat-menu-item routerLink="/equipos">
-            <mat-icon>sports</mat-icon> En competición
+            <mat-icon>sports</mat-icon> {{ 'header.enCompeticion' | t }}
           </button>
           <button mat-menu-item routerLink="/fixture">
-            <mat-icon>calendar_today</mat-icon> Fixture
+            <mat-icon>calendar_today</mat-icon> {{ 'header.fixture' | t }}
           </button>
           <button mat-menu-item routerLink="/ranking">
-            <mat-icon>format_list_numbered</mat-icon> Ranking inicial
+            <mat-icon>format_list_numbered</mat-icon> {{ 'header.ranking' | t }}
           </button>
         </div>
       </mat-menu>
     </div>
     <button class="menu-button desktop-2" mat-button routerLink="/reglamento">
-      <mat-icon class="icon">gavel</mat-icon> Reglamento
+      <mat-icon class="icon">gavel</mat-icon> {{ 'header.reglamento' | t }}
     </button>
     @if (acceso() === 'lectura') {
       <button class="menu-button desktop-2" mat-button (click)="cerrarSesion()">
-        <mat-icon class="icon">logout</mat-icon> Cerrar sesión
+        <mat-icon class="icon">logout</mat-icon> {{ 'header.cerrarSesion' | t }}
       </button>
     } @else {
       <button class="menu-button desktop-2" mat-button routerLink="/admin">
-        <mat-icon class="icon">admin_panel_settings</mat-icon> Admin
+        <mat-icon class="icon">admin_panel_settings</mat-icon> {{ 'header.admin' | t }}
       </button>
     }
   </nav>
 
-  <!-- Menú hamburguesa en móvil -->
+  <!-- Idioma (desktop y móvil) y menú hamburguesa (solo móvil) -->
+  <div class="acciones">
+  <button mat-button class="boton-idioma" (click)="alternarIdioma()"
+          [attr.aria-label]="'header.cambiarIdioma' | t" [title]="'header.cambiarIdioma' | t">
+    <mat-icon>translate</mat-icon>
+    <span class="idioma-actual">{{ idioma.actual() === 'es' ? 'ES' : 'EN' }}</span>
+  </button>
+
   <button mat-icon-button [matMenuTriggerFor]="menu" class="menu-mobile">
     <mat-icon>menu</mat-icon>
   </button>
+  </div>
 
 <mat-menu #menu="matMenu">
   <button class="mobile-2" mat-menu-item routerLink="/">
     <mat-icon>home</mat-icon>
-    <span>Home</span>
+    <span>{{ 'header.home' | t }}</span>
   </button>
   <button class="mobile-2" mat-menu-item routerLink="/tabla-puntajes">
     <mat-icon>leaderboard</mat-icon>
-    <span>Tabla de puntajes</span>
+    <span>{{ 'header.tablaPuntajes' | t }}</span>
   </button>
   <button class="mobile-2" mat-menu-item routerLink="/juegos">
     <mat-icon>sports_football</mat-icon>
-    <span>Juegos de la semana</span>
+    <span>{{ 'header.juegos' | t }}</span>
   </button>
   <!-- Submenú en móvil: se mantiene como clic tradicional -->
   <button mat-menu-item [matMenuTriggerFor]="equiposMobileSubMenu">
     <mat-icon>groups</mat-icon>
-    <span>Equipos</span>
+    <span>{{ 'header.equipos' | t }}</span>
   </button>
   <mat-menu #equiposMobileSubMenu="matMenu">
     <button mat-menu-item routerLink="/equipos">
       <mat-icon>sports</mat-icon>
-      <span>En competición</span>
+      <span>{{ 'header.enCompeticion' | t }}</span>
     </button>
     <button mat-menu-item routerLink="/fixture">
       <mat-icon>calendar_today</mat-icon>
-      <span>Fixture</span>
+      <span>{{ 'header.fixture' | t }}</span>
     </button>
     <button mat-menu-item routerLink="/ranking">
       <mat-icon>format_list_numbered</mat-icon>
-      <span>Ranking inicial</span>
+      <span>{{ 'header.ranking' | t }}</span>
     </button>
   </mat-menu>
   <button mat-menu-item routerLink="/reglamento">
     <mat-icon>gavel</mat-icon>
-    <span>Reglamento</span>
+    <span>{{ 'header.reglamento' | t }}</span>
   </button>
   @if (acceso() === 'lectura') {
     <button mat-menu-item (click)="cerrarSesion()">
       <mat-icon>logout</mat-icon>
-      <span>Cerrar sesión</span>
+      <span>{{ 'header.cerrarSesion' | t }}</span>
     </button>
   } @else {
     <button mat-menu-item routerLink="/admin">
       <mat-icon>admin_panel_settings</mat-icon>
-      <span>Admin</span>
+      <span>{{ 'header.admin' | t }}</span>
     </button>
   }
 </mat-menu>

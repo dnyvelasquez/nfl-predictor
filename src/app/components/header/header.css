@@ -58,7 +58,7 @@
   }
 }
 
-@media (min-width: 1020px) {
+@media (min-width: 1140px) {
   .menu-desktop {
     display: flex;
     justify-content: center;
@@ -121,4 +121,29 @@
 
 ::ng-deep .mat-menu-panel {
   transition-delay: 0s !important;
+}
+
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.boton-idioma {
+  min-width: 0;
+  padding: 0 8px;
+  color: inherit;
+}
+
+.boton-idioma mat-icon {
+  margin-right: 4px;
+}
+
+.idioma-actual {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.acciones {
+  flex-shrink: 0;
 }
