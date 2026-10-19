@@ -8,8 +8,14 @@ import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil, catchError } from 'rxjs/operators';
 import { EquiposService, ConferenciaStanding, EquipoStanding } from '../../services/equipos';
 import { JuegosService } from '../../services/juegos';
-import { armarPostemporada, Postemporada, Cruce, EquipoBracket, Ronda, Conferencia } from './postemporada';
+import { armarPostemporada, rangoFechas, Postemporada, Cruce, EquipoBracket, Ronda, Conferencia, JuegoPlayoff } from './postemporada';
 import { fechaCortaLocal, horaLocal, tieneHora } from '../../services/core/hora-local';
+import { Etapa } from '../../services/core/etapas';
+import { IdiomaService, registrarTextos, traducirPeriodo } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
+import { ES_FIXTURE, EN_FIXTURE } from './textos';
+
+registrarTextos(ES_FIXTURE, EN_FIXTURE);
 
 const LOGOS_CONFERENCIA: Record<'AFC' | 'NFC', string> = {
   AFC: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/American_Football_Conference_logo.svg',
@@ -35,7 +41,8 @@ interface ColumnaBracket {
     MatTabsModule,
     MatProgressSpinnerModule,
     MatIconModule,
-    CommonModule
+    CommonModule,
+    TPipe
   ],
   templateUrl: './fixture.html',
   styleUrls: ['./fixture.css'],
@@ -58,6 +65,8 @@ export class Fixture implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private service = inject(EquiposService);
   private juegosService = inject(JuegosService);
+  private idioma = inject(IdiomaService);
+  private playoffs: JuegoPlayoff[] = [];
   private cdr = inject(ChangeDetectorRef);
   private refresco?: ReturnType<typeof setTimeout>;
   private primeraCarga = true;
@@ -78,6 +87,7 @@ export class Fixture implements OnInit, OnDestroy {
       next: ({ conferencias, playoffs, terminada }) => {
         this.conferencias = conferencias;
         this.provisional = !terminada;
+        this.playoffs = playoffs;
         this.postemporada = armarPostemporada(this.equiposBracket(conferencias), playoffs);
         this.columnas = this.armarColumnas(this.postemporada);
         if (this.primeraCarga) {
@@ -91,7 +101,7 @@ export class Fixture implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error loading fixture:', err);
-        if (this.primeraCarga) this.error = 'Error al cargar el fixture. Por favor, intenta de nuevo.';
+        if (this.primeraCarga) this.error = this.idioma.t('fixture.error');
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -140,22 +150,36 @@ export class Fixture implements OnInit, OnDestroy {
     return '';
   }
 
+  /** Título de una ronda en el idioma actual. */
+  tituloRonda(etapa: Etapa): string {
+    return this.idioma.t(`fixture.ronda.${etapa}` as 'fixture.ronda.wildcard');
+  }
+
+  /** Rango de fechas de una ronda en el idioma actual. */
+  fechasRonda(etapa: Etapa): string | null {
+    return rangoFechas(this.playoffs, etapa, this.idioma.actual());
+  }
+
   /** Texto de estado de un cruce. */
   estadoCruce(c: Cruce): string {
+    const idioma = this.idioma.actual();
     switch (c.estado) {
-      case 'final': return 'Final';
-      case 'en_vivo': return c.periodo ? `En vivo · ${c.periodo}` : 'En vivo';
+      case 'final': return this.idioma.t('comun.final');
+      case 'en_vivo': return c.periodo
+        ? this.idioma.t('fixture.enVivoPeriodo', { periodo: traducirPeriodo(idioma, c.periodo) })
+        : this.idioma.t('comun.enVivo');
       case 'programado': return this.fechaHora(c);
-      case 'proyectado': return 'Proyectado';
-      default: return 'Por definir';
+      case 'proyectado': return this.idioma.t('fixture.proyectado');
+      default: return this.idioma.t('fixture.porDefinir');
     }
   }
 
   /** Fecha y hora del cruce en la hora local del usuario. */
   private fechaHora(c: Cruce): string {
-    if (!/^\d{4}[/-]\d{2}[/-]\d{2}$/.test(c.fecha ?? '')) return 'Programado';
-    const hora = tieneHora(c) ? ` · ${horaLocal(c)}` : '';
-    return `${fechaCortaLocal(c)}${hora}`;
+    const idioma = this.idioma.actual();
+    if (!/^\d{4}[/-]\d{2}[/-]\d{2}$/.test(c.fecha ?? '')) return this.idioma.t('fixture.programado');
+    const hora = tieneHora(c) ? ` · ${horaLocal(c, idioma)}` : '';
+    return `${fechaCortaLocal(c, idioma)}${hora}`;
   }
 
   esPerdedor(c: Cruce, e: EquipoBracket | null): boolean {

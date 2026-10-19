@@ -7,26 +7,31 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin } from 'rxjs';
 import { EquiposService, EquipoRanking } from '../../services/equipos';
 import { JuegosService } from '../../services/juegos';
+import { IdiomaService, registrarTextos } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
+import { ES_RANKING, EN_RANKING } from './textos';
+
+registrarTextos(ES_RANKING, EN_RANKING);
 
 /**
  * Niveles del ranking global, en el orden en que los arma scripts/sync-ranking.mjs
  * (el orden del Draft de la NFL, invertido). Supone el formato actual de 14
  * equipos en playoffs. Dentro de cada nivel, de mejor a peor récord de temporada regular.
  */
-const NIVELES: { desde: number; hasta: number; titulo: string }[] = [
-  { desde: 1, hasta: 1, titulo: 'Campeón del Super Bowl' },
-  { desde: 2, hasta: 2, titulo: 'Subcampeón del Super Bowl' },
-  { desde: 3, hasta: 4, titulo: 'Perdieron la final de conferencia' },
-  { desde: 5, hasta: 8, titulo: 'Perdieron en la ronda divisional' },
-  { desde: 9, hasta: 14, titulo: 'Perdieron en la ronda de comodines' },
-  { desde: 15, hasta: 32, titulo: 'No clasificaron a playoffs' },
+const NIVELES: { desde: number; hasta: number; titulo: keyof typeof ES_RANKING }[] = [
+  { desde: 1, hasta: 1, titulo: 'ranking.nivel.campeon' },
+  { desde: 2, hasta: 2, titulo: 'ranking.nivel.subcampeon' },
+  { desde: 3, hasta: 4, titulo: 'ranking.nivel.conferencia' },
+  { desde: 5, hasta: 8, titulo: 'ranking.nivel.divisional' },
+  { desde: 9, hasta: 14, titulo: 'ranking.nivel.comodines' },
+  { desde: 15, hasta: 32, titulo: 'ranking.nivel.fuera' },
 ];
 
 /** Página informativa: el ranking de la temporada anterior con el que se hizo la asignación inicial. */
 @Component({
   selector: 'app-ranking',
   standalone: true,
-  imports: [RouterModule, MatCardModule, MatDividerModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [RouterModule, MatCardModule, MatDividerModule, MatIconModule, MatProgressSpinnerModule, TPipe],
   templateUrl: './ranking.html',
   styleUrls: ['./ranking.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -34,6 +39,7 @@ const NIVELES: { desde: number; hasta: number; titulo: string }[] = [
 export class Ranking {
   private equiposService = inject(EquiposService);
   private juegosService = inject(JuegosService);
+  private idioma = inject(IdiomaService);
 
   cargando = signal(true);
   error = signal<string | null>(null);
@@ -61,7 +67,7 @@ export class Ranking {
         this.cargando.set(false);
       },
       error: () => {
-        this.error.set('No fue posible cargar el ranking. Intenta de nuevo.');
+        this.error.set(this.idioma.t('ranking.error'));
         this.cargando.set(false);
       },
     });

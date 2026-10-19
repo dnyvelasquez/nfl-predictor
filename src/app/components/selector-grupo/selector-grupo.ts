@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { MatSelectModule } from '@angular/material/select';
 import { GrupoDisponible, GruposService } from '../../services/grupos';
+import { TPipe } from '../../i18n/t.pipe';
 
 /**
  * Selector del grupo que se está viendo. Con un solo grupo muestra su nombre;
@@ -10,10 +11,10 @@ import { GrupoDisponible, GruposService } from '../../services/grupos';
 @Component({
   selector: 'app-selector-grupo',
   standalone: true,
-  imports: [MatSelectModule],
+  imports: [MatSelectModule, TPipe],
   template: `
     @if (grupos.length > 1) {
-      <mat-select class="selector" [value]="grupoId" (selectionChange)="elegir($event.value)" aria-label="Grupo">
+      <mat-select class="selector" [value]="grupoId" (selectionChange)="elegir($event.value)" [attr.aria-label]="'comun.grupo' | t">
         @for (g of grupos; track g.id) {
           <mat-option [value]="g.id">{{ g.nombre }}</mat-option>
         }

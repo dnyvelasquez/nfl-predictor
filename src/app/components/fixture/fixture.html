@@ -2,7 +2,7 @@
   @if (loading) {
     <div class="loading-container">
       <mat-spinner diameter="40"></mat-spinner>
-      <p>Cargando fixture...</p>
+      <p>{{ 'fixture.cargando' | t }}</p>
     </div>
   } @else if (error) {
     <div class="error-container">
@@ -11,7 +11,7 @@
     </div>
   } @else {
     <mat-tab-group class="fixture-tabs" [(selectedIndex)]="pestana" animationDuration="0ms" mat-stretch-tabs="false">
-      <mat-tab label="Temporada regular">
+      <mat-tab [label]="'fixture.tabRegular' | t">
         <div class="conferencias">
           @for (conf of conferencias; track conf.conferencia) {
             <mat-card class="conferencia" [ngClass]="conf.conferencia === 'AFC' ? 'conf-afc' : 'conf-nfc'">
@@ -26,7 +26,7 @@
                     <div class="division-header">
                       <span class="division-conf">{{ conf.conferencia }}</span>
                       <strong>{{ nombreDivision(div.division) }}</strong>
-                      <span class="division-col">G-P-E</span>
+                      <span class="division-col">{{ 'fixture.gpe' | t }}</span>
                     </div>
                     @for (e of div.equipos; track e.id) {
                       <div class="equipo-row" [ngClass]="claseFila(e)">
@@ -43,17 +43,17 @@
         </div>
       </mat-tab>
 
-      <mat-tab label="Postemporada">
+      <mat-tab [label]="'fixture.tabPost' | t">
         @if (postemporada) {
           <mat-card class="postemporada">
             <div class="post-header">
-              <h2>Postemporada</h2>
+              <h2>{{ 'fixture.tabPost' | t }}</h2>
               @if (provisional) {
-                <span class="chip-provisional">Clasificación provisional</span>
+                <span class="chip-provisional">{{ 'fixture.provisional' | t }}</span>
               }
             </div>
             @if (provisional) {
-              <p class="post-nota">Los cruces se proyectan con las semillas actuales y cambian hasta que termine la temporada regular.</p>
+              <p class="post-nota">{{ 'fixture.notaProvisional' | t }}</p>
             }
 
             <div class="bracket">
@@ -67,8 +67,8 @@
                       <mat-icon class="columna-trofeo">emoji_events</mat-icon>
                     }
                     <div>
-                      <strong>{{ col.ronda.titulo }}</strong>
-                      @if (col.ronda.fechas) { <span class="columna-fechas">{{ col.ronda.fechas }}</span> }
+                      <strong>{{ tituloRonda(col.ronda.etapa) }}</strong>
+                      @if (fechasRonda(col.ronda.etapa); as fechas) { <span class="columna-fechas">{{ fechas }}</span> }
                     </div>
                   </header>
 
@@ -83,7 +83,7 @@
                           <img [src]="d.logo" [alt]="d.nombre" class="cruce-logo">
                           <span class="cruce-nombre">{{ d.nombre }}</span>
                         </div>
-                        <div class="cruce-estado">Descansa · pasa directo</div>
+                        <div class="cruce-estado">{{ 'fixture.descansa' | t }}</div>
                       </div>
                     }
                   </div>
@@ -111,7 +111,7 @@
         } @else {
           <span class="seed">–</span>
           <span class="cruce-logo vacio"></span>
-          <span class="cruce-nombre por-definir">Por definir</span>
+          <span class="cruce-nombre por-definir">{{ 'fixture.porDefinir' | t }}</span>
         }
       </div>
     }

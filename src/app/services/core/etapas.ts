@@ -86,21 +86,35 @@ export function registroEquipoEnEtapa(
   return { wins, ties, losses, puntos, descanso };
 }
 
-export function marcaEquipoEnEtapa(etapa: Etapa, wins: number, ties: number, losses: number, descanso = false): string {
+// Etiquetas del resultado de un equipo en una ronda de playoffs, por idioma
+// (este módulo no depende de Angular, así que no usa los diccionarios de i18n).
+const MARCAS: Record<'es' | 'en', { descanso: string; gano: string; perdio: string; empato: string; pendiente: string }> = {
+  es: { descanso: 'Descansó (1ª semilla)', gano: 'Ganó', perdio: 'Perdió', empato: 'Empató', pendiente: 'Pendiente' },
+  en: { descanso: 'Bye (1st seed)', gano: 'Won', perdio: 'Lost', empato: 'Tied', pendiente: 'Pending' },
+};
+
+export function marcaEquipoEnEtapa(
+  etapa: Etapa, wins: number, ties: number, losses: number, descanso = false, idioma: 'es' | 'en' = 'es'
+): string {
   if (etapa === 'regular') {
     return `${wins}-${losses}-${ties}`;
   }
-  if (descanso) return 'Descansó (1ª semilla)';
-  if (wins > 0) return 'Ganó';
-  if (losses > 0) return 'Perdió';
-  if (ties > 0) return 'Empató';
-  return 'Pendiente';
+  const m = MARCAS[idioma];
+  if (descanso) return m.descanso;
+  if (wins > 0) return m.gano;
+  if (losses > 0) return m.perdio;
+  if (ties > 0) return m.empato;
+  return m.pendiente;
 }
 
-export function estadoEquipoEnEtapa(item: { equipo: { etapa: Etapa }; wins: number; ties: number; losses: number; descanso?: boolean }): string {
-  return marcaEquipoEnEtapa(item.equipo.etapa, item.wins, item.ties, item.losses, item.descanso);
+export function estadoEquipoEnEtapa(
+  item: { equipo: { etapa: Etapa }; wins: number; ties: number; losses: number; descanso?: boolean }, idioma: 'es' | 'en' = 'es'
+): string {
+  return marcaEquipoEnEtapa(item.equipo.etapa, item.wins, item.ties, item.losses, item.descanso, idioma);
 }
 
-export function marcaEquipoPorEtapa(item: { etapa: Etapa; wins: number; ties: number; losses: number; descanso?: boolean }): string {
-  return marcaEquipoEnEtapa(item.etapa, item.wins, item.ties, item.losses, item.descanso);
+export function marcaEquipoPorEtapa(
+  item: { etapa: Etapa; wins: number; ties: number; losses: number; descanso?: boolean }, idioma: 'es' | 'en' = 'es'
+): string {
+  return marcaEquipoEnEtapa(item.etapa, item.wins, item.ties, item.losses, item.descanso, idioma);
 }

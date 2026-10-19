@@ -106,6 +106,18 @@ export const ES = {
   'db.El juego no existe': 'El juego no existe',
   'db.En playoffs no hay empate': 'En playoffs no hay empate',
   'db.Los pronósticos de este juego ya cerraron': 'Los pronósticos de este juego ya cerraron',
+  'comun.aciertosDe': '{a} de {n} aciertos',
+  'comun.diferencia1': '1 diferencia (+{p})',
+  'comun.diferenciasN': '{n} diferencias (+{p})',
+  'comun.sinTerminados': 'Todavía no hay juegos terminados con su pronóstico.',
+  'comun.grupo': 'Grupo',
+  'tabla.titulo': 'Tabla de puntajes',
+  'tabla.cargando': 'Cargando puntajes...',
+  'tabla.privada': 'La tabla de puntajes es privada de cada grupo.',
+  'tabla.sinParticipantes': 'No hay participantes registrados',
+  'tabla.error': 'Error al cargar los participantes. Por favor, recarga la página.',
+  'dialogo.puntajeTotal': 'Puntaje total',
+  'dialogo.cerrar': 'Cerrar',
 } as const;
 
-export type Clave = keyof typeof ES;
+

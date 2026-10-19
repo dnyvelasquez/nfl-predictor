@@ -2,7 +2,7 @@
   <mat-card class="tabla-puntajes-card">
     <div class="header">
       <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
-      <mat-card-title class="tabla-puntajes-title">Tabla de puntajes</mat-card-title>
+      <mat-card-title class="tabla-puntajes-title">{{ 'tabla.titulo' | t }}</mat-card-title>
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
@@ -15,7 +15,7 @@
     @if (loading()) {
       <div class="loading-overlay">
         <mat-spinner diameter="40"></mat-spinner>
-        <p>Cargando puntajes...</p>
+        <p>{{ 'tabla.cargando' | t }}</p>
       </div>
     }
 
@@ -29,19 +29,19 @@
     @if (!loading() && !logueado()) {
       <div class="empty-overlay">
         <mat-icon>lock</mat-icon>
-        <p>La tabla de puntajes es privada de cada grupo.</p>
-        <a mat-flat-button color="primary" routerLink="/login" [queryParams]="{ redirect: '/tabla-puntajes' }">Iniciar sesión</a>
+        <p>{{ 'tabla.privada' | t }}</p>
+        <a mat-flat-button color="primary" routerLink="/login" [queryParams]="{ redirect: '/tabla-puntajes' }">{{ 'comun.iniciarSesion' | t }}</a>
       </div>
     } @else if (!loading() && grupos().length === 0) {
       <div class="empty-overlay">
         <mat-icon>group_off</mat-icon>
-        <p>Tu usuario todavía no pertenece a ningún grupo.</p>
+        <p>{{ 'comun.sinGrupo' | t }}</p>
       </div>
     } @else if (participantes(); as participantes) {
       @if (participantes.length === 0) {
         <div class="empty-overlay">
           <mat-icon>info_outline</mat-icon>
-          <p>No hay participantes registrados</p>
+          <p>{{ 'tabla.sinParticipantes' | t }}</p>
         </div>
       } @else {
         <div class="table-container">
@@ -50,14 +50,14 @@
               <div class="participante-section">
                 <div class="participante">
                   <span class="participante-item">{{ p.nombre }}</span>
-                  <span class="puntaje-item">{{ p.puntaje }} puntos</span>
+                  <span class="puntaje-item">{{ 'comun.puntos' | t: { n: p.puntaje } }}</span>
                 </div>
               </div>
               <div class="equipos-section">
                 <div class="equipos-lista">
                   @for (grupo of p.equiposPorEtapa; track grupo.etapa) {
                     <div class="etapa-group">
-                      <div class="etapa-group-label">{{ grupo.label }}</div>
+                      <div class="etapa-group-label">{{ etapa(grupo.etapa) }}</div>
                       @for (item of grupo.equipos; track item.equipo.nombre) {
                           <div class="equipo-item">
                             <div class="equipo-logo-nombre">
@@ -66,7 +66,7 @@
                             </div>
                             <div class="equipo-info-derecha">
                               <span class="equipo-record">{{ estadoEquipo(item) }}</span>
-                              <span class="equipo-puntaje">{{ item.puntos }} puntos</span>
+                              <span class="equipo-puntaje">{{ 'comun.puntos' | t: { n: item.puntos } }}</span>
                               <div
                                 [ngClass]="{
                                   'chip-afc': item.equipo.division.startsWith('AFC'),
@@ -83,22 +83,22 @@
                   @if (p.pronosticosPorEtapa; as resumen) {
                     @for (r of resumen; track r.etapa) {
                       <div class="etapa-group">
-                        <div class="etapa-group-label">{{ r.label }}</div>
+                        <div class="etapa-group-label">{{ etapa(r.etapa) }}</div>
                         <div class="equipo-item">
                           <div class="equipo-logo-nombre">
-                            <strong class="equipo-nombre">{{ r.aciertos }} de {{ r.pronosticados }} aciertos</strong>
+                            <strong class="equipo-nombre">{{ 'comun.aciertosDe' | t: { a: r.aciertos, n: r.pronosticados } }}</strong>
                             @if (r.diferencias > 0) {
-                              <span class="equipo-record">{{ r.diferencias }} {{ r.diferencias === 1 ? 'diferencia' : 'diferencias' }} (+{{ r.puntosDiferencia }})</span>
+                              <span class="equipo-record">{{ (r.diferencias === 1 ? 'comun.diferencia1' : 'comun.diferenciasN') | t: { n: r.diferencias, p: r.puntosDiferencia } }}</span>
                             }
                           </div>
                           <div class="equipo-info-derecha">
-                            <span class="equipo-puntaje">{{ r.puntos }} puntos</span>
+                            <span class="equipo-puntaje">{{ 'comun.puntos' | t: { n: r.puntos } }}</span>
                           </div>
                         </div>
                       </div>
                     } @empty {
                       <div class="etapa-group">
-                        <div class="etapa-group-label">Todavía no hay juegos terminados con su pronóstico.</div>
+                        <div class="etapa-group-label">{{ 'comun.sinTerminados' | t }}</div>
                       </div>
                     }
                   }

@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
 import { IdiomaService, Params } from './idioma';
-import { Clave } from './textos.es';
+import { Clave } from './idioma';
 
 /**
  * `{{ 'home.cargando' | t }}` o `{{ 'juegos.titulo' | t: { n: semana } }}`.

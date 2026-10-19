@@ -1,6 +1,8 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ParticipantesService, Participante } from '../../services/participantes';
-import { estadoEquipoEnEtapa } from '../../services/core/etapas';
+import { estadoEquipoEnEtapa, Etapa } from '../../services/core/etapas';
+import { IdiomaService, traducirEtapa } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
 import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -30,7 +32,8 @@ import { SelectorGrupo } from '../selector-grupo/selector-grupo';
     MatButtonModule,
     RouterModule,
     CommonModule,
-    SelectorGrupo
+    SelectorGrupo,
+    TPipe
   ],
   templateUrl: './tabla-puntajes.html',
   styleUrls: ['./tabla-puntajes.css'],
@@ -40,6 +43,7 @@ export class TablaPuntajes {
 
   private service = inject(ParticipantesService);
   private gruposService = inject(GruposService);
+  private idioma = inject(IdiomaService);
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -58,7 +62,7 @@ export class TablaPuntajes {
     switchMap((g) => !g ? of([] as Participante[]) : this.service.getParticipantesConPuntaje(g).pipe(
       catchError((error) => {
         console.error('Error loading participants:', error);
-        this.error.set('Error al cargar los participantes. Por favor, recarga la página.');
+        this.error.set(this.idioma.t('tabla.error'));
         return of([] as Participante[]);
       })
     )),
@@ -80,5 +84,6 @@ export class TablaPuntajes {
     this.grupo$.next(grupoId);
   }
 
-  readonly estadoEquipo = estadoEquipoEnEtapa;
+  readonly estadoEquipo = (item: Parameters<typeof estadoEquipoEnEtapa>[0]) => estadoEquipoEnEtapa(item, this.idioma.actual());
+  readonly etapa = (e: Etapa) => traducirEtapa(this.idioma.actual(), e);
 }

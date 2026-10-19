@@ -1,8 +1,8 @@
-import { Clave } from './textos.es';
+import { ES } from './textos.es';
 
 // Textos de la interfaz en inglés. Mismas claves que `textos.es.ts`.
 
-export const EN: Record<Clave, string> = {
+export const EN: Record<keyof typeof ES, string> = {
   // Common
   'comun.cargando': 'Loading...',
   'comun.final': 'Final',
@@ -105,4 +105,16 @@ export const EN: Record<Clave, string> = {
   'db.El juego no existe': "The game doesn't exist",
   'db.En playoffs no hay empate': "There are no ties in the playoffs",
   'db.Los pronósticos de este juego ya cerraron': 'Picks for this game are already closed',
+  'comun.aciertosDe': '{a} of {n} correct',
+  'comun.diferencia1': '1 exact margin (+{p})',
+  'comun.diferenciasN': '{n} exact margins (+{p})',
+  'comun.sinTerminados': 'No finished games with a pick yet.',
+  'comun.grupo': 'Group',
+  'tabla.titulo': 'Leaderboard',
+  'tabla.cargando': 'Loading scores...',
+  'tabla.privada': "Each group's leaderboard is private.",
+  'tabla.sinParticipantes': 'No participants yet',
+  'tabla.error': "Couldn't load the participants. Please reload the page.",
+  'dialogo.puntajeTotal': 'Total score',
+  'dialogo.cerrar': 'Close',
 };

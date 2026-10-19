@@ -3,7 +3,7 @@
     <div class="header">
         <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
         <mat-card-title class="tabla-puntajes-title">{{ data.nombre }}</mat-card-title>
-        <button class="close-button" (click)="cerrar()">✕</button>
+        <button class="close-button" (click)="cerrar()" [attr.aria-label]="'dialogo.cerrar' | t">✕</button>
     </div>
     <mat-divider></mat-divider>
 
@@ -11,8 +11,8 @@
         <div class="tabla-puntajes-table">
         <div class="participante-section">
             <div class="participante">
-            <span class="participante-item">Puntaje total</span>
-            <span class="puntaje-item">{{ data.puntaje }} puntos</span>
+            <span class="participante-item">{{ 'dialogo.puntajeTotal' | t }}</span>
+            <span class="puntaje-item">{{ 'comun.puntos' | t: { n: data.puntaje } }}</span>
             </div>
         </div>
 
@@ -20,7 +20,7 @@
             <div class="equipos-lista">
             @for (grupo of data.equiposPorEtapa; track grupo.etapa) {
                 <div class="etapa-group">
-                    <div class="etapa-group-label">{{ grupo.label }}</div>
+                    <div class="etapa-group-label">{{ etapa(grupo.etapa) }}</div>
                     @for (item of grupo.equipos; track item.equipo.nombre) {
                         <div class="equipo-item">
                         <div class="equipo-logo-nombre">
@@ -29,7 +29,7 @@
                         </div>
                         <div class="equipo-info-derecha">
                             <span class="equipo-record">{{ estadoEquipo(item) }}</span>
-                            <span class="equipo-puntaje">{{ item.puntos }} puntos</span>
+                            <span class="equipo-puntaje">{{ 'comun.puntos' | t: { n: item.puntos } }}</span>
                             <div
                               [ngClass]="{
                                 'chip-afc': item.equipo.division.startsWith('AFC'),
@@ -46,22 +46,22 @@
             @if (data.pronosticosPorEtapa; as resumen) {
               @for (r of resumen; track r.etapa) {
                 <div class="etapa-group">
-                  <div class="etapa-group-label">{{ r.label }}</div>
+                  <div class="etapa-group-label">{{ etapa(r.etapa) }}</div>
                   <div class="equipo-item">
                     <div class="equipo-logo-nombre">
-                      <strong class="equipo-nombre">{{ r.aciertos }} de {{ r.pronosticados }} aciertos</strong>
+                      <strong class="equipo-nombre">{{ 'comun.aciertosDe' | t: { a: r.aciertos, n: r.pronosticados } }}</strong>
                       @if (r.diferencias > 0) {
-                        <span class="equipo-record">{{ r.diferencias }} {{ r.diferencias === 1 ? 'diferencia' : 'diferencias' }} (+{{ r.puntosDiferencia }})</span>
+                        <span class="equipo-record">{{ (r.diferencias === 1 ? 'comun.diferencia1' : 'comun.diferenciasN') | t: { n: r.diferencias, p: r.puntosDiferencia } }}</span>
                       }
                     </div>
                     <div class="equipo-info-derecha">
-                      <span class="equipo-puntaje">{{ r.puntos }} puntos</span>
+                      <span class="equipo-puntaje">{{ 'comun.puntos' | t: { n: r.puntos } }}</span>
                     </div>
                   </div>
                 </div>
               } @empty {
                 <div class="etapa-group">
-                  <div class="etapa-group-label">Todavía no hay juegos terminados con su pronóstico.</div>
+                  <div class="etapa-group-label">{{ 'comun.sinTerminados' | t }}</div>
                 </div>
               }
             }
