@@ -2,30 +2,30 @@
   <mat-card class="reglamento-card">
     <div class="header">
       <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="logo">
-      <mat-card-title class="reglamento-title">Reglamento NFL Predictor</mat-card-title>
+      <mat-card-title class="reglamento-title">{{ 'reglamento.titulo' | t }}</mat-card-title>
       <h1> 🏈</h1>
       <mat-divider></mat-divider>
     </div>
 
     @if (grupos().length > 0) {
       <div class="grupo-reglamento">
-        <span>Reglamento del grupo</span>
+        <span>{{ 'reglamento.delGrupo' | t }}</span>
         <app-selector-grupo [grupos]="grupos()" [grupoId]="grupoId()" (cambio)="cambiarGrupo($event)"></app-selector-grupo>
       </div>
     }
 
     <div class="modo-reglamento">
-      <mat-button-toggle-group [value]="modo()" (change)="modoElegido.set($event.value)" aria-label="Modo de juego" hideSingleSelectionIndicator>
+      <mat-button-toggle-group [value]="modo()" (change)="modoElegido.set($event.value)" [attr.aria-label]="'reglamento.modoDeJuego' | t" hideSingleSelectionIndicator>
         @for (m of modos; track m.value) {
-          <mat-button-toggle [value]="m.value">{{ m.label }}</mat-button-toggle>
+          <mat-button-toggle [value]="m.value">{{ etiquetaModo(m.value) }}</mat-button-toggle>
         }
       </mat-button-toggle-group>
       @if (grupo(); as g) {
         <span class="nota-modo">
           @if (g.modo === modo()) {
-            {{ g.nombre }} juega en este modo.
+            {{ 'reglamento.juegaEsteModo' | t: { grupo: g.nombre } }}
           } @else {
-            {{ g.nombre }} juega en {{ etiquetaModo(g.modo) }}; este reglamento no le aplica.
+            {{ 'reglamento.juegaOtroModo' | t: { grupo: g.nombre, modo: etiquetaModo(g.modo) } }}
           }
         </span>
       }
@@ -33,26 +33,88 @@
 
     <ng-template #reglaApuesta>
       @if (!cargado()) {
-        El valor de la apuesta se está cargando…
+        {{ 'reglamento.apuestaCargando' | t }}
       } @else if (!logueado()) {
-        El valor de la apuesta lo define cada grupo. <a routerLink="/login" [queryParams]="{ redirect: '/reglamento' }">Inicia sesión</a> para ver el de tu grupo.
+        {{ 'reglamento.apuestaSinSesion1' | t }}<a routerLink="/login" [queryParams]="{ redirect: '/reglamento' }">{{ 'reglamento.apuestaSinSesionLink' | t }}</a>{{ 'reglamento.apuestaSinSesion2' | t }}
       } @else if (!grupo()) {
-        El valor de la apuesta lo define cada grupo; tu usuario todavía no pertenece a ninguno.
+        {{ 'reglamento.apuestaSinGrupo' | t }}
       } @else if (apuesta()) {
-        El valor de la apuesta lo define cada grupo; en {{ grupo()!.nombre }} es de {{ apuesta() }}.
+        {{ 'reglamento.apuestaValor' | t: { grupo: grupo()!.nombre, apuesta: apuesta() } }}
       } @else {
-        El valor de la apuesta lo define cada grupo; {{ grupo()!.nombre }} todavía no lo ha definido.
+        {{ 'reglamento.apuestaSinDefinir' | t: { grupo: grupo()!.nombre } }}
       }
     </ng-template>
 
     <ng-template #reglasPremios>
-      <li>Quien tenga más puntos al terminar el Super Bowl recibe el 70&nbsp;% del recaudo.</li>
-      <li>Quien quede de segundo en puntos recibe el 30&nbsp;% del recaudo.</li>
-      <li>Si hay empate en el primer lugar, el recaudo completo se reparte en partes iguales entre los empatados, y no hay premio de segundo lugar.</li>
-      <li>Si hay empate en el segundo lugar, el 30&nbsp;% del recaudo se reparte en partes iguales entre los empatados.</li>
+      @if (en()) {
+        <li>Whoever has the most points when the Super Bowl ends wins 70&nbsp;% of the pot.</li>
+        <li>Second place in points wins 30&nbsp;% of the pot.</li>
+        <li>If there's a tie for first place, the whole pot is split equally among those tied, and there's no second-place prize.</li>
+        <li>If there's a tie for second place, the 30&nbsp;% is split equally among those tied.</li>
+      } @else {
+        <li>Quien tenga más puntos al terminar el Super Bowl recibe el 70&nbsp;% del recaudo.</li>
+        <li>Quien quede de segundo en puntos recibe el 30&nbsp;% del recaudo.</li>
+        <li>Si hay empate en el primer lugar, el recaudo completo se reparte en partes iguales entre los empatados, y no hay premio de segundo lugar.</li>
+        <li>Si hay empate en el segundo lugar, el 30&nbsp;% del recaudo se reparte en partes iguales entre los empatados.</li>
+      }
     </ng-template>
 
     @if (modo() === 'equipos') {
+    @if (en()) {
+    <div class="container">
+      <h3>Draw</h3>
+      <ol start="1">
+        <li>At the start of the season, the NFL Predictor platform draws a unique number for each participant. That number sets the order in which teams are handed out.</li>
+        <li>Before the draw, each participant has a provisional number based on the order in which they signed up; that number has no effect on the draw.</li>
+        <li>The draw happens on a live video call or with the participants present, so everyone can verify it.</li>
+      </ol>
+
+      <h3>Regular-season team assignment</h3>
+      <ol start="4">
+        <li>Teams are handed out following the previous season's overall ranking: first is the Super Bowl champion and last is the team with the worst regular-season record.</li>
+        <li>In the first round, the participant with the lowest number gets the highest-ranked team, the next number gets the next team, and so on until every participant has one.</li>
+        <li>In the next round the teams keep the same order, but participants go in reverse, from the highest number to the lowest. Rounds keep alternating like this until the teams run out.</li>
+        <li>Every participant gets the same number of teams. If the remaining teams aren't enough for a full round, they stay unassigned.</li>
+        <li>A participant can't have two teams from the same division or more than two teams from the same conference.</li>
+        <li>If a participant can't take the team that's their turn because of the previous rule, that team goes to the next participant who can take it. The skipped participant gets the next available team.</li>
+        <li>The platform makes this assignment automatically, strictly following these rules.</li>
+      </ol>
+
+      <h3>Playoff team assignment</h3>
+      <ol start="11">
+        <li>In the wild card, divisional and conference championship rounds, each participant has one team from each conference. The exception is the wild card round: whoever holds a conference's first seed plays that round with only that team, which has a bye that counts as a win (rule 19), and gives up the rest. In the Super Bowl each participant has a single team, and participants are split evenly between the two finalists: whoever still has both keeps the one with the better record, and if one finalist ends up with more than half of the participants, the highest-scoring ones on that side move to the other.</li>
+        <li>When each round ends, the participant with the lowest score is assigned first: they get the available team with the best regular-season record, and so on. The best record is the highest winning percentage (a tie counts as half a win); if two teams have the same record, the one with the better official NFL seed goes first and, if they're still tied (it can happen in the Super Bowl between teams from different conferences), the one with the better regular-season point differential. If two participants have the same score, the one with the lower draw number goes first.</li>
+        <li>If two of the teams a participant had in the previous round are still alive and from different conferences, they keep them.</li>
+        <li>If more than two of their teams are still alive, or two from the same conference, they give up the extras to keep one per conference: they keep the one with the better record, using the same criteria as rule 12.</li>
+        <li>If fewer than one team per conference is still alive, they're filled in with available teams, using the criteria of rule 12.</li>
+        <li>A team can't be assigned to two participants unless there are more participants than available teams. In that case teams are shared evenly: no team gets one more participant while another has fewer.</li>
+        <li>Assigned teams can't be changed during a round; they only change in the next round's reassignment, according to these rules.</li>
+      </ol>
+
+      <h3>Points</h3>
+      <ol start="18">
+        <li>
+          Each win by an assigned team earns its participant points, depending on the round:
+          <ul>
+            <li>Regular season: 10 points</li>
+            <li>Wild card round: 20 points</li>
+            <li>Divisional round: 30 points</li>
+            <li>Conference championship: 40 points</li>
+            <li>Super Bowl: 50 points</li>
+          </ul>
+        </li>
+        <li>Each conference's first seed has a bye in the wild card round. Whoever holds it in that round earns 20 points, the same as winning it, so they're not at a disadvantage. These points are awarded when the regular season ends, once the seeds are final.</li>
+        <li>In the regular season, a tie earns half the points of a win (5 points). There are no ties in the playoffs.</li>
+        <li>A loss neither adds nor subtracts points.</li>
+      </ol>
+
+      <h3>Entry fee and prizes</h3>
+      <ol start="22">
+        <li><ng-container [ngTemplateOutlet]="reglaApuesta"></ng-container></li>
+        <ng-container [ngTemplateOutlet]="reglasPremios"></ng-container>
+      </ol>
+    </div>
+    } @else {
     <div class="container">
       <h3>Sorteo</h3>
       <ol start="1">
@@ -106,6 +168,50 @@
         <ng-container [ngTemplateOutlet]="reglasPremios"></ng-container>
       </ol>
     </div>
+    }
+    } @else {
+    @if (en()) {
+    <div class="container">
+      <h3>Participants</h3>
+      <ol start="1">
+        <li>Each participant is a user of the platform. The group's administrator signs them up with a participant name, which can't be repeated within the group.</li>
+        <li>There's no draw and no team assignment: every participant picks every game.</li>
+        <li>Whoever signs up after the season has started plays from that moment on. Games that had already closed before they signed up count as 0 points for them.</li>
+      </ol>
+
+      <h3>Picks</h3>
+      <ol start="4">
+        <li>In every regular-season and playoff game, the participant picks which team wins. In the regular season they can also pick a tie; there are no ties in the playoffs.</li>
+        <li>On top of that, if they want, they can predict the point margin between the two teams (from 1 to 99). A tie pick has no margin to predict.</li>
+        <li>Picks can be made, and changed, until 5 minutes before the game's kickoff. From then on the game is closed and no changes are accepted. The closing time is shown on each game, and the platform's clock is the one that counts.</li>
+        <li>A playoff game can only be picked once both of its teams are known. A postponed game stays closed; if it's rescheduled, it reopens until 5 minutes before its new kickoff and existing picks are kept.</li>
+        <li>Each participant's picks are private while the game is open. Once it closes, every member of the group can see them.</li>
+        <li>Whoever doesn't pick a game earns 0 points in that game.</li>
+      </ol>
+
+      <h3>Points</h3>
+      <ol start="10">
+        <li>
+          Getting the result right (the winner or, in the regular season, the tie) earns points depending on the round:
+          <ul>
+            <li>Regular season: 10 points</li>
+            <li>Wild card round: 20 points</li>
+            <li>Divisional round: 30 points</li>
+            <li>Conference championship: 40 points</li>
+            <li>Super Bowl: 50 points</li>
+          </ul>
+        </li>
+        <li>Getting the exact point margin right earns that same number of points, up to 14, no matter which team won, on top of the points from rule 10. For example, whoever picks a team to win by 7 earns a 7-point bonus if the game ends with a 7-point margin, even if the other team won; if they also picked the winner, they earn the result points too.</li>
+        <li>A wrong pick doesn't subtract points.</li>
+        <li>Only finished games count, with their final score. A live score doesn't move the standings until the game ends.</li>
+      </ol>
+
+      <h3>Entry fee and prizes</h3>
+      <ol start="14">
+        <li><ng-container [ngTemplateOutlet]="reglaApuesta"></ng-container></li>
+        <ng-container [ngTemplateOutlet]="reglasPremios"></ng-container>
+      </ol>
+    </div>
     } @else {
     <div class="container">
       <h3>Participantes</h3>
@@ -149,6 +255,6 @@
       </ol>
     </div>
     }
+    }
   </mat-card>
 </div>
-

@@ -13,11 +13,12 @@ import { IdiomaService, registrarTextos, traducirEtapa } from '../../i18n/idioma
 import { TPipe } from '../../i18n/t.pipe';
 import { ES_EQUIPOS, EN_EQUIPOS } from './textos';
 
-registrarTextos(ES_EQUIPOS, EN_EQUIPOS);
 import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { SelectorGrupo } from '../selector-grupo/selector-grupo';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+
+registrarTextos(ES_EQUIPOS, EN_EQUIPOS);
 
 type EquipoConEtapas = Equipo & { porEtapa: RegistroEquipoPorEtapa[] };
 

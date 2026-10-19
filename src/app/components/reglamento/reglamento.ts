@@ -5,8 +5,13 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTableModule } from '@angular/material/table';
 import { NgTemplateOutlet } from '@angular/common';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { GruposService, GrupoDisponible, ModoGrupo, MODOS_GRUPO, etiquetaModo, formatearApuesta } from '../../services/grupos';
+import { GruposService, GrupoDisponible, ModoGrupo, MODOS_GRUPO, formatearApuesta } from '../../services/grupos';
+import { IdiomaService, registrarTextos } from '../../i18n/idioma';
+import { TPipe } from '../../i18n/t.pipe';
+import { ES_REGLAMENTO, EN_REGLAMENTO } from './textos';
 import { SelectorGrupo } from '../selector-grupo/selector-grupo';
+
+registrarTextos(ES_REGLAMENTO, EN_REGLAMENTO);
 
 /**
  * Reglamento. Hay uno por modo de juego (Equipos y Pronóstico), los dos
@@ -25,13 +30,18 @@ import { SelectorGrupo } from '../selector-grupo/selector-grupo';
     MatTableModule,
     MatButtonToggleModule,
     NgTemplateOutlet,
-    SelectorGrupo
+    SelectorGrupo,
+    TPipe
   ],
   templateUrl: './reglamento.html',
   styleUrls: ['./reglamento.css']
 })
 export class Reglamento {
   private gruposService = inject(GruposService);
+  private idioma = inject(IdiomaService);
+
+  /** Las reglas están escritas en los dos idiomas en el HTML; se muestra la del idioma actual. */
+  en = computed(() => this.idioma.actual() === 'en');
 
   cargado = signal(false);
   logueado = signal(false);
@@ -45,7 +55,7 @@ export class Reglamento {
   });
 
   readonly modos = MODOS_GRUPO;
-  readonly etiquetaModo = etiquetaModo;
+  readonly etiquetaModo = (modo: ModoGrupo) => this.idioma.t(`modo.${modo}` as 'modo.equipos');
   /** Modo que el usuario eligió leer; null = el del grupo elegido (o Equipos sin grupo). */
   modoElegido = signal<ModoGrupo | null>(null);
   modo = computed<ModoGrupo>(() => this.modoElegido() ?? this.grupo()?.modo ?? 'equipos');

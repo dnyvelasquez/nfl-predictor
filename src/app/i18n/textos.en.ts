@@ -117,4 +117,6 @@ export const EN: Record<keyof typeof ES, string> = {
   'tabla.error': "Couldn't load the participants. Please reload the page.",
   'dialogo.puntajeTotal': 'Total score',
   'dialogo.cerrar': 'Close',
+  'modo.equipos': 'Teams mode',
+  'modo.pronostico': "Pick'em mode",
 };

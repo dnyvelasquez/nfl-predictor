@@ -118,6 +118,8 @@ export const ES = {
   'tabla.error': 'Error al cargar los participantes. Por favor, recarga la página.',
   'dialogo.puntajeTotal': 'Puntaje total',
   'dialogo.cerrar': 'Cerrar',
+  'modo.equipos': 'Modo Equipos',
+  'modo.pronostico': 'Modo Pronóstico',
 } as const;
 
 
