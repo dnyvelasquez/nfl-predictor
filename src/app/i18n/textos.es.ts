@@ -38,7 +38,7 @@ export const ES = {
   'header.juegos': 'Juegos de la semana',
   'header.equipos': 'Equipos',
   'header.enCompeticion': 'En competición',
-  'header.fixture': 'Fixture',
+  'header.fixture': 'Clasificación',
   'header.ranking': 'Ranking inicial',
   'header.reglamento': 'Reglamento',
   'header.cerrarSesion': 'Cerrar sesión',

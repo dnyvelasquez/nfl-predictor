@@ -1,8 +1,8 @@
-// Textos de la página Fixture (carga diferida: se registran al cargar la página).
+// Textos de la página Clasificación / Standings (ruta /fixture; carga diferida: se registran al cargar la página).
 
 export const ES_FIXTURE = {
-  'fixture.cargando': 'Cargando fixture...',
-  'fixture.error': 'Error al cargar el fixture. Por favor, intenta de nuevo.',
+  'fixture.cargando': 'Cargando clasificación...',
+  'fixture.error': 'Error al cargar la clasificación. Por favor, intenta de nuevo.',
   'fixture.tabRegular': 'Temporada regular',
   'fixture.tabPost': 'Postemporada',
   'fixture.gpe': 'G-P-E',

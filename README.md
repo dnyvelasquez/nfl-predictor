@@ -91,8 +91,8 @@ También tiene una GitHub Action (`.github/workflows/sync-ranking.yml`) que corr
 - **Juegos de la semana**: calendario por semana con la hora, el marcador final o, mientras el juego está en curso, el marcador parcial con un letrero "En vivo" y el cuarto que se está jugando; se actualiza solo. Con sesión muestra qué participante del grupo tiene cada equipo (Modo Equipos) o deja pronosticar cada juego (Modo Pronóstico, ver abajo).
 
 Las fechas y horas de los juegos se muestran en la zona horaria de cada usuario (la de su navegador); en la base se guardan en hora de Bogotá. En inglés van en formato de 12 horas.
-- **Equipos → Fixture**: dos pestañas.
-  - *Temporada regular*: standings por conferencia y división, con el récord (Ganados-Perdidos-Empatados) y el orden oficial de la NFL; una franja de color marca la clasificación a playoffs (amarillo: semilla 1, azul: otros campeones de división, rojo: wild cards).
+- **Equipos → Clasificación** (en inglés, Standings): dos pestañas.
+  - *Temporada regular*: clasificación por conferencia y división, con el récord (Ganados-Perdidos-Empatados) y el orden oficial de la NFL; una franja de color marca la clasificación a playoffs (amarillo: semilla 1, azul: otros campeones de división, rojo: wild cards).
   - *Postemporada*: el cuadro de playoffs (AFC, Super Bowl y NFC). Antes de los playoffs muestra los cruces proyectados con las semillas actuales; luego, los juegos reales con fecha, marcador en vivo y ganador. Se abre sola en esta pestaña cuando empiezan los playoffs.
 - **Equipos → Ranking inicial**: el ranking de la temporada anterior con el que se hizo la asignación inicial, agrupado según hasta dónde llegó cada equipo en los playoffs.
 - **Reglamento**: uno por modo de juego, con un selector para leer el otro (abre en el modo del grupo elegido). Modo Equipos: sorteo, asignación de equipos, puntos y premios; Modo Pronóstico: participantes, cómo y hasta cuándo se pronostica, puntos (incluido el bono por diferencia) y premios. El valor de la apuesta depende del grupo y solo se ve con sesión.
