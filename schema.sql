@@ -1621,3 +1621,106 @@ REVOKE ALL ON FUNCTION public.quitar_de_grupo(uuid, uuid), public.actualizar_apu
 GRANT EXECUTE ON FUNCTION public.quitar_de_grupo(uuid, uuid), public.actualizar_apuesta(uuid, numeric) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ============================================================
+-- PRIMERAS SEMILLAS SIN DUEÑO EN COMODINES (2026-10-20): si nadie tenía una
+-- primera semilla en temporada regular (grupo que empieza al cerrar la
+-- temporada, o equipo sin asignar), va al participante de menor puntaje.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.calcular_auto_asignacion_wildcard(p_grupo uuid)
+RETURNS TABLE (equipo_id text, participante text, conferencia text, motivo text)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$
+-- 1. Quien tiene la primera semilla de una conferencia va solo con ese equipo
+--    (descansa y cuenta como victoria) y cede los demás.
+-- 2. Los demás conservan sus equipos vivos de temporada regular; con dos de la
+--    misma conferencia se quedan con el de mejor récord (desempate: semilla).
+-- 3. Una primera semilla que nadie tenía (grupo que empieza al cerrar la
+--    temporada regular, o equipo que quedó sin asignar) va al participante de
+--    menor puntaje (empate: número de sorteo), primero entre los que no
+--    conservaron ningún equipo; quien la recibe cede los que conservaba.
+-- 4. De menor a mayor puntaje (empate: número de sorteo), cada uno completa la
+--    conferencia que le falta con el equipo libre de mejor récord.
+-- "Récord" = % de victorias de temporada regular (empate = media victoria).
+#variable_conflict use_column
+DECLARE
+  part record;
+  semilla record;
+  v_conf text;
+  elegido text;
+  v_part text;
+BEGIN
+  DROP TABLE IF EXISTS _wc_equipos;
+  DROP TABLE IF EXISTS _wc_resultado;
+
+  CREATE TEMP TABLE _wc_equipos ON COMMIT DROP AS
+  SELECT e.id, e.nombre, left(e.division, 3) AS conf, e.seed_conferencia AS seed,
+         coalesce(r.pct, 0) AS pct, a.participante AS dueno
+  FROM equipos e
+  LEFT JOIN LATERAL (
+    SELECT sum(CASE WHEN x.propio > x.rival THEN 1 WHEN x.propio = x.rival THEN 0.5 ELSE 0 END) / nullif(count(*), 0) AS pct
+    FROM (
+      SELECT CASE WHEN j.local = e.nombre THEN j.resultado_local ELSE j.resultado_visitante END AS propio,
+             CASE WHEN j.local = e.nombre THEN j.resultado_visitante ELSE j.resultado_local END AS rival
+      FROM juegos j
+      WHERE j.etapa = 'regular' AND j.estado <> 'en_vivo'
+        AND j.resultado_local IS NOT NULL AND j.resultado_visitante IS NOT NULL
+        AND (j.local = e.nombre OR j.visitante = e.nombre)
+    ) x
+  ) r ON true
+  LEFT JOIN asignacion a ON a.equipo_id = e.id AND a.etapa = 'regular' AND a.grupo_id = p_grupo
+  WHERE e.seed_conferencia BETWEEN 1 AND 7;
+
+  CREATE TEMP TABLE _wc_resultado (equipo_id text, participante text, conf text, motivo text) ON COMMIT DROP;
+
+  INSERT INTO _wc_resultado
+  SELECT id, dueno, conf, 'Primera semilla: descansa y cuenta como victoria'
+  FROM _wc_equipos WHERE seed = 1 AND dueno IS NOT NULL;
+
+  INSERT INTO _wc_resultado
+  SELECT DISTINCT ON (dueno, conf) id, dueno, conf, 'Conserva su equipo de temporada regular'
+  FROM _wc_equipos
+  WHERE seed BETWEEN 2 AND 7 AND dueno IS NOT NULL
+    AND dueno NOT IN (SELECT r.participante FROM _wc_resultado r)
+  ORDER BY dueno, conf, pct DESC, seed ASC;
+
+  FOR semilla IN SELECT e.id, e.conf FROM _wc_equipos e WHERE e.seed = 1 AND e.dueno IS NULL ORDER BY e.conf LOOP
+    v_part := NULL;
+    SELECT pg.participante INTO v_part
+    FROM puntajes_grupo(p_grupo) pg
+    WHERE pg.participante NOT IN (SELECT r.participante FROM _wc_resultado r WHERE r.motivo LIKE 'Primera semilla%')
+    ORDER BY EXISTS (SELECT 1 FROM _wc_resultado r WHERE r.participante = pg.participante) ASC,
+             pg.puntos ASC, pg.numero ASC
+    LIMIT 1;
+    IF v_part IS NOT NULL THEN
+      DELETE FROM _wc_resultado r WHERE r.participante = v_part;
+      INSERT INTO _wc_resultado VALUES (semilla.id, v_part, semilla.conf,
+        'Primera semilla sin dueño, por puntaje: descansa y cuenta como victoria');
+    END IF;
+  END LOOP;
+
+  FOR part IN
+    SELECT pg.participante AS nombre
+    FROM puntajes_grupo(p_grupo) pg
+    WHERE pg.participante NOT IN (SELECT r.participante FROM _wc_resultado r WHERE r.motivo LIKE 'Primera semilla%')
+    ORDER BY pg.puntos ASC, pg.numero ASC
+  LOOP
+    FOREACH v_conf IN ARRAY ARRAY['AFC', 'NFC'] LOOP
+      CONTINUE WHEN EXISTS (SELECT 1 FROM _wc_resultado r WHERE r.participante = part.nombre AND r.conf = v_conf);
+      elegido := NULL;
+      SELECT e.id INTO elegido
+      FROM _wc_equipos e
+      WHERE e.conf = v_conf AND e.seed BETWEEN 2 AND 7
+        AND e.id NOT IN (SELECT r.equipo_id FROM _wc_resultado r)
+      ORDER BY e.pct DESC, e.seed ASC
+      LIMIT 1;
+      IF elegido IS NOT NULL THEN
+        INSERT INTO _wc_resultado VALUES (elegido, part.nombre, v_conf, 'Asignado por puntaje');
+      END IF;
+    END LOOP;
+  END LOOP;
+
+  RETURN QUERY SELECT r.equipo_id, r.participante, r.conf, r.motivo FROM _wc_resultado r;
+END $f$;
+
+REVOKE ALL ON FUNCTION public.calcular_auto_asignacion_wildcard(uuid) FROM PUBLIC;
