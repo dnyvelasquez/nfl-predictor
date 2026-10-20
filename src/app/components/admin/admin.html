@@ -30,7 +30,7 @@
           <span>{{ 'admin.nuevoUsuario' | t }}</span>
         </button>
       }
-      @if (esSuperusuario()) {
+      @if (esAdministrador()) {
         <button mat-button routerLink="/usuario">
           <mat-icon>manage_accounts</mat-icon>
           <span>{{ 'admin.usuarios' | t }}</span>

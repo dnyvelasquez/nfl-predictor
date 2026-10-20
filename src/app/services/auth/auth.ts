@@ -249,10 +249,14 @@ export class AuthService {
     );
   }
 
-  /** Solo super usuario: saca a un usuario de un grupo. */
+  /**
+   * Saca a un usuario de un grupo (RPC `quitar_de_grupo`): el superusuario a
+   * cualquiera; un administrador, solo a miembros de solo lectura de sus grupos
+   * y nunca a sí mismo (lo valida la base).
+   */
   quitarDeGrupo(userId: string, grupoId: string) {
     return from(
-      this.supabaseClient.from('miembros_grupo').delete().eq('user_id', userId).eq('grupo_id', grupoId)
+      this.supabaseClient.getClient().rpc('quitar_de_grupo', { p_user: userId, p_grupo: grupoId })
     ).pipe(
       map(({ error }: any) => {
         if (error) throw error;

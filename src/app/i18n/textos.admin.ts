@@ -65,6 +65,7 @@ export const ES_ADMIN = {
 
   // Usuarios
   'us.titulo': 'Usuarios',
+  'us.notaAdmin': 'Ves a los miembros de los grupos que administras. Puedes agregar usuarios existentes como solo lectura, sacar a los de solo lectura y cambiar la apuesta de tus grupos. Para crear un usuario nuevo usa "Nuevo usuario".',
   'us.buscar': 'Buscar (email)',
   'us.botonBuscar': 'Buscar',
   'us.eliminarA': 'Eliminar a {email}',
@@ -207,6 +208,11 @@ export const ES_ADMIN = {
   'db.El grupo todavía tiene participantes, asignaciones o usuarios; muévelos o bórralos primero.': 'El grupo todavía tiene participantes, asignaciones o usuarios; muévelos o bórralos primero.',
   'db.participanteRepetido': 'Ya hay un participante llamado "{x}" en este grupo',
   'db.etapaNoSoportada': 'Etapa no soportada: {x}',
+  'db.No autorizado para sacar miembros de este grupo': 'No autorizado para sacar miembros de este grupo',
+  'db.No puedes sacarte a ti mismo del grupo': 'No puedes sacarte a ti mismo del grupo',
+  'db.Un administrador solo puede sacar a usuarios de solo lectura': 'Un administrador solo puede sacar a usuarios de solo lectura',
+  'db.No autorizado para cambiar la apuesta de este grupo': 'No autorizado para cambiar la apuesta de este grupo',
+  'db.La apuesta no puede ser negativa': 'La apuesta no puede ser negativa',
 } as const;
 
 export const EN_ADMIN: Record<keyof typeof ES_ADMIN, string> = {
@@ -269,6 +275,7 @@ export const EN_ADMIN: Record<keyof typeof ES_ADMIN, string> = {
 
   // Users
   'us.titulo': 'Users',
+  'us.notaAdmin': 'You see the members of the groups you administer. You can add existing users as read-only, remove read-only members and change your groups\' entry fee. To create a new user, use "New user".',
   'us.buscar': 'Search (email)',
   'us.botonBuscar': 'Search',
   'us.eliminarA': 'Delete {email}',
@@ -411,6 +418,11 @@ export const EN_ADMIN: Record<keyof typeof ES_ADMIN, string> = {
   'db.El grupo todavía tiene participantes, asignaciones o usuarios; muévelos o bórralos primero.': 'The group still has participants, assignments or users; move or delete them first.',
   'db.participanteRepetido': 'There is already a participant named "{x}" in this group',
   'db.etapaNoSoportada': 'Unsupported stage: {x}',
+  'db.No autorizado para sacar miembros de este grupo': 'Not authorized to remove members from this group',
+  'db.No puedes sacarte a ti mismo del grupo': "You can't remove yourself from the group",
+  'db.Un administrador solo puede sacar a usuarios de solo lectura': 'An administrator can only remove read-only users',
+  'db.No autorizado para cambiar la apuesta de este grupo': "Not authorized to change this group's entry fee",
+  'db.La apuesta no puede ser negativa': "The entry fee can't be negative",
 };
 
 /** Registra los textos del panel (idempotente: se puede llamar desde cada página). */

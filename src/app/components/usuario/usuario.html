@@ -16,6 +16,10 @@
       </button>
     </div>
 
+    @if (!esSuperusuario && !loading) {
+      <p class="nota-admin">{{ 'us.notaAdmin' | t }}</p>
+    }
+
     <div class="buscador">
       <mat-form-field appearance="fill" class="campo-buscar" subscriptSizing="dynamic">
         <mat-label>{{ 'us.buscar' | t }}</mat-label>
@@ -43,14 +47,18 @@
           <section class="tarjeta-usuario">
             <div class="usuario-encabezado">
               <span class="email">{{ u.email }}</span>
-              <button mat-icon-button color="warn" (click)="confirmAndDelete(u)"
-                      [disabled]="u.id === miUserId || loading" [attr.aria-label]="'us.eliminarA' | t: { email: u.email }">
-                <mat-icon>delete</mat-icon>
-              </button>
+              @if (esSuperusuario) {
+                <button mat-icon-button color="warn" (click)="confirmAndDelete(u)"
+                        [disabled]="u.id === miUserId || loading" [attr.aria-label]="'us.eliminarA' | t: { email: u.email }">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
             </div>
 
-            <mat-checkbox [checked]="u.esSuperusuario" (change)="cambiarSuperusuario(u, $event.checked)"
-                          [disabled]="u.id === miUserId || loading">{{ 'rol.superusuario' | t }}</mat-checkbox>
+            @if (esSuperusuario) {
+              <mat-checkbox [checked]="u.esSuperusuario" (change)="cambiarSuperusuario(u, $event.checked)"
+                            [disabled]="u.id === miUserId || loading">{{ 'rol.superusuario' | t }}</mat-checkbox>
+            }
 
             <div class="membresias">
               @for (m of u.membresias; track m.grupo_id) {
@@ -59,16 +67,24 @@
                     <span>{{ m.grupo }}</span>
                     @if (m.participante) { <small class="participante">{{ 'us.participante' | t: { p: m.participante } }}</small> }
                   </div>
-                  <mat-select class="membresia-rol" [value]="m.rol" (selectionChange)="cambiarRolEnGrupo(u, m, $event.value)"
-                              [disabled]="loading" [attr.aria-label]="'us.rolEn' | t: { grupo: m.grupo }">
-                    @for (r of roles; track r.value) {
-                      <mat-option [value]="r.value">{{ etiquetaRol(r.value) }}</mat-option>
-                    }
-                  </mat-select>
-                  <button mat-icon-button class="membresia-quitar" (click)="quitarDeGrupo(u, m)" [disabled]="loading"
-                          [attr.aria-label]="'us.sacarDe' | t: { grupo: m.grupo }">
-                    <mat-icon>close</mat-icon>
-                  </button>
+                  @if (esSuperusuario) {
+                    <mat-select class="membresia-rol" [value]="m.rol" (selectionChange)="cambiarRolEnGrupo(u, m, $event.value)"
+                                [disabled]="loading" [attr.aria-label]="'us.rolEn' | t: { grupo: m.grupo }">
+                      @for (r of roles; track r.value) {
+                        <mat-option [value]="r.value">{{ etiquetaRol(r.value) }}</mat-option>
+                      }
+                    </mat-select>
+                  } @else {
+                    <span class="membresia-rol rol-texto">{{ etiquetaRol(m.rol) }}</span>
+                  }
+                  @if (puedeQuitar(u, m)) {
+                    <button mat-icon-button class="membresia-quitar" (click)="quitarDeGrupo(u, m)" [disabled]="loading"
+                            [attr.aria-label]="'us.sacarDe' | t: { grupo: m.grupo }">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  } @else {
+                    <span class="membresia-quitar"></span>
+                  }
                 </div>
               } @empty {
                 <p class="sin-grupo">{{ (u.esSuperusuario ? 'us.veTodos' : 'us.sinGrupo') | t }}</p>
@@ -109,15 +125,18 @@
               <input matInput type="number" min="0" step="1000" [value]="g.apuesta ?? ''"
                      (change)="cambiarApuesta(g, $any($event.target).value)" />
             </mat-form-field>
-            <button mat-icon-button color="warn" (click)="borrarGrupo(g)" [disabled]="loading"
-                    [attr.aria-label]="'us.borrarGrupo' | t: { grupo: g.nombre }">
-              <mat-icon>delete</mat-icon>
-            </button>
+            @if (esSuperusuario) {
+              <button mat-icon-button color="warn" (click)="borrarGrupo(g)" [disabled]="loading"
+                      [attr.aria-label]="'us.borrarGrupo' | t: { grupo: g.nombre }">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
           </div>
         </li>
       }
     </ul>
 
+    @if (esSuperusuario) {
     <div class="nuevo-grupo">
       <mat-form-field appearance="fill" class="campo-nombre">
         <mat-label>{{ 'us.nuevoGrupo' | t }}</mat-label>
@@ -139,6 +158,7 @@
       </mat-form-field>
       <button mat-raised-button color="primary" class="boton-crear" (click)="crearGrupo()" [disabled]="loading">{{ 'us.crearGrupo' | t }}</button>
     </div>
+    }
 
   </mat-card>
 </div>

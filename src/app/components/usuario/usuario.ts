@@ -10,7 +10,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService, ROLES_GRUPO, RolGrupo, UsuarioVisible, MembresiaVisible } from '../../services/auth/auth';
-import { GruposService, Grupo, ModoGrupo, MODOS_GRUPO } from '../../services/grupos';
+import { GruposService, GrupoDisponible, ModoGrupo, MODOS_GRUPO } from '../../services/grupos';
 import { Router, RouterModule } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
 import { IdiomaService } from '../../i18n/idioma';
@@ -63,7 +63,14 @@ export class Usuario implements OnInit {
   modos = MODOS_GRUPO;
   etiquetaModo = (modo: ModoGrupo) => this.idioma.t(`modo.${modo}` as 'modo.equipos');
   etiquetaRol = (rol: RolGrupo) => this.idioma.t(`rol.${rol}` as 'rol.lectura');
-  grupos: Grupo[] = [];
+  /**
+   * Grupos que quien entra puede gestionar: todos para el superusuario, los que
+   * administra para un administrador. Un administrador solo ve a los miembros
+   * de esos grupos (lo filtra `usuarios_visibles()`), agrega como solo lectura,
+   * saca a los de solo lectura y cambia la apuesta; lo demás es del superusuario.
+   */
+  grupos: GrupoDisponible[] = [];
+  esSuperusuario = false;
   // El usuario en sesión no puede quitarse el super usuario ni borrarse (evita quedarse sin super usuario).
   miUserId: string | null = null;
 
@@ -81,10 +88,11 @@ export class Usuario implements OnInit {
   load() {
     this.loading = true;
     this.errorMsg = null;
-    forkJoin({ usuarios: this.svc.listUsers(), grupos: this.gruposService.getGrupos() }).subscribe({
-      next: ({ usuarios, grupos }) => {
+    forkJoin({ usuarios: this.svc.listUsers(), disponibles: this.gruposService.gruposDisponibles$() }).subscribe({
+      next: ({ usuarios, disponibles }) => {
         this.todos = usuarios;
-        this.grupos = grupos;
+        this.esSuperusuario = disponibles.grupos.some((g) => g.rol === 'superusuario');
+        this.grupos = disponibles.grupos.filter((g) => g.rol === 'superusuario' || g.rol === 'administrador');
         this.paginar();
         this.loading = false;
       },
@@ -112,8 +120,14 @@ export class Usuario implements OnInit {
   nextPage() { if (this.hayMas) { this.page++; this.paginar(); } }
   prevPage() { if (this.page > 1) { this.page--; this.paginar(); } }
 
-  gruposSinMembresia(u: UsuarioVisible): Grupo[] {
+  gruposSinMembresia(u: UsuarioVisible): GrupoDisponible[] {
     return this.grupos.filter((g) => !u.membresias.some((m) => m.grupo_id === g.id));
+  }
+
+  /** Un administrador solo saca a miembros de solo lectura de sus grupos, y nunca a sí mismo. */
+  puedeQuitar(u: UsuarioVisible, m: MembresiaVisible): boolean {
+    if (this.esSuperusuario) return true;
+    return m.rol === 'lectura' && u.id !== this.miUserId && this.grupos.some((g) => g.id === m.grupo_id);
   }
 
   cambiarSuperusuario(u: UsuarioVisible, esSuper: boolean) {
@@ -131,7 +145,7 @@ export class Usuario implements OnInit {
       () => u.membresias = u.membresias.filter((x) => x.grupo_id !== m.grupo_id));
   }
 
-  agregarAGrupo(u: UsuarioVisible, g: Grupo) {
+  agregarAGrupo(u: UsuarioVisible, g: GrupoDisponible) {
     // En Modo Pronóstico el usuario entra como participante: hace falta su nombre.
     let participante: string | null = null;
     if (g.modo === 'pronostico') {
@@ -171,7 +185,7 @@ export class Usuario implements OnInit {
     this.loading = true; this.errorMsg = this.okMsg = null;
     this.gruposService.crearGrupo(nombre, modo, this.leerApuesta(this.nuevaApuesta.value)).subscribe({
       next: (g) => {
-        this.grupos = [...this.grupos, g].sort((a, b) => a.nombre.localeCompare(b.nombre));
+        this.grupos = [...this.grupos, { ...g, rol: 'superusuario' as const }].sort((a, b) => a.nombre.localeCompare(b.nombre));
         this.nuevoGrupo.reset('');
         this.nuevaApuesta.reset(null);
         this.nuevoModo.reset(null);
@@ -185,7 +199,7 @@ export class Usuario implements OnInit {
     });
   }
 
-  cambiarApuesta(g: Grupo, valor: string) {
+  cambiarApuesta(g: GrupoDisponible, valor: string) {
     const apuesta = this.leerApuesta(valor);
     if (apuesta === g.apuesta) return;
     if (apuesta !== null && apuesta < 0) { this.errorMsg = this.idioma.t('us.apuestaNegativa'); return; }
@@ -210,7 +224,7 @@ export class Usuario implements OnInit {
     return Number.isFinite(n) ? n : null;
   }
 
-  borrarGrupo(g: Grupo) {
+  borrarGrupo(g: GrupoDisponible) {
     const ok = confirm(this.idioma.t('us.confirmBorrarGrupo', { grupo: g.nombre }));
     if (!ok) return;
 

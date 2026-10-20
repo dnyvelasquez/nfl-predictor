@@ -1552,3 +1552,72 @@ REVOKE ALL ON FUNCTION privado.pronosticar(uuid, smallint, text, smallint, text)
 GRANT EXECUTE ON FUNCTION privado.pronosticar(uuid, smallint, text, smallint, text), public.pronosticar(uuid, smallint, text, smallint) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ============================================================================
+-- 2026-10-20 — La página Usuarios se abre a los administradores de grupo.
+-- Un administrador ve a los miembros de los grupos que administra (ya lo hacía
+-- usuarios_visibles()), agrega usuarios existentes como solo lectura (ya lo
+-- hacía agregar_miembro()) y, con estas dos funciones, saca a miembros de
+-- solo lectura y cambia la apuesta de sus grupos. Cambiar roles, marcar
+-- superusuario, borrar cuentas y crear/borrar grupos siguen siendo solo del
+-- superusuario (escrituras directas, que RLS reserva para él).
+-- Mismo patrón que las demás RPC: envoltorio SECURITY INVOKER en public que lee
+-- auth.user_id() y núcleo SECURITY DEFINER en privado.
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION privado.quitar_de_grupo(p_user uuid, p_grupo uuid, p_uid text) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+-- Superusuario: cualquier miembro. Administrador: solo miembros de solo lectura
+-- de un grupo que administra, y nunca a sí mismo. El trigger de miembros_grupo
+-- borra su participante si el grupo es de Modo Pronóstico.
+DECLARE
+  rol_caller text := privado.rol_en_grupo_de(p_grupo, p_uid);
+  rol_objetivo text;
+BEGIN
+  SELECT m.rol INTO rol_objetivo FROM miembros_grupo m WHERE m.user_id = p_user AND m.grupo_id = p_grupo;
+  IF rol_caller = 'superusuario' THEN
+    NULL;
+  ELSIF rol_caller = 'administrador' THEN
+    IF p_user::text = p_uid THEN
+      RAISE EXCEPTION 'No puedes sacarte a ti mismo del grupo' USING ERRCODE = '42501';
+    END IF;
+    IF rol_objetivo IS DISTINCT FROM 'lectura' THEN
+      RAISE EXCEPTION 'Un administrador solo puede sacar a usuarios de solo lectura' USING ERRCODE = '42501';
+    END IF;
+  ELSE
+    RAISE EXCEPTION 'No autorizado para sacar miembros de este grupo' USING ERRCODE = '42501';
+  END IF;
+  DELETE FROM miembros_grupo m WHERE m.user_id = p_user AND m.grupo_id = p_grupo;
+END $$;
+
+CREATE OR REPLACE FUNCTION privado.actualizar_apuesta(p_grupo uuid, p_apuesta numeric, p_uid text) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+-- Superusuario o administrador del grupo.
+BEGIN
+  IF coalesce(privado.rol_en_grupo_de(p_grupo, p_uid), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para cambiar la apuesta de este grupo' USING ERRCODE = '42501';
+  END IF;
+  IF p_apuesta IS NOT NULL AND p_apuesta < 0 THEN
+    RAISE EXCEPTION 'La apuesta no puede ser negativa' USING ERRCODE = '22023';
+  END IF;
+  UPDATE grupos g SET apuesta = p_apuesta WHERE g.id = p_grupo;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.quitar_de_grupo(p_user uuid, p_grupo uuid) RETURNS void
+LANGUAGE sql
+BEGIN ATOMIC
+  SELECT privado.quitar_de_grupo(p_user, p_grupo, auth.user_id());
+END;
+
+CREATE OR REPLACE FUNCTION public.actualizar_apuesta(p_grupo uuid, p_apuesta numeric) RETURNS void
+LANGUAGE sql
+BEGIN ATOMIC
+  SELECT privado.actualizar_apuesta(p_grupo, p_apuesta, auth.user_id());
+END;
+
+REVOKE ALL ON FUNCTION privado.quitar_de_grupo(uuid, uuid, text), privado.actualizar_apuesta(uuid, numeric, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION privado.quitar_de_grupo(uuid, uuid, text), privado.actualizar_apuesta(uuid, numeric, text) TO authenticated;
+REVOKE ALL ON FUNCTION public.quitar_de_grupo(uuid, uuid), public.actualizar_apuesta(uuid, numeric) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.quitar_de_grupo(uuid, uuid), public.actualizar_apuesta(uuid, numeric) TO authenticated;
+
+NOTIFY pgrst, 'reload schema';

@@ -267,3 +267,15 @@ h2 {
     margin-top: 0;
   }
 }
+
+/* Administrador de grupo: el rol se muestra como texto (no lo puede cambiar). */
+.rol-texto {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.nota-admin {
+  margin: 4px 0 12px;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}

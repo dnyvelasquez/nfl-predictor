@@ -87,8 +87,9 @@ export class GruposService {
     );
   }
 
+  /** RPC `actualizar_apuesta`: superusuario o administrador del grupo. */
   actualizarApuesta(id: string, apuesta: number | null): Observable<void> {
-    return from(this.supabaseClient.from('grupos').update({ apuesta }).eq('id', id)).pipe(
+    return from(this.supabaseClient.getClient().rpc('actualizar_apuesta', { p_grupo: id, p_apuesta: apuesta })).pipe(
       map(({ error }: any) => {
         if (error) throw error;
       })

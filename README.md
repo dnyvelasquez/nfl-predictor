@@ -108,12 +108,12 @@ Las fechas y horas de los juegos se muestran en la zona horaria de cada usuario 
 - **Asignación**: un cuadro por etapa (Temporada Regular, Wild Card, Ronda Divisional, Final de Conferencia y Super Bowl). Cada pestaña tiene "Auto-asignar", que aplica el reglamento: la temporada regular por el ranking, y cada ronda de playoffs por puntaje, con los resultados de la ronda anterior. Si la ronda anterior todavía no termina, la confirmación lo avisa.
 - **Participantes**: personas inscritas en el grupo. En Modo Equipos el orden de selección se reparte con el botón "Sortear números"; en Modo Pronóstico cada participante es un usuario y se crea al agregarlo al grupo.
 - **Ingresar Juego**: calendario y resultados (la sincronización con ESPN los mantiene al día; aquí se pueden corregir a mano, en hora de Bogotá).
-- **Nuevo Usuario / Usuarios**: alta de usuarios en un grupo y gestión de roles, grupos (con su modo) y apuestas.
+- **Nuevo Usuario / Usuarios**: alta de usuarios en un grupo y gestión de roles, grupos (con su modo) y apuestas. Un administrador entra a Usuarios solo con los miembros de los grupos que administra: agrega usuarios existentes como solo lectura, saca a los de solo lectura y cambia la apuesta de sus grupos.
 
 **Roles**
 
 - **Super usuario**: hace todo, en todos los grupos.
-- **Administrador** (de un grupo): ve el panel, usa "Auto-asignar" y "Sortear números", y crea usuarios de solo lectura en su grupo.
+- **Administrador** (de un grupo): ve el panel, usa "Auto-asignar" y "Sortear números", crea usuarios de solo lectura en su grupo y gestiona a sus miembros de solo lectura y la apuesta del grupo desde Usuarios.
 - **Solo lectura**: no entra al panel; inicia sesión para ver la tabla, los equipos y la apuesta de su grupo (pensado como una cuenta compartida por grupo).
 
 Un mismo usuario puede pertenecer a varios grupos, con un rol distinto en cada uno. Los datos de cada grupo (participantes, asignaciones, apuesta) son privados: la base de datos solo se los muestra a sus miembros.
