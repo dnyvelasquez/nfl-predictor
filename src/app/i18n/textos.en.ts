@@ -66,6 +66,11 @@ export const EN: Record<keyof typeof ES, string> = {
   'home.enHorasMin': 'in {h} h {m} min',
   'home.enMin': 'in {m} min',
   'home.enInstantes': 'any moment now',
+  'home.pickGana': 'Your pick: wins',
+  'home.pickGanaPor': 'Your pick: wins by {n}',
+  'home.pickPierde': 'Your pick: loses',
+  'home.pickPierdePor': 'Your pick: loses by {n}',
+  'home.pickEmpate': 'Your pick: tie',
 
   // This week's games
   'juegos.titulo': 'Week {n} Games',

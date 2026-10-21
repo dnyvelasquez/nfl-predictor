@@ -67,6 +67,11 @@ export const ES = {
   'home.enHorasMin': 'en {h} h {m} min',
   'home.enMin': 'en {m} min',
   'home.enInstantes': 'en instantes',
+  'home.pickGana': 'Tu pronóstico: gana',
+  'home.pickGanaPor': 'Tu pronóstico: gana por {n}',
+  'home.pickPierde': 'Tu pronóstico: pierde',
+  'home.pickPierdePor': 'Tu pronóstico: pierde por {n}',
+  'home.pickEmpate': 'Tu pronóstico: empate',
 
   // Juegos de la semana
   'juegos.titulo': 'Juegos de la Semana {n}',

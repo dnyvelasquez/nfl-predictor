@@ -39,6 +39,11 @@
             @if (logueado() && j.participanteVisitante) {
               <p class="equipo-participante">{{ j.participanteVisitante }}</p>
             }
+            @if (pick(j, 'visitante'); as pk) {
+              <p class="pick grande" [class]="pk.tipo" [title]="pk.etiqueta" [attr.aria-label]="pk.etiqueta">
+                <ng-container *ngTemplateOutlet="pickTpl; context: { $implicit: pk }"></ng-container>
+              </p>
+            }
           </div>
 
           <div class="centro">
@@ -76,6 +81,11 @@
             @if (logueado() && j.participanteLocal) {
               <p class="equipo-participante">{{ j.participanteLocal }}</p>
             }
+            @if (pick(j, 'local'); as pk) {
+              <p class="pick grande" [class]="pk.tipo" [title]="pk.etiqueta" [attr.aria-label]="pk.etiqueta">
+                <ng-container *ngTemplateOutlet="pickTpl; context: { $implicit: pk }"></ng-container>
+              </p>
+            }
           </div>
         </div>
       </mat-card>
@@ -96,6 +106,11 @@
               <div class="fila-equipo">
                 <span>{{ j.visitante }}</span>
                 @if (logueado() && j.participanteVisitante) { <small>{{ j.participanteVisitante }}</small> }
+                @if (pick(j, 'visitante'); as pk) {
+                  <small class="pick" [class]="pk.tipo" [title]="pk.etiqueta" [attr.aria-label]="pk.etiqueta">
+                    <ng-container *ngTemplateOutlet="pickTpl; context: { $implicit: pk }"></ng-container>
+                  </small>
+                }
               </div>
 
               <div class="fila-centro">
@@ -121,6 +136,11 @@
               <div class="fila-equipo derecha">
                 <span>{{ j.local }}</span>
                 @if (logueado() && j.participanteLocal) { <small>{{ j.participanteLocal }}</small> }
+                @if (pick(j, 'local'); as pk) {
+                  <small class="pick" [class]="pk.tipo" [title]="pk.etiqueta" [attr.aria-label]="pk.etiqueta">
+                    <ng-container *ngTemplateOutlet="pickTpl; context: { $implicit: pk }"></ng-container>
+                  </small>
+                }
               </div>
               <img [src]="j.logoLocal" [alt]="j.local" width="44" height="44" loading="lazy" class="mascota-chica">
             </div>
@@ -209,3 +229,8 @@
     }
   </div>
 </div>
+
+<!-- Pronóstico del usuario bajo un equipo: la diferencia (+N / −N) o, sin ella, un ícono. -->
+<ng-template #pickTpl let-pk>
+  @if (pk.texto) { {{ pk.texto }} } @else { <mat-icon aria-hidden="true">{{ pk.icono }}</mat-icon> }
+</ng-template>

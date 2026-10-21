@@ -17,6 +17,8 @@
   --acento: #7fd3f7;
   --participante: #74d99a;
   --en-vivo: #ff6b6b;
+  --perdedor: #ff8f8f; /* coral suave, a juego con el verde de --participante */
+  --empate: #ffb547;
   --linea: rgba(255, 255, 255, 0.12);
 }
 
@@ -115,6 +117,41 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--participante);
+}
+
+/* Pronóstico del usuario (Modo Pronóstico): ganador verde, perdedor coral, empate ámbar. */
+.pick {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pick.grande {
+  justify-content: center;
+  margin-top: 4px !important;
+  font-size: 1rem;
+}
+
+/* Con el prefijo de fila para ganarle a `.fila-equipo small`. */
+.pick.gana, .fila-equipo .pick.gana { color: var(--participante); }
+.pick.pierde, .fila-equipo .pick.pierde { color: var(--perdedor); }
+.pick.empate, .fila-equipo .pick.empate { color: var(--empate); }
+
+.pick mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+.pick.grande mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.fila-equipo.derecha .pick {
+  justify-content: flex-end;
 }
 
 .centro {

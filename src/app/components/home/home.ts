@@ -12,7 +12,8 @@ import { ParticipantesService, Participante } from '../../services/participantes
 import { JuegosService, Juego } from '../../services/juegos';
 import { AuthService } from '../../services/auth/auth';
 import { GruposService, GrupoDisponible } from '../../services/grupos';
-import { registroEquipoEnEtapa, ETAPAS } from '../../services/core/etapas';
+import { PronosticosService } from '../../services/pronosticos';
+import { registroEquipoEnEtapa, ETAPAS, Eleccion } from '../../services/core/etapas';
 import { mascotaIzquierda, mascotaDerecha } from '../../services/core/mascotas';
 import { horaLocal } from '../../services/core/hora-local';
 import { IdiomaService, traducirPeriodo } from '../../i18n/idioma';
@@ -21,6 +22,15 @@ import { elegirDestacado, etiquetaPrime, cuentaRegresiva, fechaCorta, ordenarSem
 
 const REFRESCO_EN_VIVO_MS = 60_000;
 const TICK_RELOJ_MS = 30_000;
+
+/** Lo que se muestra bajo un equipo según el pronóstico del usuario (Modo Pronóstico). */
+export interface PickEquipo {
+  tipo: 'gana' | 'pierde' | 'empate';
+  /** "+7" / "−7" si puso diferencia; null = se muestra un ícono. */
+  texto: string | null;
+  icono: string;
+  etiqueta: string;
+}
 
 /**
  * Portada. Para todos: el juego destacado (ver `elegirDestacado`) y los juegos
@@ -52,6 +62,7 @@ export class Home implements OnInit, OnDestroy {
   private juegosService = inject(JuegosService);
   private authService = inject(AuthService);
   private gruposService = inject(GruposService);
+  private pronosticosService = inject(PronosticosService);
   private idioma = inject(IdiomaService);
 
   cargando = signal(true);
@@ -66,6 +77,9 @@ export class Home implements OnInit, OnDestroy {
   private juegosSiguiente = signal<Juego[]>([]);
   // "G-P-E" de temporada regular por nombre de equipo (sin juegos en vivo).
   private records = signal<Record<string, string>>({});
+
+  /** Pronósticos del usuario en sesión (grupo en Modo Pronóstico), por id de juego. */
+  private misPronosticos = signal<Map<number, { eleccion: Eleccion; diferencia: number | null }>>(new Map());
 
   participantes = signal<Participante[] | null>(null);
   cargandoTabla = signal(false);
@@ -96,6 +110,7 @@ export class Home implements OnInit, OnDestroy {
 
   destacado = computed(() => elegirDestacado([...this.juegosSemana(), ...this.juegosSiguiente()]));
   listaSemana = computed(() => ordenarSemana(this.juegosSemana()));
+  esPronostico = computed(() => this.grupos().find(g => g.id === this.grupoId())?.modo === 'pronostico');
   nombreGrupo = computed(() => this.grupos().find(g => g.id === this.grupoId())?.nombre ?? '');
 
   // Helpers para el template (los que muestran texto leen el idioma actual).
@@ -190,6 +205,25 @@ export class Home implements OnInit, OnDestroy {
     return cuentaRegresiva(j, this.ahora(), this.idioma.actual());
   }
 
+  /**
+   * Pronóstico del usuario visto desde un lado del juego: la diferencia en
+   * verde (+N) bajo el ganador y en rojo (−N) bajo el perdedor; sin
+   * diferencia, un ícono de ganador/perdedor, y el mismo en los dos si eligió empate.
+   */
+  pick(j: Juego, lado: 'local' | 'visitante'): PickEquipo | null {
+    const p = this.misPronosticos().get(Number(j.id));
+    if (!p) return null;
+    const t = (clave: Parameters<IdiomaService['t']>[0], n?: number) =>
+      this.idioma.t(clave, n === undefined ? undefined : { n });
+    if (p.eleccion === 'empate') {
+      return { tipo: 'empate', texto: null, icono: 'drag_handle', etiqueta: t('home.pickEmpate') };
+    }
+    const dif = p.diferencia;
+    return p.eleccion === lado
+      ? { tipo: 'gana', texto: dif ? `+${dif}` : null, icono: 'thumb_up', etiqueta: dif ? t('home.pickGanaPor', dif) : t('home.pickGana') }
+      : { tipo: 'pierde', texto: dif ? `−${dif}` : null, icono: 'thumb_down', etiqueta: dif ? t('home.pickPierdePor', dif) : t('home.pickPierde') };
+  }
+
   record(nombre: string): string {
     return this.records()[nombre] ?? '';
   }
@@ -229,6 +263,7 @@ export class Home implements OnInit, OnDestroy {
         this.juegosSemana.set(actual);
         this.juegosSiguiente.set(siguiente);
         this.records.set(this.calcularRecords(resultados));
+        if (!silencioso) this.cargarMisPronosticos([...actual, ...siguiente]);
         this.error.set(null);
         this.cargando.set(false);
         this.programarRefresco();
@@ -245,6 +280,25 @@ export class Home implements OnInit, OnDestroy {
   private programarRefresco(): void {
     const hayEnVivo = [...this.juegosSemana(), ...this.juegosSiguiente()].some(j => j.estado === 'en_vivo');
     if (hayEnVivo) this.refresco = setTimeout(() => this.cargarJuegos(true), REFRESCO_EN_VIVO_MS);
+  }
+
+  // Solo en Modo Pronóstico y si el usuario es participante del grupo.
+  private cargarMisPronosticos(juegos: Juego[]): void {
+    const grupoId = this.grupoId();
+    if (!this.logueado() || !grupoId || !this.esPronostico()) {
+      this.misPronosticos.set(new Map());
+      return;
+    }
+    const ids = juegos.map(j => Number(j.id));
+    this.pronosticosService.getMiParticipanteId(grupoId).pipe(
+      switchMap((miId) => !miId ? of([]) : this.pronosticosService.getPronosticos(grupoId, ids).pipe(
+        map((lista) => lista.filter(p => p.participante_id === miId))
+      )),
+      catchError(() => of([]))
+    ).subscribe((lista) => {
+      if (grupoId !== this.grupoId()) return;
+      this.misPronosticos.set(new Map(lista.map(p => [p.juego_id, { eleccion: p.eleccion, diferencia: p.diferencia }])));
+    });
   }
 
   private calcularRecords(resultados: Juego[]): Record<string, string> {
