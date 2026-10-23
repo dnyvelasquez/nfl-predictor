@@ -9,7 +9,8 @@
 }
 
 .juegos-card {
-  max-width: 90%;
+  width: 100%;
+  max-width: min(90%, 880px); /* más ancho solo dejaba huecos entre equipos, hora y pronóstico */
   padding: 20px;
   text-align: center;
 }
@@ -161,10 +162,10 @@
 .grid-row {
   display: grid;
   grid-template-columns:
-    3fr   /* Visitante */
-    1fr   /* Vs */
-    3fr   /* Local */
-    3fr;  /* scheduled */
+    minmax(0, 1fr)  /* Visitante */
+    auto            /* Vs */
+    minmax(0, 1fr)  /* Local */
+    110px;          /* scheduled */
   align-items: center;
   gap: 12px;
   padding: 12px;
@@ -665,4 +666,20 @@
 
 .otros-detalle > .otros-nota {
   padding: 8px 10px;
+}
+
+/* Escritorio: la barra de pronóstico va agrupada al centro en vez de repartida a lo ancho. */
+@media (min-width: 601px) {
+  .pronostico {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    column-gap: 20px;
+  }
+
+  .pronostico-estado {
+    min-width: 0;
+    align-items: flex-start;
+    text-align: left;
+  }
 }
