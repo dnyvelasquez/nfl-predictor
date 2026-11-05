@@ -78,6 +78,20 @@ export class PronosticosService {
     );
   }
 
+  /**
+   * Reinicia los puntajes de un grupo en Modo Pronóstico borrando todos sus
+   * pronósticos, también los de juegos futuros (no se puede deshacer). RPC
+   * `reiniciar_puntajes`: superusuario o administrador del grupo. Devuelve cuántos borró.
+   */
+  reiniciarPuntajes(grupoId: string): Observable<number> {
+    return from(this.supabaseClient.getClient().rpc('reiniciar_puntajes', { p_grupo: grupoId })).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return Number(data) || 0;
+      })
+    );
+  }
+
   /** Guarda ganador y diferencia juntos (la diferencia se reemplaza en cada llamada; con 'empate' va null). */
   pronosticar(grupoId: string, juegoId: number, eleccion: Eleccion, diferencia: number | null = null): Observable<Eleccion> {
     return from(

@@ -1724,3 +1724,37 @@ BEGIN
 END $f$;
 
 REVOKE ALL ON FUNCTION public.calcular_auto_asignacion_wildcard(uuid) FROM PUBLIC;
+
+-- ============================================================
+-- REINICIAR PUNTAJES EN MODO PRONÓSTICO (2026-11-05): el puntaje no se guarda,
+-- se calcula de los pronósticos, así que reiniciar = borrar TODOS los
+-- pronósticos del grupo (también los de juegos futuros). No se puede deshacer.
+-- Superusuario o administrador del grupo. Los participantes se conservan.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION privado.reiniciar_puntajes(p_grupo uuid, p_uid text) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  borrados integer;
+BEGIN
+  IF coalesce(privado.rol_en_grupo_de(p_grupo, p_uid), '') NOT IN ('superusuario', 'administrador') THEN
+    RAISE EXCEPTION 'No autorizado para reiniciar los puntajes de este grupo' USING ERRCODE = '42501';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM grupos g WHERE g.id = p_grupo AND g.modo = 'pronostico') THEN
+    RAISE EXCEPTION 'Este grupo no está en Modo Pronóstico' USING ERRCODE = '22023';
+  END IF;
+  DELETE FROM pronosticos pr WHERE pr.grupo_id = p_grupo;
+  GET DIAGNOSTICS borrados = ROW_COUNT;
+  RETURN borrados;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.reiniciar_puntajes(p_grupo uuid) RETURNS integer
+LANGUAGE sql
+BEGIN ATOMIC
+  SELECT privado.reiniciar_puntajes(p_grupo, auth.user_id());
+END;
+
+REVOKE ALL ON FUNCTION privado.reiniciar_puntajes(uuid, text), public.reiniciar_puntajes(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION privado.reiniciar_puntajes(uuid, text), public.reiniciar_puntajes(uuid) TO authenticated;
+
+NOTIFY pgrst, 'reload schema';

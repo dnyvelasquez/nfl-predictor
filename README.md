@@ -95,7 +95,7 @@ Las fechas y horas de los juegos se muestran en la zona horaria de cada usuario 
   - *Temporada regular*: clasificación por conferencia y división, con el récord (Ganados-Perdidos-Empatados) y el orden oficial de la NFL; una franja de color marca la clasificación a playoffs (amarillo: semilla 1, azul: otros campeones de división, rojo: wild cards).
   - *Postemporada*: el cuadro de playoffs (AFC, Super Bowl y NFC). Antes de los playoffs muestra los cruces proyectados con las semillas actuales; luego, los juegos reales con fecha, marcador en vivo y ganador. Se abre sola en esta pestaña cuando empiezan los playoffs.
 - **Equipos → Ranking inicial**: el ranking de la temporada anterior con el que se hizo la asignación inicial, agrupado según hasta dónde llegó cada equipo en los playoffs.
-- **Reglamento**: uno por modo de juego, con un selector para leer el otro (abre en el modo del grupo elegido). Modo Equipos: sorteo, asignación de equipos, puntos y premios; Modo Pronóstico: participantes, cómo y hasta cuándo se pronostica, puntos (incluido el bono por diferencia) y premios. El valor de la apuesta depende del grupo y solo se ve con sesión.
+- **Reglamento**: uno por modo de juego, con un selector para leer el otro (abre en el modo del grupo elegido). Modo Equipos: sorteo, asignación de equipos, puntos y premios; Modo Pronóstico: participantes, cómo y hasta cuándo se pronostica, puntos (incluido el bono por diferencia), premios y reinicio de puntajes. El valor de la apuesta depende del grupo y solo se ve con sesión.
 
 **Páginas de cada grupo (requieren sesión)**
 
@@ -108,12 +108,12 @@ Las fechas y horas de los juegos se muestran en la zona horaria de cada usuario 
 - **Asignación**: un cuadro por etapa (Temporada Regular, Wild Card, Ronda Divisional, Final de Conferencia y Super Bowl). Cada pestaña tiene "Auto-asignar", que aplica el reglamento: la temporada regular por el ranking, y cada ronda de playoffs por puntaje, con los resultados de la ronda anterior. Si la ronda anterior todavía no termina, la confirmación lo avisa.
 - **Participantes**: personas inscritas en el grupo. En Modo Equipos el orden de selección se reparte con el botón "Sortear números"; en Modo Pronóstico cada participante es un usuario y se crea al agregarlo al grupo.
 - **Ingresar Juego**: calendario y resultados (la sincronización con ESPN los mantiene al día; aquí se pueden corregir a mano, en hora de Bogotá).
-- **Nuevo Usuario / Usuarios**: alta de usuarios en un grupo y gestión de roles, grupos (con su modo) y apuestas. Un administrador entra a Usuarios solo con los miembros de los grupos que administra: agrega usuarios existentes como solo lectura, saca a los de solo lectura y cambia la apuesta de sus grupos.
+- **Nuevo Usuario / Usuarios**: alta de usuarios en un grupo y gestión de roles, grupos (con su modo) y apuestas. Un administrador entra a Usuarios solo con los miembros de los grupos que administra: agrega usuarios existentes como solo lectura, saca a los de solo lectura y cambia la apuesta de sus grupos. En los grupos de Modo Pronóstico, el super usuario y el administrador del grupo pueden además reiniciar los puntajes: se borran todos los pronósticos del grupo, también los de juegos futuros, y no se puede deshacer.
 
 **Roles**
 
 - **Super usuario**: hace todo, en todos los grupos.
-- **Administrador** (de un grupo): ve el panel, usa "Auto-asignar" y "Sortear números", crea usuarios de solo lectura en su grupo y gestiona a sus miembros de solo lectura y la apuesta del grupo desde Usuarios.
+- **Administrador** (de un grupo): ve el panel, usa "Auto-asignar" y "Sortear números", crea usuarios de solo lectura en su grupo y gestiona desde Usuarios a sus miembros de solo lectura, la apuesta del grupo y, en Modo Pronóstico, el reinicio de puntajes.
 - **Solo lectura**: no entra al panel; inicia sesión para ver la tabla, los equipos y la apuesta de su grupo (pensado como una cuenta compartida por grupo).
 
 Un mismo usuario puede pertenecer a varios grupos, con un rol distinto en cada uno. Los datos de cada grupo (participantes, asignaciones, apuesta) son privados: la base de datos solo se los muestra a sus miembros.

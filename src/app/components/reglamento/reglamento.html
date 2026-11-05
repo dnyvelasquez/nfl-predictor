@@ -211,6 +211,11 @@
         <li><ng-container [ngTemplateOutlet]="reglaApuesta"></ng-container></li>
         <ng-container [ngTemplateOutlet]="reglasPremios"></ng-container>
       </ol>
+
+      <h3>Score reset</h3>
+      <ol start="19">
+        <li>The group's administrator can reset the group's scores. A reset deletes all of the group's picks, including those for upcoming games: every participant goes back to 0 and has to pick again. It can't be undone.</li>
+      </ol>
     </div>
     } @else {
     <div class="container">
@@ -252,6 +257,11 @@
       <ol start="14">
         <li><ng-container [ngTemplateOutlet]="reglaApuesta"></ng-container></li>
         <ng-container [ngTemplateOutlet]="reglasPremios"></ng-container>
+      </ol>
+
+      <h3>Reinicio de puntajes</h3>
+      <ol start="19">
+        <li>El administrador del grupo puede reiniciar los puntajes del grupo. Al hacerlo se borran todos los pronósticos del grupo, también los de juegos futuros: todos los participantes quedan en 0 y deben volver a pronosticar. No se puede deshacer.</li>
       </ol>
     </div>
     }

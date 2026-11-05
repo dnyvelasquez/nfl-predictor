@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService, ROLES_GRUPO, RolGrupo, UsuarioVisible, MembresiaVisible } from '../../services/auth/auth';
 import { GruposService, GrupoDisponible, ModoGrupo, MODOS_GRUPO } from '../../services/grupos';
+import { PronosticosService } from '../../services/pronosticos';
 import { Router, RouterModule } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
 import { IdiomaService } from '../../i18n/idioma';
@@ -45,6 +46,7 @@ export class Usuario implements OnInit {
 
   private svc = inject(AuthService);
   private gruposService = inject(GruposService);
+  private pronosticosService = inject(PronosticosService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
 
@@ -213,6 +215,23 @@ export class Usuario implements OnInit {
       },
       error: (e) => {
         this.errorMsg = this.idioma.error(e, 'us.errorApuesta');
+        this.loading = false;
+      },
+    });
+  }
+
+  /** Solo Modo Pronóstico: borra todos los pronósticos del grupo, y con ellos los puntajes. */
+  reiniciarPuntajes(g: GrupoDisponible) {
+    if (!confirm(this.idioma.t('us.confirmReiniciar', { grupo: g.nombre }))) return;
+
+    this.loading = true; this.errorMsg = this.okMsg = null;
+    this.pronosticosService.reiniciarPuntajes(g.id).subscribe({
+      next: (n) => {
+        this.okMsg = this.idioma.t('us.puntajesReiniciados', { grupo: g.nombre, n });
+        this.loading = false;
+      },
+      error: (e) => {
+        this.errorMsg = this.idioma.error(e, 'us.errorReiniciar');
         this.loading = false;
       },
     });

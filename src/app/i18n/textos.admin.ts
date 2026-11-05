@@ -100,6 +100,10 @@ export const ES_ADMIN = {
   'us.apuestaNegativa': 'La apuesta no puede ser negativa',
   'us.apuestaActualizada': 'Apuesta de "{grupo}" actualizada.',
   'us.errorApuesta': 'No se pudo actualizar la apuesta',
+  'us.reiniciarPuntajes': 'Reiniciar puntajes de {grupo}',
+  'us.confirmReiniciar': '¿Reiniciar los puntajes de "{grupo}"? Se borrarán todos los pronósticos del grupo, también los de juegos futuros, y todos los participantes quedarán en 0. Esto no se puede deshacer.',
+  'us.puntajesReiniciados': 'Puntajes de "{grupo}" reiniciados. Pronósticos borrados: {n}.',
+  'us.errorReiniciar': 'No se pudieron reiniciar los puntajes',
   'us.confirmBorrarGrupo': '¿Eliminar el grupo "{grupo}"? Solo se puede si no tiene participantes, asignaciones ni usuarios.',
   'us.grupoEliminado': 'Grupo "{grupo}" eliminado.',
   'us.errorBorrarGrupo': 'No se pudo eliminar el grupo',
@@ -213,6 +217,7 @@ export const ES_ADMIN = {
   'db.Un administrador solo puede sacar a usuarios de solo lectura': 'Un administrador solo puede sacar a usuarios de solo lectura',
   'db.No autorizado para cambiar la apuesta de este grupo': 'No autorizado para cambiar la apuesta de este grupo',
   'db.La apuesta no puede ser negativa': 'La apuesta no puede ser negativa',
+  'db.No autorizado para reiniciar los puntajes de este grupo': 'No autorizado para reiniciar los puntajes de este grupo',
 } as const;
 
 export const EN_ADMIN: Record<keyof typeof ES_ADMIN, string> = {
@@ -310,6 +315,10 @@ export const EN_ADMIN: Record<keyof typeof ES_ADMIN, string> = {
   'us.apuestaNegativa': "The entry fee can't be negative",
   'us.apuestaActualizada': 'Entry fee for "{grupo}" updated.',
   'us.errorApuesta': "Couldn't update the entry fee",
+  'us.reiniciarPuntajes': 'Reset scores for {grupo}',
+  'us.confirmReiniciar': 'Reset the scores for "{grupo}"? This deletes all of the group\'s picks, including those for upcoming games, and every participant goes back to 0. This can\'t be undone.',
+  'us.puntajesReiniciados': 'Scores for "{grupo}" reset. Picks deleted: {n}.',
+  'us.errorReiniciar': "Couldn't reset the scores",
   'us.confirmBorrarGrupo': 'Delete the group "{grupo}"? Only possible if it has no participants, assignments or users.',
   'us.grupoEliminado': 'Group "{grupo}" deleted.',
   'us.errorBorrarGrupo': "Couldn't delete the group",
@@ -423,6 +432,7 @@ export const EN_ADMIN: Record<keyof typeof ES_ADMIN, string> = {
   'db.Un administrador solo puede sacar a usuarios de solo lectura': 'An administrator can only remove read-only users',
   'db.No autorizado para cambiar la apuesta de este grupo': "Not authorized to change this group's entry fee",
   'db.La apuesta no puede ser negativa': "The entry fee can't be negative",
+  'db.No autorizado para reiniciar los puntajes de este grupo': "Not authorized to reset this group's scores",
 };
 
 /** Registra los textos del panel (idempotente: se puede llamar desde cada página). */

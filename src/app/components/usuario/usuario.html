@@ -125,6 +125,13 @@
               <input matInput type="number" min="0" step="1000" [value]="g.apuesta ?? ''"
                      (change)="cambiarApuesta(g, $any($event.target).value)" />
             </mat-form-field>
+            @if (g.modo === 'pronostico') {
+              <button mat-icon-button color="warn" (click)="reiniciarPuntajes(g)" [disabled]="loading"
+                      [attr.title]="'us.reiniciarPuntajes' | t: { grupo: g.nombre }"
+                      [attr.aria-label]="'us.reiniciarPuntajes' | t: { grupo: g.nombre }">
+                <mat-icon>restart_alt</mat-icon>
+              </button>
+            }
             @if (esSuperusuario) {
               <button mat-icon-button color="warn" (click)="borrarGrupo(g)" [disabled]="loading"
                       [attr.aria-label]="'us.borrarGrupo' | t: { grupo: g.nombre }">
