@@ -14,6 +14,7 @@ import { Etapa } from '../../services/core/etapas';
 import { IdiomaService, registrarTextos, traducirPeriodo } from '../../i18n/idioma';
 import { TPipe } from '../../i18n/t.pipe';
 import { ES_FIXTURE, EN_FIXTURE } from './textos';
+import { AbrirEquipo } from '../equipo-dialog/abrir-equipo';
 
 registrarTextos(ES_FIXTURE, EN_FIXTURE);
 
@@ -37,6 +38,7 @@ interface ColumnaBracket {
   selector: 'app-fixture',
   standalone: true,
   imports: [
+    AbrirEquipo,
     MatCardModule,
     MatTabsModule,
     MatProgressSpinnerModule,

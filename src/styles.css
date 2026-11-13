@@ -23,6 +23,32 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   box-shadow: none !important;
 }
 
+/* Diálogo de temporada de un equipo (components/equipo-dialog). */
+.equipo-dialog-panel .mat-mdc-dialog-container {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: 92vh !important;
+}
+
+.equipo-dialog-panel .mat-mdc-dialog-container .mdc-dialog__surface {
+  border-radius: 16px !important;
+  background-color: transparent !important;
+  overflow: visible !important;
+}
+
+/* Mascotas, logos y nombres de equipo que abren su temporada (directiva appEquipo). */
+.equipo-clicable[role="button"] {
+  cursor: pointer;
+}
+
+.equipo-clicable[role="button"]:focus-visible {
+  outline: 2px solid #FFB612;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* Selector de grupo en las páginas de admin (participantes, asignación). */
 .grupo-select {
   width: 100%;

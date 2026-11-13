@@ -55,6 +55,19 @@ export interface Equipo {
   participante?: string;
 }
 
+/** Ficha de un equipo para el diálogo de su temporada. */
+export interface EquipoFicha {
+  id: string;
+  nombre: string;
+  ciudad: string | null;
+  division: string;
+  logo: string | null;
+  posicion_division: number | null;
+  seed_conferencia: number | null;
+  /** Mascota grande (640 px), derivada del nombre. */
+  mascota: string;
+}
+
 export interface EquipoStanding {
   id: string;
   nombre: string;
@@ -441,6 +454,22 @@ export class EquiposService {
               };
             }),
         }));
+      })
+    );
+  }
+
+  /** Datos de un equipo para el diálogo de su temporada (por nombre), o null si no existe. */
+  getEquipoPorNombre(nombre: string): Observable<EquipoFicha | null> {
+    return from(
+      this.supabaseClient
+        .from('equipos')
+        .select('id,nombre,ciudad,division,logo,posicion_division,seed_conferencia')
+        .eq('nombre', nombre)
+        .maybeSingle()
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return data ? ({ ...data, mascota: mascotaIzquierda(data.nombre, 'masc') } as EquipoFicha) : null;
       })
     );
   }

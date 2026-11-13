@@ -17,12 +17,14 @@ import { CommonModule } from '@angular/common';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SelectorGrupo } from '../selector-grupo/selector-grupo';
+import { AbrirEquipo } from '../equipo-dialog/abrir-equipo';
 
 /** Tabla de puntajes del grupo elegido. Los datos de los grupos son privados: sin sesión se invita a iniciarla. */
 @Component({
   selector: 'app-tabla-puntajes',
   standalone: true,
   imports: [
+    AbrirEquipo,
     MatCardModule,
     MatDividerModule,
     MatTableModule,

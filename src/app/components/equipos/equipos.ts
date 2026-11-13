@@ -17,6 +17,7 @@ import { GruposService, GrupoDisponible } from '../../services/grupos';
 import { SelectorGrupo } from '../selector-grupo/selector-grupo';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { AbrirEquipo } from '../equipo-dialog/abrir-equipo';
 
 registrarTextos(ES_EQUIPOS, EN_EQUIPOS);
 
@@ -26,6 +27,7 @@ type EquipoConEtapas = Equipo & { porEtapa: RegistroEquipoPorEtapa[] };
   selector: 'app-equipos',
   standalone: true,
   imports: [
+    AbrirEquipo,
     MatCardModule,
     MatDividerModule,
     MatTableModule,

@@ -54,6 +54,32 @@ export class JuegosService {
     );
   }
 
+  /**
+   * Todos los juegos de un equipo en la temporada (temporada regular y
+   * playoffs), jugados, en vivo y por jugar, ordenados por fecha. Se buscan por
+   * nombre porque `juegos` guarda los nombres de los equipos, no sus ids.
+   */
+  getJuegosDeEquipo(nombre: string): Observable<Juego[]> {
+    const n = nombre.replace(/[,()"]/g, '');
+    return from(
+      this.supabaseClient
+        .from('juegos')
+        .select('*')
+        .or(`local.eq.${n},visitante.eq.${n}`)
+        .order('fecha', { ascending: true })
+        .order('hora', { ascending: true })
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) throw error;
+        return ((data ?? []) as Juego[]).map(j => ({
+          ...j,
+          logoVisitante: mascotaIzquierda(j.visitante),
+          logoLocal: mascotaDerecha(j.local),
+        }));
+      })
+    );
+  }
+
   /** Juegos de playoffs (todas las etapas menos 'regular'), incluidos los "TBD" que ESPN crea por adelantado. */
   getJuegosPostemporada(): Observable<Juego[]> {
     return from(

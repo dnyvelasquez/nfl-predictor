@@ -125,6 +125,7 @@ export const ES = {
   'dialogo.cerrar': 'Cerrar',
   'modo.equipos': 'Modo Equipos',
   'modo.pronostico': 'Modo Pronóstico',
+  'equipo.verTemporada': 'Ver la temporada de {equipo}',
 } as const;
 
 

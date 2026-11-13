@@ -18,6 +18,7 @@ import { ParticipantesService } from '../../services/participantes';
 import { fechaLocal, fechaLarga, horaLocal, horaLocalDeMs, kickoffMs, zonaHorariaLocal } from '../../services/core/hora-local';
 import { IdiomaService, traducirEtapa, traducirPeriodo, traducirErrorBase } from '../../i18n/idioma';
 import { TPipe } from '../../i18n/t.pipe';
+import { AbrirEquipo } from '../equipo-dialog/abrir-equipo';
 
 interface GrupoFecha {
   fecha: string;
@@ -28,6 +29,7 @@ interface GrupoFecha {
   selector: 'app-juegos',
   standalone: true,
   imports: [
+    AbrirEquipo,
     MatCardModule,
     MatDividerModule,
     MatTableModule,

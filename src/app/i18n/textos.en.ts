@@ -124,4 +124,5 @@ export const EN: Record<keyof typeof ES, string> = {
   'dialogo.cerrar': 'Close',
   'modo.equipos': 'Teams mode',
   'modo.pronostico': "Pick'em mode",
+  'equipo.verTemporada': 'View {equipo} season',
 };

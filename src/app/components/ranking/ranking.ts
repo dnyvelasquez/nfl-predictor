@@ -10,6 +10,7 @@ import { JuegosService } from '../../services/juegos';
 import { IdiomaService, registrarTextos } from '../../i18n/idioma';
 import { TPipe } from '../../i18n/t.pipe';
 import { ES_RANKING, EN_RANKING } from './textos';
+import { AbrirEquipo } from '../equipo-dialog/abrir-equipo';
 
 registrarTextos(ES_RANKING, EN_RANKING);
 
@@ -31,7 +32,7 @@ const NIVELES: { desde: number; hasta: number; titulo: keyof typeof ES_RANKING }
 @Component({
   selector: 'app-ranking',
   standalone: true,
-  imports: [RouterModule, MatCardModule, MatDividerModule, MatIconModule, MatProgressSpinnerModule, TPipe],
+  imports: [AbrirEquipo, RouterModule, MatCardModule, MatDividerModule, MatIconModule, MatProgressSpinnerModule, TPipe],
   templateUrl: './ranking.html',
   styleUrls: ['./ranking.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

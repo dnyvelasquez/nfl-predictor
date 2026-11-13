@@ -30,9 +30,9 @@
 
         <div class="destacado-cuerpo">
           <div class="equipo">
-            <img [src]="mascotaIzquierda(j.visitante, 'masc')" [alt]="j.visitante"
+            <img [appEquipo]="j.visitante" [src]="mascotaIzquierda(j.visitante, 'masc')" [alt]="j.visitante"
                  width="640" height="640" fetchpriority="high" class="mascota-grande">
-            <p class="equipo-nombre">{{ j.visitante }}</p>
+            <p class="equipo-nombre" [appEquipo]="j.visitante">{{ j.visitante }}</p>
             <p class="equipo-detalle">
               @if (record(j.visitante)) { {{ record(j.visitante) }} · }{{ 'home.visitante' | t }}
             </p>
@@ -72,9 +72,9 @@
           </div>
 
           <div class="equipo">
-            <img [src]="mascotaDerecha(j.local, 'masc')" [alt]="j.local"
+            <img [appEquipo]="j.local" [src]="mascotaDerecha(j.local, 'masc')" [alt]="j.local"
                  width="640" height="640" fetchpriority="high" class="mascota-grande">
-            <p class="equipo-nombre">{{ j.local }}</p>
+            <p class="equipo-nombre" [appEquipo]="j.local">{{ j.local }}</p>
             <p class="equipo-detalle">
               @if (record(j.local)) { {{ record(j.local) }} · }{{ 'home.local' | t }}
             </p>
@@ -102,9 +102,9 @@
 
           @for (j of listaSemana(); track j.id) {
             <div class="fila-juego">
-              <img [src]="j.logoVisitante" [alt]="j.visitante" width="44" height="44" loading="lazy" class="mascota-chica">
+              <img [appEquipo]="j.visitante" [src]="j.logoVisitante" [alt]="j.visitante" width="44" height="44" loading="lazy" class="mascota-chica">
               <div class="fila-equipo">
-                <span>{{ j.visitante }}</span>
+                <span [appEquipo]="j.visitante">{{ j.visitante }}</span>
                 @if (logueado() && j.participanteVisitante) { <small>{{ j.participanteVisitante }}</small> }
                 @if (pick(j, 'visitante'); as pk) {
                   <small class="pick" [class]="pk.tipo" [title]="pk.etiqueta" [attr.aria-label]="pk.etiqueta">
@@ -134,7 +134,7 @@
               </div>
 
               <div class="fila-equipo derecha">
-                <span>{{ j.local }}</span>
+                <span [appEquipo]="j.local">{{ j.local }}</span>
                 @if (logueado() && j.participanteLocal) { <small>{{ j.participanteLocal }}</small> }
                 @if (pick(j, 'local'); as pk) {
                   <small class="pick" [class]="pk.tipo" [title]="pk.etiqueta" [attr.aria-label]="pk.etiqueta">
@@ -142,7 +142,7 @@
                   </small>
                 }
               </div>
-              <img [src]="j.logoLocal" [alt]="j.local" width="44" height="44" loading="lazy" class="mascota-chica">
+              <img [appEquipo]="j.local" [src]="j.logoLocal" [alt]="j.local" width="44" height="44" loading="lazy" class="mascota-chica">
             </div>
           } @empty {
             <p class="vacio">{{ 'home.sinJuegos' | t }}</p>

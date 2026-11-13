@@ -8,11 +8,12 @@ import { Participante } from '../../services/participantes';
 import { estadoEquipoEnEtapa, Etapa } from '../../services/core/etapas';
 import { IdiomaService, traducirEtapa } from '../../i18n/idioma';
 import { TPipe } from '../../i18n/t.pipe';
+import { AbrirEquipo } from '../equipo-dialog/abrir-equipo';
 
 @Component({
   selector: 'app-participante-dialog',
   standalone: true,
-  imports: [
+  imports: [AbrirEquipo, 
     CommonModule,
     MatCardModule,
     MatDividerModule,

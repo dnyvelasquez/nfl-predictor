@@ -37,8 +37,8 @@
           @for (e of n.equipos; track e.id) {
             <div class="fila" [class.campeon]="e.ranking === 1">
               <span class="puesto">{{ e.ranking }}</span>
-              <img [src]="e.logo" [alt]="e.nombre" width="40" height="40" class="logo">
-              <span class="nombre">{{ e.ciudad }} {{ e.nombre }}</span>
+              <img [appEquipo]="e.nombre" [src]="e.logo" [alt]="e.nombre" width="40" height="40" class="logo">
+              <span class="nombre" [appEquipo]="e.nombre">{{ e.ciudad }} {{ e.nombre }}</span>
               <span class="division" [class.afc]="conferencia(e.division) === 'AFC'" [class.nfc]="conferencia(e.division) === 'NFC'">
                 {{ e.division }}
               </span>

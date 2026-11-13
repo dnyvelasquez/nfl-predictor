@@ -55,9 +55,9 @@
               @for (j of grupo.juegos; track j.id) {
                 <div class="grid-row">
                   <div class="equipo equipo-visitante">
-                    <img [src]="j.logoVisitante" [alt]="j.visitante" class="equipo-logo" loading="lazy">
+                    <img [appEquipo]="j.visitante" [src]="j.logoVisitante" [alt]="j.visitante" class="equipo-logo" loading="lazy">
                     <div class="equipo-info">
-                      <span class="nombre">{{ j.visitante }}</span>
+                      <span class="nombre" [appEquipo]="j.visitante">{{ j.visitante }}</span>
                       @if (mostrarTitulares) {
                         @if ((j.participanteVisitante || '').trim()) {
                           <span class="participante">{{ j.participanteVisitante }}</span>
@@ -74,9 +74,9 @@
                     <span>{{ 'comun.vs' | t }}</span>
                   </div>
                   <div class="equipo equipo-local">
-                    <img [src]="j.logoLocal" [alt]="j.local" class="equipo-logo" loading="lazy">
+                    <img [appEquipo]="j.local" [src]="j.logoLocal" [alt]="j.local" class="equipo-logo" loading="lazy">
                     <div class="equipo-info">
-                      <span class="nombre">{{ j.local }}</span>
+                      <span class="nombre" [appEquipo]="j.local">{{ j.local }}</span>
                       @if (mostrarTitulares) {
                         @if ((j.participanteLocal || '').trim()) {
                           <span class="participante">{{ j.participanteLocal }}</span>

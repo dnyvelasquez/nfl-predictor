@@ -19,6 +19,7 @@ import { horaLocal } from '../../services/core/hora-local';
 import { IdiomaService, traducirPeriodo } from '../../i18n/idioma';
 import { TPipe } from '../../i18n/t.pipe';
 import { elegirDestacado, etiquetaPrime, cuentaRegresiva, fechaCorta, ordenarSemana, estadoVisible } from './portada';
+import { AbrirEquipo } from '../equipo-dialog/abrir-equipo';
 
 const REFRESCO_EN_VIVO_MS = 60_000;
 const TICK_RELOJ_MS = 30_000;
@@ -42,6 +43,7 @@ export interface PickEquipo {
   selector: 'app-home',
   standalone: true,
   imports: [
+    AbrirEquipo,
     CommonModule,
     RouterModule,
     MatCardModule,

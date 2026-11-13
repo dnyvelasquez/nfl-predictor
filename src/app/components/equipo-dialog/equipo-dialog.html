@@ -1,0 +1,131 @@
+<div class="dialogo" [class.afc]="conferencia(equipo()?.division) === 'AFC'" [class.nfc]="conferencia(equipo()?.division) === 'NFC'">
+  <header class="cabecera">
+    <img class="mascota" [src]="equipo()?.mascota ?? ''" [alt]="nombre()" width="640" height="640"
+         [class.oculta]="!equipo()">
+    <div class="titulo">
+      <h2 mat-dialog-title>{{ equipo()?.ciudad }} {{ nombre() }}</h2>
+      @if (equipo(); as e) {
+        <div class="chips">
+          <span class="chip" [class.chip-afc]="conferencia(e.division) === 'AFC'" [class.chip-nfc]="conferencia(e.division) === 'NFC'">{{ e.division }}</span>
+          @if (e.posicion_division) {
+            <span class="chip suave">{{ 'eqd.posicionDivision' | t: { n: e.posicion_division } }}</span>
+          }
+          @if (e.seed_conferencia && e.seed_conferencia <= 7) {
+            <span class="chip suave">{{ 'eqd.semilla' | t: { n: e.seed_conferencia, conf: conferencia(e.division) } }}</span>
+          }
+        </div>
+      }
+    </div>
+    <button type="button" class="cerrar" (click)="cerrar()" [attr.aria-label]="'dialogo.cerrar' | t">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  @if (anteriores().length) {
+    <button type="button" class="volver" (click)="volver()">
+      <mat-icon>arrow_back</mat-icon>{{ 'eqd.volver' | t: { equipo: ultimoAnterior() } }}
+    </button>
+  }
+
+  <div class="cuerpo">
+    @if (cargando()) {
+      <div class="estado"><mat-spinner diameter="36"></mat-spinner><span>{{ 'eqd.cargando' | t }}</span></div>
+    } @else if (error()) {
+      <div class="estado">{{ 'eqd.error' | t }}</div>
+    } @else if (temporada(); as t) {
+
+      <section class="resumen" [attr.aria-label]="'eqd.marca' | t">
+        <div class="dato principal">
+          <span class="valor">{{ marcaRegular(t.regular) }}</span>
+          <span class="etiqueta">{{ 'eqd.marca' | t }}</span>
+          <span class="ayuda">{{ 'eqd.marcaAyuda' | t }}</span>
+        </div>
+        @if (tieneMarca(t.playoffs)) {
+          <div class="dato"><span class="valor">{{ marca(t.playoffs) }}</span><span class="etiqueta">{{ 'eqd.playoffs' | t }}</span></div>
+        }
+        <div class="dato"><span class="valor">{{ marca(t.local) }}</span><span class="etiqueta">{{ 'eqd.enCasa' | t }}</span></div>
+        <div class="dato"><span class="valor">{{ marca(t.visitante) }}</span><span class="etiqueta">{{ 'eqd.deVisita' | t }}</span></div>
+        <div class="dato"><span class="valor">{{ t.favor }}</span><span class="etiqueta">{{ 'eqd.favor' | t }}</span></div>
+        <div class="dato"><span class="valor">{{ t.contra }}</span><span class="etiqueta">{{ 'eqd.contra' | t }}</span></div>
+        <div class="dato">
+          <span class="valor" [class.positivo]="t.favor > t.contra" [class.negativo]="t.favor < t.contra">{{ diferencia(t) }}</span>
+          <span class="etiqueta">{{ 'eqd.diferencia' | t }}</span>
+        </div>
+        <div class="dato">
+          <span class="valor" [class.positivo]="t.racha?.resultado === 'G'" [class.negativo]="t.racha?.resultado === 'P'">{{ racha(t) }}</span>
+          <span class="etiqueta">{{ 'eqd.racha' | t }}</span>
+        </div>
+      </section>
+
+      @if (t.enVivo.length) {
+        <section class="seccion">
+          <h3><span class="punto-vivo"></span>{{ 'eqd.enVivo' | t }}</h3>
+          @for (p of t.enVivo; track p.juego.id) {
+            <div class="partido vivo">
+              <ng-container [ngTemplateOutlet]="ronda_" [ngTemplateOutletContext]="{ $implicit: p }"></ng-container>
+              <span class="cuando">{{ periodo(p) }}</span>
+              <ng-container [ngTemplateOutlet]="rival_" [ngTemplateOutletContext]="{ $implicit: p }"></ng-container>
+              <span class="marcador"><strong>{{ p.propio ?? 0 }}</strong> - {{ p.contra ?? 0 }}</span>
+            </div>
+          }
+        </section>
+      }
+
+      <section class="seccion">
+        <h3>{{ 'eqd.jugados' | t }}</h3>
+        @for (p of t.jugados; track p.juego.id) {
+          <div class="partido">
+            <ng-container [ngTemplateOutlet]="ronda_" [ngTemplateOutletContext]="{ $implicit: p }"></ng-container>
+            <span class="cuando">{{ fecha(p) }}</span>
+            <ng-container [ngTemplateOutlet]="rival_" [ngTemplateOutletContext]="{ $implicit: p }"></ng-container>
+            <span class="marcador">
+              <span class="letra" [class.g]="p.resultado === 'G'" [class.p]="p.resultado === 'P'" [class.e]="p.resultado === 'E'"
+                    [attr.title]="textoResultado(p)" [attr.aria-label]="textoResultado(p)">{{ letra(p) }}</span>
+              <strong>{{ p.propio }}</strong> - {{ p.contra }}
+            </span>
+          </div>
+        } @empty {
+          <p class="vacio">{{ 'eqd.sinJugados' | t }}</p>
+        }
+      </section>
+
+      <section class="seccion">
+        <h3>{{ 'eqd.proximos' | t }}</h3>
+        @for (p of t.proximos; track p.juego.id) {
+          <div class="partido">
+            <ng-container [ngTemplateOutlet]="ronda_" [ngTemplateOutletContext]="{ $implicit: p }"></ng-container>
+            <span class="cuando">{{ fecha(p) }}</span>
+            <ng-container [ngTemplateOutlet]="rival_" [ngTemplateOutletContext]="{ $implicit: p }"></ng-container>
+            <span class="marcador hora">
+              @if (p.pospuesto) { {{ 'comun.pospuesto' | t }} } @else { {{ hora(p) }} }
+            </span>
+          </div>
+        } @empty {
+          <p class="vacio">{{ 'eqd.sinProximos' | t }}</p>
+        }
+        @if (t.proximos.length && zona) {
+          <p class="zona">{{ 'eqd.zona' | t }} ({{ zona }})</p>
+        }
+      </section>
+    }
+  </div>
+</div>
+
+<ng-template #ronda_ let-p>
+  <span class="ronda" [class.playoff]="esPlayoff(p)">{{ ronda(p) }}</span>
+</ng-template>
+
+<ng-template #rival_ let-p>
+  @if (rivalConocido(p)) {
+    <button type="button" class="rival" (click)="verRival(p)" [attr.aria-label]="'eqd.verRival' | t: { equipo: p.rival }">
+      <span class="sede">{{ (p.esLocal ? 'eqd.vs' : 'eqd.en') | t }}</span>
+      @if (p.logoRival) { <img [src]="p.logoRival" alt="" width="32" height="32"> }
+      <span class="rival-nombre">{{ p.rival }}</span>
+    </button>
+  } @else {
+    <span class="rival sin-definir">
+      <span class="sede">{{ (p.esLocal ? 'eqd.vs' : 'eqd.en') | t }}</span>
+      <span class="rival-nombre">{{ rival(p) }}</span>
+    </span>
+  }
+</ng-template>

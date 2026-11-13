@@ -30,8 +30,8 @@
                     </div>
                     @for (e of div.equipos; track e.id) {
                       <div class="equipo-row" [ngClass]="claseFila(e)">
-                        <img [src]="e.logo" [alt]="e.nombre" class="equipo-logo">
-                        <span class="equipo-nombre">{{ e.ciudad }} {{ e.nombre }}</span>
+                        <img [appEquipo]="e.nombre" [src]="e.logo" [alt]="e.nombre" class="equipo-logo">
+                        <span class="equipo-nombre" [appEquipo]="e.nombre">{{ e.ciudad }} {{ e.nombre }}</span>
                         <span class="equipo-record">{{ e.wins }}-{{ e.losses }}-{{ e.ties }}</span>
                       </div>
                     }
@@ -80,8 +80,8 @@
                       <div class="cruce descanso">
                         <div class="cruce-equipo ganador">
                           <span class="seed">{{ d.seed }}</span>
-                          <img [src]="d.logo" [alt]="d.nombre" class="cruce-logo">
-                          <span class="cruce-nombre">{{ d.nombre }}</span>
+                          <img [appEquipo]="d.nombre" [src]="d.logo" [alt]="d.nombre" class="cruce-logo">
+                          <span class="cruce-nombre" [appEquipo]="d.nombre">{{ d.nombre }}</span>
                         </div>
                         <div class="cruce-estado">{{ 'fixture.descansa' | t }}</div>
                       </div>
@@ -103,8 +103,8 @@
       <div class="cruce-equipo" [class.ganador]="c.ganador && e && c.ganador.id === e.id" [class.perdedor]="esPerdedor(c, e)">
         @if (e) {
           <span class="seed">{{ e.seed }}</span>
-          <img [src]="e.logo" [alt]="e.nombre" class="cruce-logo">
-          <span class="cruce-nombre">{{ e.nombre }}</span>
+          <img [appEquipo]="e.nombre" [src]="e.logo" [alt]="e.nombre" class="cruce-logo">
+          <span class="cruce-nombre" [appEquipo]="e.nombre">{{ e.nombre }}</span>
           @if (c.estado === 'final' || c.estado === 'en_vivo') {
             <span class="cruce-puntos">{{ $index === 0 ? c.puntosLocal : c.puntosVisitante }}</span>
           }
