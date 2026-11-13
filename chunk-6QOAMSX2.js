@@ -1,0 +1,1 @@
+import{Ja as i,V as t,Vc as n,id as r}from"./chunk-UP36H6DX.js";var s=(()=>{class e{static \u0275fac=function(o){return new(o||e)};static \u0275mod=i({type:e});static \u0275inj=t({imports:[r]})}return e})();var ce=(()=>{class e{static \u0275fac=function(o){return new(o||e)};static \u0275mod=i({type:e});static \u0275inj=t({imports:[n,s,n]})}return e})();export{ce as a};
